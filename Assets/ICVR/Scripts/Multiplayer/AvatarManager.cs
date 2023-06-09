@@ -1,4 +1,4 @@
-using Unity.Plastic.Newtonsoft.Json;
+using Newtonsoft.Json;
 using ICVR.SharedAssets;
 using System.Collections.Generic;
 using UnityEngine;

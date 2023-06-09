@@ -1,6 +1,6 @@
 using UnityEngine;
 using WebXR;
-using Unity.Plastic.Newtonsoft.Json;
+using Newtonsoft.Json;
 using System.Runtime.InteropServices;
 using System.Collections;
 

@@ -1,6 +1,6 @@
 using System;
 using UnityEngine;
-using Unity.Plastic.Newtonsoft.Json;
+using Newtonsoft.Json;
 
 [Serializable]
 public class NodeInputData
