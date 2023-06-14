@@ -16,14 +16,6 @@ public class ChatController : MonoBehaviour
     public delegate void ChatBroadcast(AvatarChatData chatData);
     public event ChatBroadcast OnBroadcastMessage;
 
-    private void ForceSendCharacter()
-    {
-        currentDraft = "*";
-        Event keyboardEvent = Event.KeyboardEvent(currentDraft);
-        _input.ProcessEvent(keyboardEvent);
-        _input.ForceLabelUpdate();
-        BroadcastChatMessage();
-    }
 
     void Update()
     {

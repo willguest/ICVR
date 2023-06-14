@@ -1,6 +1,4 @@
-using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Newtonsoft.Json;
 using ICVR.SharedAssets;
@@ -9,6 +7,10 @@ using WebXR;
 
 namespace ICVR
 {
+    /// <summary>
+    /// The BodyController is the meeting point for all data and where they get packaged,
+    /// and sent across the network. 
+    /// </summary>
     public class BodyController : MonoBehaviour
     {
         public static string CurrentUserId { get; private set; }
@@ -24,8 +26,6 @@ namespace ICVR
 
         [SerializeField] private Transform leftPointer;
         [SerializeField] private Transform rightPointer;
-
-        [SerializeField] private ChatController chatController;
 
         [SerializeField] private GameObject hudFollower;
 
@@ -43,7 +43,6 @@ namespace ICVR
             rightHand.GetComponent<XRControllerInteraction>().OnHandInteraction += PackageEventData;
             WebXRManager.OnXRChange += OnXRChange;
 
-            chatController.OnBroadcastMessage += PackageChatData;
         }
 
         private void OnDisable()
@@ -67,7 +66,6 @@ namespace ICVR
             }
             leftHand.GetComponent<XRControllerInteraction>().OnHandInteraction -= PackageEventData;
             rightHand.GetComponent<XRControllerInteraction>().OnHandInteraction -= PackageEventData;
-            chatController.OnBroadcastMessage -= PackageChatData;
         }
 
         private void OnXRChange(WebXRState state, int viewsCount, Rect leftRect, Rect rightRect)
@@ -75,6 +73,7 @@ namespace ICVR
             headObject.transform.localRotation = Quaternion.identity;
             //bodyObject.transform.localRotation = Quaternion.identity;
 
+            // Turn off the following UI when in VR.
             hudFollower.SetActive(state == WebXRState.NORMAL);
         }
 
@@ -97,6 +96,7 @@ namespace ICVR
 
         void Update()
         {
+            // set position of following UI
             if (hudFollower.activeInHierarchy)
             {
                 hudFollower.transform.position = transform.position + headObject.transform.forward * 1.5f + headObject.transform.up * -0.6f;
@@ -105,9 +105,9 @@ namespace ICVR
 
             if (!IsConnectionReady) return;
 
-            // included 'home' for manual initialisation or debugging
+
             float frameTick = Time.time;
-            if (Input.GetKeyUp(KeyCode.Home) || hasInteractionEvent)
+            if (hasInteractionEvent)
             {
                 startTime = frameTick + 0.25f; 
                 SendData(JsonConvert.SerializeObject(BuildDataFrame()));
@@ -174,23 +174,6 @@ namespace ICVR
 
             currentEventType = AvatarEventType.Interaction;
             currentEventData = JsonConvert.SerializeObject(ahdFrame);
-            hasInteractionEvent = true;
-        }
-
-        private void PackageChatData(AvatarChatData chatData)
-        {
-            if (chatController != null)
-            {
-                chatController.UpdateChatFeed(CurrentUserId, chatData);
-            }
-
-            if (CurrentNoPeers < 1)
-            {
-                return;
-            }
-
-            currentEventType = AvatarEventType.Chat;
-            currentEventData = JsonConvert.SerializeObject(chatData);
             hasInteractionEvent = true;
         }
 
