@@ -58,7 +58,10 @@ namespace ICVR
             currentManipulator = manipulator.transform.Find("model").gameObject;
 
             // disable mesh collider, to prevent interference with object colliders and rigidbodies
-            currentManipulator.GetComponentInChildren<MeshCollider>().enabled = false;
+            foreach (CapsuleCollider cc in currentManipulator.GetComponentsInChildren<CapsuleCollider>())
+            {
+                cc.enabled = false;
+            }
 
             currentManipulator.transform.parent = gameObject.transform;
             Transform activeControlPose = controlPoseRight;
@@ -83,7 +86,11 @@ namespace ICVR
             }
 
             StartCoroutine(LerpToControlPose(currentManipulator, Vector3.zero, Quaternion.identity, 0.4f));
-            currentManipulator.GetComponentInChildren<MeshCollider>().enabled = true;
+
+            foreach (CapsuleCollider cc in currentManipulator.GetComponentsInChildren<CapsuleCollider>())
+            {
+                cc.enabled = true;
+            }
 
             currentManipulator = null;
             IsBeingUsed = false;

@@ -10,6 +10,7 @@ namespace ICVR.SharedAssets
         public Quaternion DefaultRotation { get; set; }
         public Vector3 DefaultScale { get; set; }
 
+        private bool isNetworkAvailable = false;
         private SharedAssetManager _manager;
 
         private void Awake()
@@ -17,22 +18,29 @@ namespace ICVR.SharedAssets
             DefaultLocation = transform.position;
             DefaultRotation = transform.rotation;
             DefaultScale = transform.lossyScale;
+
+            if (SharedAssetManager.Instance)
+            {
+                isNetworkAvailable = true;
+            }
         }
 
         private void Start()
         {
-            _manager = SharedAssetManager.Instance;
-            Id = GetGameObjectPath(gameObject);
-            bool isIncluded = _manager.IncludeAssetInRegister(Id, gameObject);
-            //if (!isIncluded) { Debug.LogError("Error including " + Id + " in shared assets registry"); }
-            //else { Debug.Log("added " + Id + " to shared assets"); }
+            if (isNetworkAvailable)
+            {
+                _manager = SharedAssetManager.Instance;
+                Id = GetGameObjectPath(gameObject);
+                _manager.IncludeAssetInRegister(Id, gameObject);
+            }
         }
 
         private void OnDestroy()
         {
-            bool removeResult = _manager.RemoveAssetFromRegister(Id);
-            //if (!removeResult) { Debug.LogError("Error removing " + Id + " from shared assets registry"); }
-            //else { Debug.Log("removed " + Id + " from shared asset registry"); }
+            if (isNetworkAvailable)
+            {
+                bool removeResult = _manager.RemoveAssetFromRegister(Id);
+            }
         }
 
         private static string GetGameObjectPath(GameObject obj)
