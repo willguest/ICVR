@@ -78,6 +78,8 @@ namespace ICVR
 
         private void LoseControl()
         {
+            if (currentManipulator == null) return;
+
             currentManipulator.transform.parent = previousParent.transform;
 
             if (gameObject.GetComponent<ControlDynamics>())

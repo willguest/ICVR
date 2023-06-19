@@ -758,7 +758,7 @@ namespace ICVR
             // button actions take priority
             if (touchingButton || pointingAtButton)
             {
-                if (currentButton.TryGetComponent(out PressableButtonAction pba) && (Time.time - actionTick) > 0.5f)
+                if (currentButton.TryGetComponent(out PressableButton pba) && (Time.time - actionTick) > 0.5f)
                 {
                     actionTick = Time.time;
                     pba.ButtonPressed.Invoke();
@@ -807,7 +807,7 @@ namespace ICVR
         {
             if (touchingButton || pointingAtButton)
             {
-                if (currentButton.TryGetComponent(out PressableButtonAction pba))
+                if (currentButton.TryGetComponent(out PressableButton pba))
                 {
                     pba.ButtonReleased.Invoke();
                 }

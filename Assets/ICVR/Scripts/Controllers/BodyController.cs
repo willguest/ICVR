@@ -32,6 +32,8 @@ namespace ICVR
         private bool IsConnectionReady = false;
         private bool hasInteractionEvent = false;
 
+        private Pose UiStartPos;
+
         private AvatarEventType currentEventType = AvatarEventType.None;
         private string currentEventData = "";
         private static float startTime = 0.0f;
@@ -89,6 +91,8 @@ namespace ICVR
                 NetworkIO.Instance.OnJoinedRoom += InitialiseDataChannel;
             }
 
+            UiStartPos.position = hudFollower.transform.position;
+            UiStartPos.rotation = hudFollower.transform.rotation;
 
             CurrentUserId = "Me";
             CurrentNoPeers = 0;
@@ -99,8 +103,8 @@ namespace ICVR
             // set position of following UI
             if (hudFollower.activeInHierarchy)
             {
-                hudFollower.transform.position = transform.position + headObject.transform.forward * 1.5f + headObject.transform.up * -0.6f;
-                hudFollower.transform.rotation = Quaternion.LookRotation(headObject.transform.forward) * Quaternion.Euler(20, 0, 0);
+                hudFollower.transform.position = transform.position + headObject.transform.forward * UiStartPos.position.z + headObject.transform.up * UiStartPos.position.y + headObject.transform.right * UiStartPos.position.x; 
+                hudFollower.transform.rotation = Quaternion.LookRotation(headObject.transform.forward) * UiStartPos.rotation;
             }
 
             if (!IsConnectionReady) return;

@@ -1,4 +1,7 @@
-﻿using System.Collections;
+﻿// Copyright (c) Will Guest 2023
+// Licensed under Mozilla Public License 2.0
+
+using System.Collections;
 using UnityEngine;
 using System;
 using WebXR;
@@ -30,36 +33,23 @@ namespace ICVR
         [Tooltip("head object that moves around with camera")]
         [SerializeField] private GameObject headObject;
 
-        //[Tooltip("body controller that governs hand and sends messages")]
-        //[SerializeField] private GameObject bodyObject;
-
-        // labeling the playspace
-        [SerializeField] private GameObject LabelObject;
-
         // cursor objects
         [SerializeField] private Texture2D cursorForScene;
         [SerializeField] private Texture2D cursorForObjects;
         [SerializeField] private Texture2D cursorForInteractables;
-
-        [SerializeField] private float jumpCool = 1.0f;
-
         [SerializeField] private SimpleCrosshair crosshair;
-        [SerializeField] private UiBehaviour uiBehaviour;
-        [SerializeField] private ChatController chatController;
 
-        public bool isGameMode = true;
-
-        public bool InSession { get; set; }
-
+        // public attributes
         public bool IsSwimming { get; set; }
 
         public GameObject CurrentObject { get; set; }
 
+        // cursor event handling
         public delegate void CursorInteraction(AvatarHandlingData interactionData);
         public event CursorInteraction OnNetworkInteraction;
 
         //[SerializeField] private Canvas JoystickCanvas;
-        [SerializeField] private float joystickMultiplier;
+        //[SerializeField] private float joystickMultiplier;
 
         private VariableJoystickB variableJoystick;
 
@@ -67,9 +57,12 @@ namespace ICVR
 
         private WebXRState xrState = WebXRState.NORMAL;
 
+        private bool isGameMode = false;
+
         private FixedJoint attachJoint;
 
         private float runFactor = 1.0f;
+        private float jumpCool = 1.0f;
 
         private float minimumX = -360f;
         private float maximumX = 360f;
@@ -212,7 +205,7 @@ namespace ICVR
             if (xrState != WebXRState.NORMAL) { return; }
 
             // lateral movement
-            if (translationEnabled && !uiBehaviour.NeedsKeys)
+            if (translationEnabled)
             {
                 MoveBodyWithKeyboard(headObject, straffeSpeed);
                 //MoveBodyWithJoystick();
@@ -254,8 +247,7 @@ namespace ICVR
 
         }
 
-
-
+        /* // coming later
         private void MoveBodyWithJoystick()
         {
             float x = variableJoystick.Horizontal * 0.5f * Time.deltaTime * joystickMultiplier;
@@ -280,7 +272,7 @@ namespace ICVR
             var desiredMoveDirection = forward * z + right * x;
             currentVehicle.transform.Translate(desiredMoveDirection);
         }
-
+        */
 
         private void MoveBodyWithKeyboard(GameObject referenceObject, float multiplier = 1.0f)
         {
@@ -531,9 +523,6 @@ namespace ICVR
             // finally, keyboard events
             else if (e.type == EventType.KeyDown)
             {
-                // if chat window is using keyboard, do nothing
-                if (chatController && chatController.HasFocus) return;
-
                 if (e.keyCode == KeyCode.I)
                 {
                     globalInvertMouse *= -1.0f;
@@ -547,11 +536,6 @@ namespace ICVR
                 if (e.keyCode == KeyCode.Space)
                 {
                     JumpSwim();
-                }
-
-                if (e.keyCode == KeyCode.Tab)
-                {
-                    uiBehaviour.ToggleSettings();
                 }
 
                 if (e.keyCode == KeyCode.LeftShift)
@@ -829,7 +813,7 @@ namespace ICVR
                 return;
             }
 
-            if (currObj.TryGetComponent(out PressableButtonAction pba) && (Time.time - triggerTick) > 0.5f)
+            if (currObj.TryGetComponent(out PressableButton pba) && (Time.time - triggerTick) > 0.5f)
             {
                 triggerTick = Time.time;
                 buttonDown = true;
@@ -856,7 +840,7 @@ namespace ICVR
                 return;
             }
 
-            if (currObj.TryGetComponent(out PressableButtonAction pba))
+            if (currObj.TryGetComponent(out PressableButton pba))
             {
                 buttonDown = false;
                 pba.ButtonReleased.Invoke();
@@ -968,33 +952,6 @@ namespace ICVR
             {
                 CurrentObject.SendMessage("OnDoubleClick");
             }
-        }
-
-        IEnumerator FloatUpAndOut(GameObject focusedObj, string _text, float speed = 0.5f)
-        {
-            isHudBusy = true;
-            Vector3 startPos = currentHitPoint;
-            Quaternion lookAtMe = Quaternion.LookRotation(gameObject.transform.forward, Vector3.up);
-
-            GameObject newLabel = Instantiate(LabelObject, startPos, lookAtMe, headObject.transform);
-            newLabel.transform.localScale = (Vector3.one / 2) * 0.01f;
-            newLabel.transform.position = startPos;
-
-            Vector3 targetPos = startPos + (Vector3.up * 1.0f);
-            TextMesh myTM = newLabel.GetComponent<TextMesh>();
-            myTM.text = _text;
-
-            float floatTimer = 0.0f;
-
-            while (floatTimer < 1.0f)
-            {
-                floatTimer += Time.smoothDeltaTime * 1f;
-                newLabel.transform.position = Vector3.Lerp(startPos, targetPos, floatTimer * speed);
-                yield return new WaitForEndOfFrame();
-            }
-
-            Destroy(newLabel, 1.5f);
-            isHudBusy = false;
         }
 
 

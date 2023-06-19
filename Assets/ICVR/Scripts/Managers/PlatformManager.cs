@@ -14,15 +14,15 @@ namespace ICVR
         [DllImport("__Internal")]
         private static extern void GetBrowserInfo(string sender);
 
-        //[SerializeField] private UnityEngine.UI.Text platformDetailText;
-
         public bool IsVRSupported { get; private set; }
 
         public WebXRState XrState { get; private set; }
 
-        private string[] VRBrowsers;
-        private NavigatorData BrowserData;
         private bool discoveredVR = false;
+
+        //private string[] VRBrowsers;
+        //private NavigatorData BrowserData;
+        //[SerializeField] private UnityEngine.UI.Text platformDetailText;
 
         private void Awake()
         {
@@ -33,23 +33,22 @@ namespace ICVR
             else
             {
                 _instance = this;
-                //DontDestroyOnLoad(this.gameObject); // option to keep between scenes
             }
         }
 
         private void Start()
         {
-            VRBrowsers = new string[4] { "Oculus Browser", "Firefox Reality", "Wolvic", "Pico Browser" };
+            //VRBrowsers = new string[4] { "Oculus Browser", "Firefox Reality", "Wolvic", "Pico Browser" };
         }
 
         private void Update()
         {
             if (discoveredVR)
             {
-                discoveredVR = false;
-                //platformDetailText.text = DisplayNavigatorSummary(BrowserData);
-                Debug.Log("Discovered VR browser, toggling..");
+                Debug.Log("Initiating VR...");
+
                 WebXRManager.Instance.ToggleVR();
+                discoveredVR = false;
             }
         }
 
@@ -71,11 +70,18 @@ namespace ICVR
             IsVRSupported = capabilities.canPresentVR;
         }
 
+        public void StartVR()
+        {
+            discoveredVR = true;
+        }
+
         private void OnXRChange(WebXRState state, int viewsCount, Rect leftRect, Rect rightRect)
         {
             XrState = state;
         }
 
+
+        /* Browser Interrogation functions (currently unused)
         private void OnBrowserInfo(string message)
         {
             if (string.IsNullOrEmpty(message))
@@ -84,10 +90,10 @@ namespace ICVR
                 return;
             }
 
-            
+
             BrowserData = JsonConvert.DeserializeObject<NavigatorData>(message);
 
-            Debug.Log("Nice to meet you, " + BrowserData.Browser.Name + " user. Just checking to see if you're VR ready  8-]");
+            Debug.Log("Hi " + BrowserData.Browser.Name + " user. Just checking to see if you're VR-ready  8-]");
 
             for (int s = 0; s < VRBrowsers.Length; s++)
             {
@@ -100,11 +106,6 @@ namespace ICVR
             }
         }
 
-        private IEnumerator TriggerAfterDelay(float delSec)
-        {
-            yield return new WaitForSeconds(delSec);
-            discoveredVR = true;
-        }
 
         private string DisplayNavigatorSummary(NavigatorData data)
         {
@@ -116,5 +117,7 @@ namespace ICVR
 
             return navDataText;
         }
+
+        */
     }
 }

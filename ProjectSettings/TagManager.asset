@@ -7,7 +7,6 @@ TagManager:
   - Interactable
   - crosshair
   - UI
-  - pinpack
   - xthumb
   layers:
   - Default
@@ -28,7 +27,7 @@ TagManager:
   - Tools
   - 
   - 
-  - buttons_text
+  - 
   - 
   - 
   - 
