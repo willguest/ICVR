@@ -70,9 +70,6 @@ namespace ICVR
 
         private WebXRState xrState = WebXRState.NORMAL;
 
-        // one outgoing audio stream per hand, by default
-        //private bool handChannelOpen = false;
-
         private FixedJoint[] attachJoint;
 
         private Rigidbody currentNearRigidBody = null;
@@ -897,21 +894,6 @@ namespace ICVR
             }
         }
 
-        /* 
-        [SerializeField] private GameObject testObject;
-        private void Update()
-        {
-            if (Input.GetKeyDown(KeyCode.K) && hand == ControllerHand.RIGHT)
-            {
-                PickupNear();
-            }
-            else if (Input.GetKeyDown(KeyCode.L) && hand == ControllerHand.RIGHT)
-            {
-                DropNear();
-            }
-        }
-        */
-
 
         public void PickupNear()
         {
@@ -1151,45 +1133,6 @@ namespace ICVR
         }
 
 
-        IEnumerator Translation(GameObject objToMove, Vector3 destination, float speed)
-        {
-            Transform t = objToMove.transform;
 
-            float floatTimer = 0.0f;
-            while (floatTimer < 1.0f)
-            {
-                floatTimer += Time.smoothDeltaTime * 1f;
-                objToMove.transform.localPosition = Vector3.Lerp(t.position, destination, floatTimer * speed);
-                yield return new WaitForEndOfFrame();
-            }
-        }
-
-
-        IEnumerator FloatUpAndOut(Vector3 displayPoint, string _text, float speed = 0.3f)
-        {
-            isHudBusy = true;
-            Vector3 startPos = displayPoint;
-            Quaternion lookAtMe = Quaternion.LookRotation(gameObject.transform.forward, Vector3.up);
-
-            GameObject newLabel = Instantiate(LabelObject, startPos, lookAtMe);
-            newLabel.transform.localScale = (Vector3.one / 2) * 0.01f;
-            newLabel.transform.position = startPos;
-
-            Vector3 targetPos = startPos + (Vector3.up * 0.8f);
-            TextMesh myTM = newLabel.GetComponent<TextMesh>();
-            myTM.text = _text;
-
-            float floatTimer = 0.0f;
-
-            while (floatTimer < 1.0f)
-            {
-                floatTimer += Time.smoothDeltaTime * 1f;
-                newLabel.transform.position = Vector3.Lerp(startPos, targetPos, floatTimer * speed);
-                yield return new WaitForEndOfFrame();
-            }
-
-            Destroy(newLabel, 1.5f);
-            isHudBusy = false;
-        }
     }
 }

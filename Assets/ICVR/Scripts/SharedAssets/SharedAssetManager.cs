@@ -24,50 +24,6 @@ namespace ICVR.SharedAssets
             SharedAssetRegister = new Dictionary<string, GameObject>();
         }
 
-        /*
-        void Start()
-        {
-            
-            InitialiseRegister();
-
-            if (searchForSharedAssets)
-            {
-                SharedAsset[] saList = FindObjectsOfType(typeof(SharedAsset)) as SharedAsset[];
-                foreach (SharedAsset asset in saList)
-                {
-                    asset.Id = asset.gameObject.name + VersionString;
-                    AddSharedAssetToRegister(asset.Id, asset.gameObject);
-                }
-            }
-        }
-
-        private void InitialiseRegister()
-        {
-            for (int t = 0; t < transform.childCount; t++)
-            {
-                GameObject child = transform.GetChild(t).gameObject;
-
-                // make sure all shared assets have the sharedasset component
-                SharedAsset shAs = child.GetComponent<SharedAsset>();
-                if (!shAs) {
-                    shAs = child.AddComponent<SharedAsset>();
-                }
-
-                shAs.Id = shAs.gameObject.name + VersionString;
-                AddSharedAssetToRegister(shAs.Id, shAs.gameObject);
-            }
-        }
-
-        private void AddSharedAssetToRegister(string id, GameObject asset)
-        {
-            // add unique values to the register
-            if (!SharedAssetRegister.ContainsKey(id))
-            {
-                SharedAssetRegister.Add(id, asset);
-            }
-        }
-        */
-
         public GameObject RetrieveAssetFromRegister(string id)
         {
             return SharedAssetRegister[id];

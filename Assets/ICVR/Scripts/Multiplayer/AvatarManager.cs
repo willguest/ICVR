@@ -11,7 +11,6 @@ namespace ICVR
         public static AvatarManager Instance { get { return _instance; } }
 
         [SerializeField] private GameObject avatarTemplate;
-        [SerializeField] private UnityEngine.UI.Text chatText;
 
         private Dictionary<string, GameObject> otherPlayers;
         private Dictionary<string, AvatarController> avatarControllers;
@@ -41,6 +40,8 @@ namespace ICVR
                 _instance = this;
             }
         }
+
+        
 
         private void OnDestroy()
         {
@@ -90,11 +91,6 @@ namespace ICVR
                 currentDataFrame = null;
             }
 
-            if (newChatMessageReady)
-            {
-                newChatMessageReady = false;
-                chatText.text += messageBuffer;
-            }
         }
 
         public void ProcessAvatarData(NodeInputData nodeFrame)
