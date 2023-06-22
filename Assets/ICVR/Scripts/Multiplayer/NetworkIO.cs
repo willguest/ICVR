@@ -7,36 +7,24 @@ using System.Runtime.InteropServices;
 
 namespace ICVR
 {
-    public static class StringExt
-    {
-        public static string? Truncate(this string? value, int maxLength, string truncationSuffix = "…")
-        {
-            return value?.Length > maxLength
-                ? value.Substring(0, maxLength) + truncationSuffix
-                : value;
-        }
-        public static string? BookEnd(this string? value, int sideLength, string truncationSuffix = "…")
-        {
-            return value?.Length > (sideLength * 2)
-                ? value.Substring(0, sideLength) + truncationSuffix + value.Substring(value.Length - sideLength, sideLength)
-                : value;
-        }
-    }
-
     public class NetworkIO : MonoBehaviour
     {
+        // singleton
         private static NetworkIO _instance;
         public static NetworkIO Instance { get { return _instance; } }
 
+        // js functions
         [DllImport("__Internal")]
-        private static extern void PrimeConnection(string sender, string socketURL, int capacity);
-        
+        private static extern void CreateNewConnection(string sender, string socketURL, int roomSize);
+
         [DllImport("__Internal")]
-        private static extern void ConfigureAudio();
+        private static extern void StartConnection(string roomId);
 
         [DllImport("__Internal")]
         private static extern void CeaseConnection();
 
+        public delegate void NetworkUserEvent(string connectionStatus, string userId, string payload);
+        public event NetworkUserEvent OnNetworkChanged;
 
         // interface
         public float NetworkUpdateFrequency { get; private set; }
@@ -46,20 +34,17 @@ namespace ICVR
 
         // unity-assigned objects
         [SerializeField] private string SignalingServerUrl = "https://rtcmulticonnection-sockets.herokuapp.com:443/";
-        [SerializeField] private Renderer connectionIndicator;
-        [SerializeField] private bool AutoStartConnection;
         
-        public delegate void NetworkUserEvent(string connectionStatus, string userId, string payload);
-        public event NetworkUserEvent OnNetworkChanged;
+        [SerializeField] private Renderer connectionIndicator;
 
         // private variables
         private RtcMultiConnection myConnection;
         private static List<string> connectedUsers;
         private List<string> previousOwnIds;
+
         private bool readyToReceive = false;
-
-        private RoomManager roomManager;
-
+        private bool WaitingForOthers = false;
+        
         // events
         public delegate void ConnectionEvent(bool connectionState);
         public event ConnectionEvent OnConnectionChanged;
@@ -67,12 +52,18 @@ namespace ICVR
         public delegate void RoomJoinEvent(string newUserId);
         public event RoomJoinEvent OnJoinedRoom;
 
-        // UI message
+        // private connection variables
+        private string roomPrefix = "ICVR-";
+        private string roomString = "";
+        private int RoomCapacity = 6;
+        private int roomNumber = 0;
+
+        private float connectionStartTick = 0;
+
         private string myStatus;
         private string userInfo;
-
         private bool networkUpdateReady = false;
-        private float connectionStartTick = 0;
+
 
         private void Awake()
         {
@@ -83,7 +74,7 @@ namespace ICVR
             else
             {
                 _instance = this;
-                //DontDestroyOnLoad(this.gameObject); // uncomment to keep alive between scenes
+                //DontDestroyOnLoad(this.gameObject); // option to keep between scenes
             }
         }
 
@@ -92,25 +83,14 @@ namespace ICVR
             connectedUsers = new List<string>();
             previousOwnIds = new List<string>();
 
-            NetworkUpdateFrequency = 4;
-
             connectionIndicator.material.EnableKeyword("_EMISSION");
             StartCoroutine(FadeToColour(connectionIndicator, Color.gray, 1.0f));
-
-            if (TryGetComponent(out roomManager) && AutoStartConnection &&
-                Application.platform != RuntimePlatform.WindowsEditor)
-            {
-                userInfo = "Room Manager found.";
-                PrimeConnection(gameObject.name, SignalingServerUrl, roomManager.MaxPeers);
-            }
 
             myStatus = "Awake";
             CurrentUserId = "";
             userInfo = "";
             networkUpdateReady = true;
         }
-
-        
 
         private void Update()
         {
@@ -127,56 +107,72 @@ namespace ICVR
             }
         }
 
-        public void StartConnection()
+        private int IncrementRoomId()
+        {
+            roomNumber++;
+            roomString = roomPrefix + roomNumber.ToString();
+            networkUpdateReady = true;
+            return roomNumber;
+        }
+
+        public void OpenJoin()
+        {
+            roomString = roomPrefix + roomNumber.ToString();
+            StartConnection(roomString);
+        }
+
+        private void OnDisable()
         {
             if (Application.platform != RuntimePlatform.WindowsEditor)
             {
-                CreateSession();
+                CeaseConnection();
             }
         }
 
-        public void StopConnection()
-        {
-            CloseConnection();
-        }
 
-        public void ToggleConnection()
+        public void StartRtcConnection()
         {
             // 3-second cool down
             if ((Time.time - connectionStartTick) < 3.0f) return;
             connectionStartTick = Time.time;
 
-            if (IsConnected)
+            if (Application.platform != RuntimePlatform.WindowsEditor)
             {
-                CloseConnection();
-                Debug.Log("Connection closed");
-            }
-            else
-            {
-                if (Application.platform != RuntimePlatform.WindowsEditor)
-                {
-                    CreateSession();
-                }
+                CreateNewConnection(gameObject.name, SignalingServerUrl, RoomCapacity);
             }
         }
-        
+
+        public void StopRtcConnection()
+        {
+            // 3-second cool down
+            if ((Time.time - connectionStartTick) < 3.0f) return;
+            connectionStartTick = Time.time;
+
+            if (IsConnected || WaitingForOthers)
+            {
+                CloseConnection();
+            }
+        }
+
+        private void RoomIsFull(string roomId)
+        {
+            IncrementRoomId();
+            OpenJoin();
+        }
 
         private void CloseConnection()
         {
             readyToReceive = false;
             IsConnected = false;
+            WaitingForOthers = false;
 
             connectedUsers.Clear();
-            OnConnectionChanged?.Invoke(false);
-            myStatus = "Not connected";
+            OnConnectionChanged.Invoke(false);
 
             StartCoroutine(FadeToColour(connectionIndicator, Color.red, 2f));
-            AvatarManager.Instance?.ResetScene();
 
-            if (Application.platform != RuntimePlatform.WindowsEditor)
-            {
-                CeaseConnection();
-            }
+            CeaseConnection();
+            AvatarManager.Instance.ResetScene();
         }
 
         private void OnFinishedLoadingRTC(string message)
@@ -189,13 +185,12 @@ namespace ICVR
                 {
                     previousOwnIds.Add(CurrentUserId);
                 }
+
             }
             catch (Exception e)
             {
                 Debug.Log("Failed creating connection object:\n" + e.ToString());
                 myConnection = null;
-                myStatus = "Error";
-                userInfo = e.ToString();
                 networkUpdateReady = true;
                 return;
             }
@@ -204,42 +199,22 @@ namespace ICVR
             StartCoroutine(FadeToColour(connectionIndicator, Color.yellow, 2f));
 
             myStatus = "Started";
-
+            WaitingForOthers = true;
             networkUpdateReady = true;
 
-            Debug.Log("WebRTC connection started, Performing room check...");
-            roomManager?.CheckForRooms();
+            // open or join room
+            roomString = roomPrefix + roomNumber.ToString();
+            StartConnection(roomString);
         }
 
-        public void CreateSession()
+
+
+        private void OnConnectionStarted(string message)
         {
-            if (roomManager)
-            {
-                PrimeConnection(gameObject.name, SignalingServerUrl, roomManager.MaxPeers);
-                roomManager?.CreateRoom();
-            }
-            else
-            {
-                PrimeConnection(gameObject.name, SignalingServerUrl, 6);
-            }
-            
-        }
-
-        private void RoomCheckComplete(string message)
-        {
-            //Debug.Log("Room check complete. " + message);
-        }
-
-        private void OnAudioConfigured(string message)
-        {
-            // update UI
-            StartCoroutine(FadeToColour(connectionIndicator, Color.green, 2f));
-
-
             ReadyFlag = true;
-            myStatus = "Ready";
+            myStatus = "Connected";
+            WaitingForOthers = true;
             networkUpdateReady = true;
-
             OnConnectionChanged.Invoke(true);
         }
 
@@ -249,7 +224,7 @@ namespace ICVR
             {
                 Debug.Log(userid + " is online.");
                 ReadyFlag = true;
-                OnConnectionChanged.Invoke(true);
+                //OnConnectionChanged.Invoke(true);
                 OnJoinedRoom.Invoke(CurrentUserId);
             }
         }
@@ -260,17 +235,12 @@ namespace ICVR
             readyToReceive = false;
 
             string mins = (Time.time / 60.0f).ToString();
-            Debug.Log("Session ended after " + mins + " mins");
+            Debug.Log("Session destroyed after " + mins + " mins");
         }
 
         public void SignalReadiness()
         {
             ReadyFlag = true;
-        }
-
-        public void RequestScreenUpdate()
-        {
-            networkUpdateReady = true;
         }
 
         private void RemoveAvatar(string avatarId)
@@ -315,6 +285,7 @@ namespace ICVR
             AvatarManager.Instance.ProcessAvatarData(data);
         }
 
+
         private void OnConnectedToNetwork(string message)
         {
             if (String.IsNullOrEmpty(message))
@@ -326,19 +297,20 @@ namespace ICVR
             ConnectionData cdata = JsonConvert.DeserializeObject<ConnectionData>(message);
             if (!connectedUsers.Contains(cdata.Userid) && !previousOwnIds.Contains(cdata.Userid))
             {
-                Debug.Log("user showed up on network: " + cdata.Userid);
+                Debug.Log("User showed up on network: " + cdata.Userid);
                 connectedUsers.Add(cdata.Userid);
-                roomManager?.CheckForRooms();
             }
             else
             {
-                Debug.Log("user '" + cdata.Userid + "' already known or is self");
+                Debug.Log("User '" + cdata.Userid + "' already known or is self");
             }
 
             StartCoroutine(FadeToColour(connectionIndicator, Color.green, 2f));
 
+            myStatus = "Connected";
             IsConnected = true;
             ReadyFlag = true;
+            WaitingForOthers = false;
 
             OnJoinedRoom.Invoke(CurrentUserId);
             networkUpdateReady = true;
@@ -355,7 +327,9 @@ namespace ICVR
             try
             {
                 ConnectionData ddata = JsonConvert.DeserializeObject<ConnectionData>(message);
+
                 DeleteAvatar(ddata.Userid);
+                myStatus = "Disconnected";
                 networkUpdateReady = true;
             }
             catch (Exception e)
@@ -370,17 +344,15 @@ namespace ICVR
             {
                 connectedUsers.Remove(avatarId);
                 if (connectedUsers.Count < 1)
-                {
+                {                
                     StartCoroutine(FadeToColour(connectionIndicator, Color.yellow, 1.0f));
-                    myStatus = "waiting for others";
+                    myStatus = "Waiting for others";
                 }
             }
 
-            Debug.Log("Removing avatar: " + avatarId);
+            Debug.Log("removing avatar:" + avatarId);
             AvatarManager.Instance.RemovePlayerAvatar(avatarId);
-            roomManager?.CheckForRooms();
         }
-
 
         private IEnumerator FadeToColour(Renderer targetRenderer, Color endColour, float duration)
         {
@@ -396,7 +368,6 @@ namespace ICVR
             }
             
             targetRenderer.material.SetColor("_EmissionColor", endColour);
-            
         }
 
     }
