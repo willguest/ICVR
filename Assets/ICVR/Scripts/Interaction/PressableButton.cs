@@ -9,15 +9,9 @@ using UnityEngine.Serialization;
 
 namespace ICVR
 {
-    ///<summary>
-    /// A button that can be pushed via direct touch.
-    /// You can use <see cref="Microsoft.MixedReality.Toolkit.PhysicalPressEventRouter"/> to route these events to <see cref="Microsoft.MixedReality.Toolkit.UI.Interactable"/>.
-    ///</summary>
-    //[HelpURL("https://microsoft.github.io/MixedRealityToolkit-Unity/Documentation/README_Button.html")]
-    //[AddComponentMenu("Scripts/MRTK/SDK/PressableButton")]
+
     public class PressableButton : MonoBehaviour
     {
-        //const string InitialMarkerTransformName = "Initial Marker";
 
         bool hasStarted = false;
 

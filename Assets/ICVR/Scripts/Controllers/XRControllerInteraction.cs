@@ -619,8 +619,6 @@ namespace ICVR
                         {
                             farcontactRigidBodies.Clear();
                             farcontactRigidBodies.Add(currentObject.GetComponent<Rigidbody>());
-
-                            //if (!isHudBusy) { StartCoroutine(FloatUpAndOut(myPointer.transform.position, meshName)); }
                         }
 
                         // here set pointer appearance for heavy objects
@@ -644,7 +642,7 @@ namespace ICVR
                 {
                     if (!distanceManip)
                     {
-                        farcontactRigidBodies.Clear(); // this is not getting called appropriately
+                        farcontactRigidBodies.Clear();
                         prevMeshName = "";
                     }
                 }
@@ -682,6 +680,14 @@ namespace ICVR
             {
                 touchingButton = true;
                 currentButton = other.gameObject;
+
+                if (other.gameObject.TryGetComponent(out PressableButton pb) &&
+                    (Time.time - triggerEnterTick) > 0.2f)
+                {
+                    triggerEnterTick = Time.time;
+                    pb.ButtonPressed?.Invoke();
+                }
+                
             }
             else if (objectLayer == 10 || objectLayer == 15) // an interactable object or tool
             {
@@ -708,6 +714,14 @@ namespace ICVR
             {
                 currentButton = null;
                 touchingButton = false;
+
+                if (other.gameObject.TryGetComponent(out PressableButton pb) &&
+                    (Time.time - triggerEnterTick) > 0.2f)
+                {
+                    triggerEnterTick = Time.time;
+                    pb.ButtonReleased?.Invoke();
+                }
+
             }
             else if (objectLayer == 10 || objectLayer == 15) // an interactable object or tool
             {
