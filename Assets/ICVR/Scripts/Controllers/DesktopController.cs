@@ -109,6 +109,7 @@ namespace ICVR
 
         private bool isHudBusy = false;
         public bool buttonDown { get; set; }
+        private GameObject currentButton;
 
         private bool isEditor;
 
@@ -231,7 +232,7 @@ namespace ICVR
                 }
             }
 
-            //detect swimming
+            // Detect swimming, adjust weight accordingly
             float elevation = currentVehicle.transform.position.y;
             if (elevation < seaLevel && currentElevation >= seaLevel)
             {
@@ -487,24 +488,15 @@ namespace ICVR
                         }
 
                     }
-                    else if (CurrentObject.layer == 12)
+                    else if (CurrentObject.layer == 12) 
                     {
                         ActivateObjectTrigger(CurrentObject);
+
                     }
                     else if (CurrentObject.layer == 14)
                     {
                         //SendPersonTrigger(CurrentObject);
                     }
-                }
-                else if (e.type == EventType.MouseDrag && e.button == 0)
-                {
-                    if (isDragging)
-                    {
-                        //activeMesh.transform.position = GetDraggingPoint();
-
-                    }
-
-
                 }
                 else if (e.type == EventType.MouseUp && e.button == 0)
                 {
@@ -512,9 +504,9 @@ namespace ICVR
                     {
                         ReleaseObject();
                     }
-                    else if (buttonDown && CurrentObject)
+                    else if (buttonDown && currentButton != null)
                     {
-                        ReleaseObjectTrigger(CurrentObject);
+                        ReleaseObjectTrigger(currentButton);
                     }
                 }
             }
@@ -808,51 +800,24 @@ namespace ICVR
 
         public void ActivateObjectTrigger(GameObject currObj)
         {
-            if (currObj.TryGetComponent(out UnityEngine.UI.Button button) && !button.interactable)
-            {
-                return;
-            }
-
             if (currObj.TryGetComponent(out PressableButton pba) && (Time.time - triggerTick) > 0.5f)
             {
                 triggerTick = Time.time;
                 buttonDown = true;
+                currentButton = currObj;
                 pba.ButtonPressed.Invoke();
             }
-
         }
 
-        public void SendPersonTrigger(GameObject avatar)
-        {
-            AvatarController personController = GetAvatarController(avatar);
-            if (personController && (Time.time - triggerTick) > 0.5f)
-            {
-                triggerTick = Time.time;
-                buttonDown = true;
-                //personController.OpenAudioChannel(personController.gameObject.name);
-            }
-        }
 
         public void ReleaseObjectTrigger(GameObject currObj)
         {
-            if (currObj.TryGetComponent(out UnityEngine.UI.Button button) && !button.interactable)
-            {
-                return;
-            }
-
             if (currObj.TryGetComponent(out PressableButton pba))
             {
                 buttonDown = false;
+                currentButton = null;
                 pba.ButtonReleased.Invoke();
             }
-
-            /*
-            if (currObj.GetComponent<AvatarController>())
-            {
-                buttonDown = false;
-                currObj.GetComponent<AvatarController>().CloseAudioChannel(currObj.name);
-            }
-            */
         }
 
         private string ViewObject(GameObject viewObject)

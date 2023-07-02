@@ -1,8 +1,11 @@
 using UnityEngine;
 
+
 public class LinearDriveContoller : MonoBehaviour
 {
     [SerializeField] private Rigidbody DriveArm;
+    [SerializeField] private float MaxActuation;
+    [SerializeField] private float MinActuation;
 
     private bool forwardDrive = false;
     private bool reverseDrive = false;
@@ -10,12 +13,12 @@ public class LinearDriveContoller : MonoBehaviour
 
     void Update()
     {
-        if (forwardDrive && DriveArm.transform.localPosition.y < 0.9f)
+        if (forwardDrive && DriveArm.transform.localPosition.y < MaxActuation)
         {
             DriveArm.MovePosition(DriveArm.transform.position + transform.up * 0.01f);
         }
         
-        if (reverseDrive && DriveArm.transform.localPosition.y > 0.065f)
+        if (reverseDrive && DriveArm.transform.localPosition.y > MinActuation)
         {
             DriveArm.MovePosition(DriveArm.transform.position + transform.up * -0.01f);
         }
