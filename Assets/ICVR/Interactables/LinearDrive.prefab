@@ -975,6 +975,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   DriveArm: {fileID: 3513165427523149732}
+  MaxActuation: 0.9
+  MinActuation: 0.06
 --- !u!1 &3513165428331478192
 GameObject:
   m_ObjectHideFlags: 0
