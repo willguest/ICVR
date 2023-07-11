@@ -15,6 +15,7 @@ namespace ICVR
     {
         public static string CurrentUserId { get; private set; }
         public static int CurrentNoPeers { get; set; }
+        public float BodyMass { get; private set; }
 
         [DllImport("__Internal")]
         private static extern void SendData(string msg);
@@ -28,6 +29,8 @@ namespace ICVR
         [SerializeField] private Transform rightPointer;
 
         [SerializeField] private GameObject hudFollower;
+
+
 
         private bool IsConnectionReady = false;
         private bool hasInteractionEvent = false;
@@ -150,7 +153,7 @@ namespace ICVR
 
         private void playersChanged(int numberofplayers)
         {
-            //Debug.Log("Dictionary changed. There are now " + numberofplayers + " players");
+            //Debug.Log("There are now " + numberofplayers + " peers");
             CurrentNoPeers = numberofplayers;
 
             // send a packet to start communication

@@ -20,7 +20,7 @@ GameObject:
   m_TagString: Interactable
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 108
+  m_StaticEditorFlags: 104
   m_IsActive: 1
 --- !u!4 &3513165426481724525
 Transform:
@@ -312,7 +312,7 @@ GameObject:
   m_TagString: Interactable
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 108
+  m_StaticEditorFlags: 104
   m_IsActive: 1
 --- !u!4 &3513165427080871927
 Transform:

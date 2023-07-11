@@ -4,9 +4,10 @@ using WebXR;
 namespace ICVR
 {
     /// <summary>
-    /// The TorsoController is just handles the attached feet collider, moving the 
-    /// body around without it needing be a child of the head object, for more
-    /// natural body representation in the scene.
+    /// The TorsoController acts as an adjustable pivot between the head and hands.
+    /// This is useful for body-oriented events and functions. It is mostly a 
+    /// placeholder for future development, but does work to align the feet and
+    /// reset the rotation when switching in and out of VR.
     /// </summary>
     public class TorsoController : MonoBehaviour
     {

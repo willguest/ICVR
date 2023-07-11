@@ -14,9 +14,7 @@ namespace ICVR
 
     public class XRControllerInteraction : MonoBehaviour
     {
-        //[SerializeField] private Text debugText;
         [SerializeField] private bool debugHand;
-        //[SerializeField] private Transform headRoot;
 
         public enum ButtonTypes
         {
@@ -35,7 +33,7 @@ namespace ICVR
         public enum Axis2DTypes
         {
             Thumbstick, // primary2DAxis
-            Touchpad // secondary2DAxis
+            Touchpad  // secondary2DAxis
         }
 
         public Action<bool> OnControllerActive;
@@ -45,7 +43,6 @@ namespace ICVR
         [SerializeField] private GameObject CharacterRoot;
         [SerializeField] private BodyController BodyController;
 
-        [SerializeField] private GameObject LabelObject;
         [SerializeField] private float MaxInteractionDistance = 15.0f;
         [SerializeField] private Renderer[] GameObjectRenderers;
 
@@ -85,10 +82,7 @@ namespace ICVR
         private GameObject currentObject;
         private GameObject myPointer;
 
-        private string prevLayer = "";
-
         private string prevMeshName = "";
-        private bool isHudBusy = false;
 
         float trigThresUp = 0.90f;
         float trigThresDn = 0.10f;
@@ -96,7 +90,7 @@ namespace ICVR
         float gripThresDn = 0.10f;
 
         float rightThumbstickThreshold = 0.9f;
-        float thAT = 0.25f;
+        float thAT = 0.25f;     // thumbstick absolute threshold
 
         private float prevRightThX = 0f;
         private float prevTrig = 0f;
@@ -104,12 +98,10 @@ namespace ICVR
 
         private bool touchingButton;
         private bool pointingAtButton;
-        private bool pointingAtPerson;
 
         private int playersPresent = 0;
 
         private GameObject currentButton;
-        private GameObject currentPerson;
 
         [SerializeField] LayerMask PointerLayerMask;
 
@@ -117,9 +109,16 @@ namespace ICVR
         private bool distanceManip = false;
         private bool nearManip = false;
 
+        private string animTrigger = "";
+
         private float actionTick = 0f;
         private float triggerEnterTick = 0f;
         private float triggerExitTick = 0f;
+
+        private bool IsSwimming;
+        private float currentElevation;
+        private float jumpTick;
+        private float seaLevel = -4.5f;
 
         // flag used by ObjectInterface - used when the hand is bound to an object
         public bool IsUsingInterface { private get; set; }
@@ -133,7 +132,7 @@ namespace ICVR
             anim.SetTrigger(animTrigger);
         }
 
-        // events
+        // events, hook to these for 
         public delegate void ButtonPressed(float buttonValue);
         public event ButtonPressed TriggerEvent;
         public event ButtonPressed GripEvent;
@@ -192,11 +191,6 @@ namespace ICVR
                 trigger = handData.trigger;
                 squeeze = handData.squeeze;
 
-                //WebXRControllerButton[] buttons = new WebXRControllerButton[2];
-                //buttons[(int)ButtonTypes.Trigger] = new WebXRControllerButton(trigger == 1, trigger);
-                //buttons[(int)ButtonTypes.Grip] = new WebXRControllerButton(squeeze == 1, squeeze);
-                //UpdateButtons(buttons);
-
                 OnHandUpdate?.Invoke(handData);
             }
         }
@@ -227,9 +221,7 @@ namespace ICVR
         }
 
 #if UNITY_EDITOR || !UNITY_WEBGL
-        //private InputDeviceCharacteristics xrHand = InputDeviceCharacteristics.Controller;
         private InputDevice? inputDevice;
-        private HapticCapabilities? hapticCapabilities;
         private int buttonsFrameUpdate = -1;
 
         private void LateUpdate()
@@ -296,29 +288,9 @@ namespace ICVR
                 {
                     buttonB = buttonPressed ? 1 : 0;
                 }
-
-                //WebXRControllerButton[] buttons = new WebXRControllerButton[6];
-                //buttons[(int)ButtonTypes.Trigger] = new WebXRControllerButton(trigger == 1, trigger);
-                //buttons[(int)ButtonTypes.Grip] = new WebXRControllerButton(squeeze == 1, squeeze);
-                //buttons[(int)ButtonTypes.Thumbstick] = new WebXRControllerButton(thumbstick == 1, thumbstick);
-                //buttons[(int)ButtonTypes.Touchpad] = new WebXRControllerButton(touchpad == 1, touchpad);
-                //buttons[(int)ButtonTypes.ButtonA] = new WebXRControllerButton(buttonA == 1, buttonA);
-                //buttons[(int)ButtonTypes.ButtonB] = new WebXRControllerButton(buttonB == 1, buttonB);
-                //UpdateButtons(buttons);
             }
 #endif
         }
-
-        // Updates button states from Web gamepad API.
-        private void UpdateButtons(WebXRControllerButton[] buttons)
-        {
-            for (int i = 0; i < buttons.Length; i++)
-            {
-                WebXRControllerButton button = buttons[i];
-                SetButtonState((ButtonTypes)i, button.pressed, button.value);
-            }
-        }
-
 
         private void OnControllerUpdate(WebXRControllerData controllerData)
         {
@@ -344,15 +316,6 @@ namespace ICVR
                 buttonA = controllerData.buttonA;
                 buttonB = controllerData.buttonB;
 
-                //WebXRControllerButton[] buttons = new WebXRControllerButton[6];
-                //buttons[(int)ButtonTypes.Trigger] = new WebXRControllerButton(trigger == 1, trigger);
-                //buttons[(int)ButtonTypes.Grip] = new WebXRControllerButton(squeeze == 1, squeeze);
-                //buttons[(int)ButtonTypes.Thumbstick] = new WebXRControllerButton(thumbstick == 1, thumbstick);
-                //buttons[(int)ButtonTypes.Touchpad] = new WebXRControllerButton(touchpad == 1, touchpad);
-                //buttons[(int)ButtonTypes.ButtonA] = new WebXRControllerButton(buttonA == 1, buttonA);
-                //buttons[(int)ButtonTypes.ButtonB] = new WebXRControllerButton(buttonB == 1, buttonB);
-                //UpdateButtons(buttons);
-
                 SetControllerActive(true);
             }
         }
@@ -368,19 +331,6 @@ namespace ICVR
                     return trigger;
             }
             return 0;
-        }
-
-        private Vector2 GetAxis2D(Axis2DTypes action)
-        {
-            TryUpdateButtons();
-            switch (action)
-            {
-                case Axis2DTypes.Thumbstick:
-                    return new Vector2(thumbstickX, thumbstickY);
-                case Axis2DTypes.Touchpad:
-                    return new Vector2(touchpadX, touchpadY);
-            }
-            return Vector2.zero;
         }
 
         private bool GetButtonDown(ButtonTypes action)
@@ -403,18 +353,6 @@ namespace ICVR
             return buttonStates[action].up;
         }
 
-        private void SetButtonState(ButtonTypes action, bool isPressed, float value)
-        {
-            if (buttonStates.ContainsKey(action))
-            {
-                //buttonStates[action].UpdateState(isPressed, value);
-            }
-            else
-            {
-                //buttonStates.Add(action, new WebXRControllerButton(isPressed, value));
-            }
-        }
-
 
         void Start()
         {
@@ -429,16 +367,17 @@ namespace ICVR
                 ToggleRenderers(xrState == WebXRState.VR);
             }
 
+            jumpTick = Time.time;
         }
-
-
 
         void FixedUpdate()
         {
             // only do this in a webxr session
             if (xrState != WebXRState.VR && debugHand == false) { return; }
 
-            // left hand controls movement
+            DetectSwimming();
+
+            // left stick controls movement
             if (hand == ControllerHand.LEFT)
             {
                 if (Math.Abs(thumbstickX) > thAT || Math.Abs(thumbstickY) > thAT)
@@ -446,7 +385,7 @@ namespace ICVR
                     MoveBodyWithJoystick(thumbstickX, thumbstickY, 2.0f);
                 }
             }
-            // right hand turns in 60 degree steps and forwards-backwards
+            // right stick turns in 60 degree steps and forwards-backwards
             else if (hand == ControllerHand.RIGHT)
             {
                 if (Mathf.Abs(thumbstickX) > rightThumbstickThreshold && prevRightThX <= rightThumbstickThreshold)
@@ -465,24 +404,11 @@ namespace ICVR
             float trigVal = GetAxis(AxisTypes.Trigger);
             if (trigVal > trigThresUp && prevTrig <= trigThresUp)
             {
-                if (IsUsingInterface)
-                {
-                    TriggerEvent.Invoke(1.0f);
-                }
-                else
-                {
-                    PickupFar();
-                }
+                PickupFar();   
             }
             else if (trigVal < trigThresDn && prevTrig >= trigThresDn)
             {
-                Debug.Log(gameObject.name + "'s XR Controller: received trigger event\nIsUsingInterface=" + IsUsingInterface);
-
-                if (IsUsingInterface)
-                {
-                    TriggerEvent.Invoke(0.0f);
-                }
-                else if (distanceManip)
+                if (distanceManip)
                 {
                     DropFar();
                 }
@@ -492,7 +418,7 @@ namespace ICVR
                 }
             }
 
-            // grip for near interaction only (holding things)
+            // grip for near interaction only
             float gripVal = GetAxis(AxisTypes.Grip);
             if (gripVal > gripThresUp && prevGrip <= gripThresUp)
             {
@@ -503,52 +429,33 @@ namespace ICVR
                 DropNear();
             }
 
-            if (GetButtonDown(ButtonTypes.ButtonA))
+            if (thumbstick == 1)
             {
-                if (IsUsingInterface)
+                JumpSwim();
+            }
+
+            // isusinginterface interface..
+            if (IsUsingInterface)
+            {
+                if (GetButtonDown(ButtonTypes.ButtonA))
                 {
                     AButtonEvent.Invoke(1.0f);
                 }
-                else
-                {
-                    // nothing yet
-                }
-
-            }
-            else if (GetButtonUp(ButtonTypes.ButtonA))
-            {
-                if (IsUsingInterface)
+                else if (GetButtonUp(ButtonTypes.ButtonA))
                 {
                     AButtonEvent.Invoke(0.0f);
                 }
-                else
-                {
-                    // nothing yet
-                }
-            }
 
-            if (GetButtonDown(ButtonTypes.ButtonB))
-            {
-                if (IsUsingInterface)
+                if (GetButtonDown(ButtonTypes.ButtonB))
                 {
                     BButtonEvent.Invoke(1.0f);
                 }
-                else
-                {
-                    // nothing yet
-                }
-            }
-            else if (GetButtonUp(ButtonTypes.ButtonB))
-            {
-                if (IsUsingInterface)
+                else if (GetButtonUp(ButtonTypes.ButtonB))
                 {
                     BButtonEvent.Invoke(0.0f);
                 }
-                else
-                {
-                    // nothing yet
-                }
             }
+
             prevTrig = trigVal;
             prevGrip = gripVal;
 
@@ -557,7 +464,41 @@ namespace ICVR
             SetActiveFarMesh();
         }
 
-        //bool isTurning = false;
+        private void DetectSwimming()
+        {
+            float elevation = CharacterRoot.transform.position.y;
+
+            if (elevation < seaLevel && currentElevation >= seaLevel)
+            {
+                IsSwimming = true;
+                CharacterRoot.GetComponent<Rigidbody>().mass = 2.0f;
+            }
+            else if (elevation > seaLevel && currentElevation <= seaLevel)
+            {
+                IsSwimming = false;
+                CharacterRoot.GetComponent<Rigidbody>().mass = 70.0f;
+            }
+            currentElevation = elevation;
+        }
+
+        private void JumpSwim()
+        {
+            if (IsSwimming && Time.time - jumpTick > 0.2f)
+            {
+                jumpTick = Time.time;
+                Vector3 swimForce = new Vector3(0f, 150f, 0f) + (CharacterRoot.transform.forward * 50f);
+                Debug.Log("stroke");
+                CharacterRoot.GetComponent<Rigidbody>().AddForce(swimForce, ForceMode.Acceleration);
+            }
+            else if (Time.time - jumpTick > 2.0f)
+            {
+                jumpTick = Time.time;
+                Vector3 jumpForce = new Vector3(0f, 350f, 0f) + (CharacterRoot.transform.forward * 50f);
+                Debug.Log("hop");
+                CharacterRoot.GetComponent<Rigidbody>().AddForce(jumpForce, ForceMode.Impulse);
+            }
+        }
+
         private WebXRCamera xrCameras;
         private Camera vrGuideCam;
 
@@ -582,7 +523,6 @@ namespace ICVR
             CharacterRoot.transform.Translate(desiredMoveDirection * multiplier);
         }
 
-
         private void RotateWithJoystick(float value)
         {
             if (value == 0) { return; }
@@ -597,7 +537,6 @@ namespace ICVR
             }
         }
 
-
         private void SetActiveFarMesh()
         {
             // only active when there is a focused object
@@ -607,7 +546,7 @@ namespace ICVR
                 int layer = currentObject.layer;
 
                 // layer-dependent actions
-                if (layer == 10 || layer == 15)
+                if (layer == 10 || layer == 15)         //  interactable objects or tools
                 {
                     pointingAtButton = false;
                     currentButton = null;
@@ -621,22 +560,17 @@ namespace ICVR
                             farcontactRigidBodies.Add(currentObject.GetComponent<Rigidbody>());
                         }
 
-                        // here set pointer appearance for heavy objects
+                        // set pointer appearance for heavy objects
                         // ...
                     }
                 }
-                else if (layer == 12)
+                else if (layer == 12)       // buttons
                 {
                     pointingAtButton = true;
                     currentButton = currentObject;
 
-                    // here set pointer appearance for buttons
+                    // set pointer appearance for buttons
                     // ...
-                }
-                else if (layer == 14)
-                {
-                    pointingAtPerson = true;
-                    currentPerson = currentObject;
                 }
                 else
                 {
@@ -657,15 +591,12 @@ namespace ICVR
                     prevMeshName = "";
                 }
                 pointingAtButton = false;
-                pointingAtPerson = false;
-                currentPerson = null;
                 currentButton = null;
 
                 // set default pointer appearance 
                 // ...
             }
         }
-
 
         void OnTriggerEnter(Collider other)
         {
@@ -676,7 +607,7 @@ namespace ICVR
 
             int objectLayer = other.gameObject.layer;
 
-            if (objectLayer == 12) // a button
+            if (objectLayer == 12) // buttons
             {
                 touchingButton = true;
                 currentButton = other.gameObject;
@@ -689,7 +620,7 @@ namespace ICVR
                 }
                 
             }
-            else if (objectLayer == 10 || objectLayer == 15) // an interactable object or tool
+            else if (objectLayer == 10 || objectLayer == 15) // interactable objects or tools
             {
                 if (other.gameObject.TryGetComponent(out Rigidbody rb) && 
                     (Time.time - triggerEnterTick) > 0.2f)
@@ -710,7 +641,7 @@ namespace ICVR
 
             int objectLayer = other.gameObject.layer;
 
-            if (objectLayer == 12) // if in 'buttons'
+            if (objectLayer == 12) // buttons
             {
                 currentButton = null;
                 touchingButton = false;
@@ -723,10 +654,8 @@ namespace ICVR
                 }
 
             }
-            else if (objectLayer == 10 || objectLayer == 15) // an interactable object or tool
+            else if (objectLayer == 10 || objectLayer == 15) // interactable objects or tools
             {
-                
-
                 if (other.gameObject.TryGetComponent(out Rigidbody rb) 
                     && (Time.time - triggerExitTick) > 0.2f)
                 {
@@ -739,7 +668,6 @@ namespace ICVR
                 }
             }
         }
-
 
 
         private AvatarHandlingData BuildEventFrame(string targetId, ManipulationDistance distance,
@@ -873,13 +801,7 @@ namespace ICVR
                 grabber.BeginAttraction(hand, transform, AttractFar);
 
             }
-            else
-            {
-                // no grabbable interface found, just a regular (maybe shared) object that is being carried
-
-            }
         }
-        private string animTrigger = "";
 
         public void AttractFar(Grabbable sender)
         {
@@ -1145,8 +1067,5 @@ namespace ICVR
             }
             return currentHitPoint;
         }
-
-
-
     }
 }

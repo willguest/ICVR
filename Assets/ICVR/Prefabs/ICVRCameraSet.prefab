@@ -569,10 +569,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aa5538e482207c04f95d355172712425, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  debugHand: 1
+  debugHand: 0
   CharacterRoot: {fileID: 7676236854016821913}
   BodyController: {fileID: 403641477948328616}
-  LabelObject: {fileID: 5584353305773740648, guid: f86f646a433c3dd4982c40524d3b9bfd, type: 3}
   MaxInteractionDistance: 15
   GameObjectRenderers:
   - {fileID: 336957402041660420}
@@ -4320,10 +4319,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aa5538e482207c04f95d355172712425, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  debugHand: 1
+  debugHand: 0
   CharacterRoot: {fileID: 7676236854016821913}
   BodyController: {fileID: 403641477948328616}
-  LabelObject: {fileID: 5584353305773740648, guid: f86f646a433c3dd4982c40524d3b9bfd, type: 3}
   MaxInteractionDistance: 15
   GameObjectRenderers:
   - {fileID: 8959524282438529362}

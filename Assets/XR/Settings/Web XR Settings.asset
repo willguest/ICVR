@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: Web XR Settings
   m_EditorClassIdentifier: 
   VRRequiredReferenceSpace: 1
-  VROptionalFeatures: 2
+  VROptionalFeatures: 0
   ARRequiredReferenceSpace: 1
-  AROptionalFeatures: -1
+  AROptionalFeatures: 0
