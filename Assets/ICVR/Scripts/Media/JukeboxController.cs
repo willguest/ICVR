@@ -2,8 +2,13 @@
 using System.Collections;
 using System.Runtime.InteropServices;
 using UnityEngine;
+using UnityEngine.Networking;
 using UnityEngine.UI;
 
+
+/// <summary>
+/// <a href="https://github.com/willguest/ICVR/tree/develop/Documentation/Media/JukeboxController.md"/>
+/// </summary>
 public class JukeboxController : MonoBehaviour
 {
 
@@ -367,7 +372,7 @@ public class JukeboxController : MonoBehaviour
         StartCoroutine(LoadAudioFromUri(url, onLoadingCompleted));
     }
 
-
+    /*
     IEnumerator LoadAudioFromUri(string _url, Action<AudioClip> onLoadingCompleted)
     {
         // Download of the given URL
@@ -392,7 +397,7 @@ public class JukeboxController : MonoBehaviour
         }
     }
 
-    // note: this only works after the bug fix, which was introduced in 2018.4.29f1
+    // only > 2018.4.29f1
     // earlier versions will throw a 'Streaming of mpeg on this platform is not supported' error.
     IEnumerator LoadAudioInEditor(string _url, Action<AudioClip> onLoadingCompleted)
     {
@@ -417,6 +422,50 @@ public class JukeboxController : MonoBehaviour
             }
         }
     }
+
+    */
+
+    IEnumerator LoadAudioFromUri(string _url, Action<AudioClip> onLoadingCompleted)
+    {
+        // Download of the given URL
+        using (UnityWebRequest www = UnityWebRequestMultimedia.GetAudioClip(_url, AudioType.AUDIOQUEUE))
+        {
+            yield return www.SendWebRequest();
+
+            if (www.result != UnityWebRequest.Result.Success)
+            {
+                // Handle error here
+                //Debug.Log(www.error);
+            }
+            else
+            {
+                AudioClip ac = DownloadHandlerAudioClip.GetContent(www);
+                onLoadingCompleted(ac);
+            }
+        }
+    }
+
+
+    IEnumerator LoadAudioInEditor(string _url, Action<AudioClip> onLoadingCompleted)
+    {
+        // Download of the given URL
+        using (UnityWebRequest www = UnityWebRequest.Get(_url))
+        {
+            yield return www.SendWebRequest();
+
+            if (www.result != UnityWebRequest.Result.Success)
+            {
+                // Handle error here
+                //Debug.Log(www.error);
+            }
+            else
+            {
+                AudioClip ac = DownloadHandlerAudioClip.GetContent(www);
+                onLoadingCompleted(ac);
+            }
+        }
+    }
+
 
     #endregion StreamingAssets and IndexedDB 
     

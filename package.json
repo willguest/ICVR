@@ -1,0 +1,28 @@
+{
+  "name": "com.willguest.ICVR",
+  "version": "1.0.0",
+  "displayName": "ICVR",
+  "description": "Internet Computer Virtual Reality",
+  "unity": "2020.3",
+  "unityRelease": "48f1",
+  "documentationUrl": "https://example.com/",
+  "changelogUrl": "https://example.com/changelog.html",
+  "license": "MPL",
+  "licensesUrl": "https://example.com/licensing.html",
+  "keywords": [
+    "WebXR",
+    "Virtual Reality",
+    "Internet Computer"
+  ],
+  "author": {
+    "name": "Will Guest",
+    "url": "https://github.com/willguest"
+  }
+  "dependencies": {
+    "jillejr.newtonsoft.json-for-unity": "13.0.102",
+    "io.github.idreamsofgame.resharp.core": "1.2.10"
+  },
+  "publishConfig": {
+    "registry": "https://package.openupm.com"
+  }
+}

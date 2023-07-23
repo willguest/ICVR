@@ -2,6 +2,8 @@
 using System.Collections;
 using System.Runtime.InteropServices;
 using UnityEngine;
+using UnityEngine.Networking;
+
 
 public class MediaController : MonoBehaviour
 {
@@ -401,7 +403,7 @@ public class MediaController : MonoBehaviour
         StartCoroutine(LoadAudioFromUri(url, onLoadingCompleted));
     }
 
-
+    /*
     IEnumerator LoadAudioFromUri(string _url, Action<AudioClip> onLoadingCompleted)
     {
         // Download of the given URL
@@ -451,7 +453,49 @@ public class MediaController : MonoBehaviour
             }
         }
     }
+    */
 
+
+    IEnumerator LoadAudioFromUri(string _url, Action<AudioClip> onLoadingCompleted)
+    {
+        // Download of the given URL
+        using (UnityWebRequest www = UnityWebRequestMultimedia.GetAudioClip(_url, AudioType.AUDIOQUEUE))
+        {
+            yield return www.SendWebRequest();
+
+            if (www.result != UnityWebRequest.Result.Success)
+            {
+                // Handle error here
+                //Debug.Log(www.error);
+            }
+            else
+            {
+                AudioClip ac = DownloadHandlerAudioClip.GetContent(www);
+                onLoadingCompleted(ac);
+            }
+        }
+    }
+
+
+    IEnumerator LoadAudioInEditor(string _url, Action<AudioClip> onLoadingCompleted)
+    {
+        // Download of the given URL
+        using (UnityWebRequest www = UnityWebRequest.Get(_url))
+        {
+            yield return www.SendWebRequest();
+
+            if (www.result != UnityWebRequest.Result.Success)
+            {
+                // Handle error here
+                //Debug.Log(www.error);
+            }
+            else
+            {
+                AudioClip ac = DownloadHandlerAudioClip.GetContent(www);
+                onLoadingCompleted(ac);
+            }
+        }
+    }
     #endregion StreamingAssets and IndexedDB 
-    
+
 }
