@@ -7,7 +7,7 @@ using UnityEngine.UI;
 
 
 /// <summary>
-/// <a href="https://github.com/willguest/ICVR/tree/develop/Documentation/Media/JukeboxController.md"/>
+/// <see href="https://github.com/willguest/ICVR/tree/develop/Documentation/Media/JukeboxController.md"/>
 /// </summary>
 public class JukeboxController : MonoBehaviour
 {
@@ -85,7 +85,6 @@ public class JukeboxController : MonoBehaviour
         TrackDisplayText.text = trackInfoDisplay;
         TrackDisplayNo.text = (GetComponent<StreamingAsset>().currDataIndex + 1).ToString();
     }
-
 
     public void PlayAudio()
     {
@@ -323,8 +322,6 @@ public class JukeboxController : MonoBehaviour
         isURLFromWebGLReceived = true;
         //Play(currentAudioURL, currentAudioId);
     }
-
-
 
 
     private void Play(string fileName, string trackName)

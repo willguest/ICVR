@@ -73,7 +73,7 @@ public class MediaController : MonoBehaviour
     #endregion Start, Update, Quit
 
 
-    #region Jukebox Button Functions
+    #region Media Button Functions
 
     private void UpdateTrackText(string trackId)
     {
@@ -188,8 +188,6 @@ public class MediaController : MonoBehaviour
         isLoadingTrack = true;
         CurrentTrackInfo = "Loading...";
         CurrentTrackNo = 0;
-        
-        //machineSounds.PlayOneShot(MachineChangeRecord);
 
         UnloadAudioResources();
 
@@ -217,9 +215,7 @@ public class MediaController : MonoBehaviour
         
         CurrentTrackInfo = "Loading...";
         CurrentTrackNo = 0;
-        
-        //machineSounds.PlayOneShot(MachineChangeRecord);
-
+    
         UnloadAudioResources();
 
         streamingAssetUrl = GetComponent<StreamingAsset>().GetNextFileUrl();
@@ -232,7 +228,7 @@ public class MediaController : MonoBehaviour
     }
 
 
-    #endregion Jukebox Button Functions
+    #endregion Media Button Functions
 
 
     #region StreamingAssets and IndexedDB 
@@ -273,7 +269,7 @@ public class MediaController : MonoBehaviour
     }
 
     /// <summary>
-    /// This is the function called when the audio has been fully loaded into idb
+    /// This is called when the audio has been fully loaded into idb
     /// </summary>
     /// <param name="audioId"></param> The same as the id parameter sent to SaveAudioInIndexedDB.
     public void LoadAudioTrack(string audioId)
@@ -341,7 +337,7 @@ public class MediaController : MonoBehaviour
     }
 
     /// <summary>
-    /// Receives callback from GetAudioUrlFromIndexedDB in simpleWebXR.jslib.
+    /// Receives callback from GetAudioUrlFromIndexedDB
     /// </summary>
     /// <param name="url"></param> path to the indexeddb location of the audio file
     public void GetUrlFromWebGL(string url)
@@ -351,8 +347,6 @@ public class MediaController : MonoBehaviour
         isURLFromWebGLReceived = true;
         //Play(currentAudioURL, currentAudioId);
     }
-
-
 
 
     private void Play(string fileName, string trackName)
@@ -403,59 +397,6 @@ public class MediaController : MonoBehaviour
         StartCoroutine(LoadAudioFromUri(url, onLoadingCompleted));
     }
 
-    /*
-    IEnumerator LoadAudioFromUri(string _url, Action<AudioClip> onLoadingCompleted)
-    {
-        // Download of the given URL
-        WWW www = new WWW(_url);
-        yield return www;
-
-        if (!string.IsNullOrEmpty(www.error))
-        {
-            //Debug.Log(www.error);
-        }
-        else
-        {
-            AudioClip ac = www.GetAudioClipCompressed(false, AudioType.AUDIOQUEUE) as AudioClip;
-            if (ac != null)
-            {
-                onLoadingCompleted(ac);
-            }
-            else
-            {
-                //Debug.Log("audio clip was null");
-            }
-        }
-    }
-
-    // note: this only works after the bug fix, which was introduced in 2018.4.29f1
-    // earlier versions will throw a 'Streaming of mpeg on this platform is not supported' error.
-    IEnumerator LoadAudioInEditor(string _url, Action<AudioClip> onLoadingCompleted)
-    {
-        // Download of the given URL
-        WWW www = new WWW(_url);
-        yield return www;
-
-        if (!string.IsNullOrEmpty(www.error))
-        {
-            //Debug.Log(www.error);
-        }
-        else
-        {
-            AudioClip ac = www.GetAudioClip(false, false, AudioType.MPEG);
-            if (ac != null)
-            {
-                onLoadingCompleted(ac);
-            }
-            else
-            {
-                //Debug.Log("audio clip was null");
-            }
-        }
-    }
-    */
-
-
     IEnumerator LoadAudioFromUri(string _url, Action<AudioClip> onLoadingCompleted)
     {
         // Download of the given URL
@@ -475,7 +416,6 @@ public class MediaController : MonoBehaviour
             }
         }
     }
-
 
     IEnumerator LoadAudioInEditor(string _url, Action<AudioClip> onLoadingCompleted)
     {

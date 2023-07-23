@@ -4,11 +4,12 @@ namespace ICVR.SharedAssets
 { 
     public class SharedAsset : MonoBehaviour 
     { 
-        public string Id { get; private set; }
         public bool IsBeingHandled { get; set; }
-        public Vector3 DefaultLocation { get; set; }
-        public Quaternion DefaultRotation { get; set; }
-        public Vector3 DefaultScale { get; set; }
+
+        public string Id { get; private set; }
+        public Vector3 DefaultLocation { get; private set; }
+        public Quaternion DefaultRotation { get; private set; }
+        public Vector3 DefaultScale { get; private set; }
 
         private bool isNetworkAvailable = false;
         private SharedAssetManager _manager;

@@ -1,7 +1,6 @@
 ﻿// Copyright (c) Will Guest 2023
 // Licensed under Mozilla Public License 2.0
 
-using System.Collections;
 using UnityEngine;
 using System;
 using WebXR;
@@ -11,13 +10,12 @@ namespace ICVR
 {
     public class DesktopController : MonoBehaviour
     {
+        // Inspector Variables
         [Tooltip("Enable/disable rotation control. For use in Unity editor only.")]
         [SerializeField] private bool rotationEnabled = true;
 
         [Tooltip("Enable/disable translation control. For use in Unity editor only.")]
         [SerializeField] private bool translationEnabled = true;
-
-        //private WebXRDisplayCapabilities capabilities;
 
         [Tooltip("Mouse sensitivity")]
         [SerializeField] private float mouseSensitivity = 1f;
@@ -33,25 +31,28 @@ namespace ICVR
         [Tooltip("head object that moves around with camera")]
         [SerializeField] private GameObject headObject;
 
-        // cursor objects
+
+        // Cursor Objects
         [SerializeField] private Texture2D cursorForScene;
         [SerializeField] private Texture2D cursorForObjects;
         [SerializeField] private Texture2D cursorForInteractables;
         [SerializeField] private SimpleCrosshair crosshair;
 
-        // public attributes
+
+        // Public Attributes
         public bool IsSwimming { get; set; }
 
         public GameObject CurrentObject { get; set; }
 
-        // cursor event handling
+        public  float currentDistance { get; private set; }
+
+        public Vector3 currentHitPoint { get; private set; }
+
+
+        // Cursor event handling
         public delegate void CursorInteraction(AvatarHandlingData interactionData);
         public event CursorInteraction OnNetworkInteraction;
 
-        //[SerializeField] private Canvas JoystickCanvas;
-        //[SerializeField] private float joystickMultiplier;
-
-        private VariableJoystickB variableJoystick;
 
         #region ----- Private Variables ------
 
@@ -79,6 +80,7 @@ namespace ICVR
         private Vector2 hotspot = new Vector2(10, 5);
         private readonly CursorMode cMode = CursorMode.ForceSoftware;
 
+        private bool isMouseDown = false;
         private bool isDragging = false;
 
         private float globalInvertMouse = 1.0f;
@@ -86,10 +88,6 @@ namespace ICVR
 
         private SharedAsset currentSharedAsset;
 
-        private float currentDistance;
-        private Vector3 currentHitPoint;
-
-        //elevation
         private float currentElevation;
 
         private GameObject activeMesh;
@@ -98,16 +96,9 @@ namespace ICVR
         private Vector3 screenPoint;
         private Vector3 offset;
 
-        static bool touching = false;
-        private Touch currentTouch;
-        private bool touchOne;
-
         private float jumpTick;
-
-        private long touchStartTick = 0;
         private float triggerTick = 0;
 
-        private bool isHudBusy = false;
         public bool buttonDown { get; set; }
         private GameObject currentButton;
 
@@ -115,11 +106,17 @@ namespace ICVR
 
         #endregion ----- Private Variables ------
 
-        private void OnXRChange(WebXRState state, int viewsCount, Rect leftRect, Rect rightRect)
+
+        #region ----- Unity Functions ------
+
+        private void OnEnable()
         {
-            xrState = state;
-            //JoystickCanvas.gameObject.SetActive(xrState == WebXRState.NORMAL);
-            SetCursorParameters();
+            WebXRManager.OnXRChange += OnXRChange;
+        }
+
+        private void OnDisable()
+        {
+            WebXRManager.OnXRChange -= OnXRChange;
         }
 
         private void Awake()
@@ -133,73 +130,15 @@ namespace ICVR
         void Start()
         {
             runOne = true;
-            touchOne = true;
             jumpTick = Time.time;
 
             SetCrosshairVisibility();
-            //SetCursorParameters();
 
             startRotation = headObject.transform.rotation;
             currentHeading = startRotation;
-
-            xAngle = 0.0f;
-            yAngle = 0.0f;
-            transform.rotation = Quaternion.Euler(yAngle, xAngle, 0.0f);
-
+            transform.rotation = Quaternion.Euler(0.0f, 0.0f, 0.0f);
             attachJoint = GetComponent<FixedJoint>();
-            //variableJoystick = JoystickCanvas.GetComponentInChildren<VariableJoystickB>();
         }
-
-
-        private Quaternion GetCameraRotationFromMouse(float sensitivity, float invertMouse)
-        {
-            if (runOne)
-            {
-                rotationX = Input.GetAxis("Mouse X");
-                rotationY = Input.GetAxis("Mouse Y");
-                runOne = false;
-            }
-            else
-            {
-                rotationX += (Input.GetAxis("Mouse X") * invertMouse) * sensitivity;
-                rotationY += (Input.GetAxis("Mouse Y") * invertMouse) * sensitivity;
-            }
-            rotationX = ClampAngle(rotationX, minimumX, maximumX);
-            rotationY = ClampAngle(rotationY, minimumY, maximumY);
-
-            return RelativeQuatFromIncrements(rotationX, rotationY);
-        }
-
-        private Quaternion RelativeQuatFromIncrements(float rotX, float rotY)
-        {
-            Quaternion xQuaternion = Quaternion.AngleAxis(rotationX, Vector3.up);
-            Quaternion yQuaternion = Quaternion.AngleAxis(rotationY, Vector3.left);
-            currentHeading = startRotation * xQuaternion * yQuaternion;
-            return currentHeading;
-        }
-
-        private Quaternion GetCameraRotationFromTouch(float sensitivity, float invertMouse, bool nTouch = false)
-        {
-            //Touch touch = Input.GetTouch(0);
-            float sensFactor = globalInvertMouse * invertMouse * sensitivity;
-
-            if (touchOne || nTouch)
-            {
-                rotationX = currentTouch.position.x;
-                rotationY = currentTouch.position.y;
-                touchOne = false;
-            }
-            else
-            {
-                rotationX = currentTouch.position.x * sensFactor;
-                rotationY = currentTouch.position.y * sensFactor;
-            }
-            rotationX = ClampAngle(rotationX, minimumX, maximumX);
-            rotationY = ClampAngle(rotationY, minimumY, maximumY);
-
-            return RelativeQuatFromIncrements(rotationX, rotationY);
-        }
-
 
         void Update()
         {
@@ -209,7 +148,6 @@ namespace ICVR
             if (translationEnabled)
             {
                 MoveBodyWithKeyboard(headObject, straffeSpeed);
-                //MoveBodyWithJoystick();
             }
 
             if (rotationEnabled)
@@ -248,32 +186,160 @@ namespace ICVR
 
         }
 
-        /* // coming later
-        private void MoveBodyWithJoystick()
+        #endregion ----- Unity Functions ------
+
+
+        #region ----- Input Handling -----
+
+        void OnGUI()
         {
-            float x = variableJoystick.Horizontal * 0.5f * Time.deltaTime * joystickMultiplier;
-            float z = variableJoystick.Vertical * 0.5f * Time.deltaTime * joystickMultiplier;
+            if (xrState != WebXRState.NORMAL) { return; }
+            if (!isEditor)
+            {
+                SetCursorImage();
+            }
+            Event e = Event.current;
 
-            // conditions for no action
-            //Camera referenceCam = Camera.main;
-            if (headObject == null) return;
-            if (x == 0 && z == 0) return;
+            // mouse events
+            if (e.isMouse)
+            {
+                if (e.button == 0)
+                {
+                    if (e.type == EventType.MouseDown)
+                    {
+                        isMouseDown = true;
+                    }
+                    else if (e.type == EventType.MouseUp)
+                    {
+                        isMouseDown = false;
+                    }
+                }
 
-            //camera forward and right vectors
-            Vector3 forward = headObject.transform.forward;
-            Vector3 right = headObject.transform.right;
+                if (e.clickCount == 2)
+                {
+                    DoubleClick();
+                    isMouseDown = false;
+                }
 
-            //project forward and right vectors on the horizontal plane (y = 0)
-            forward.y = 0f;
-            right.y = 0f;
-            forward.Normalize();
-            right.Normalize();
+                if (e.type == EventType.MouseDown && e.button == 0 && CurrentObject != null)
+                {
+                    if (CurrentObject.layer == 9)
+                    {
+                        //start interation mode for furniture...
+                    }
+                    else if (CurrentObject.layer == 10 || CurrentObject.layer == 15)
+                    {
+                        // identify shared asset and assign currentTargetId
+                        SharedAsset sharedAsset = CurrentObject.GetComponent<SharedAsset>();
 
-            //this is the direction in the world space we want to move:
-            var desiredMoveDirection = forward * z + right * x;
-            currentVehicle.transform.Translate(desiredMoveDirection);
+                        if (sharedAsset)
+                        {
+                            if (!sharedAsset.IsBeingHandled)
+                            {
+                                currentSharedAsset = sharedAsset;
+                                PickUpObject(CurrentObject);
+                            }
+                            else
+                            {
+                                // asset is being used, do nothing
+                                Debug.Log("This object is being used by someone else. Please pester them until they let you play with it.");
+                            }
+                        }
+                        else
+                        {
+                            PickUpObject(CurrentObject);
+                        }
+                    }
+                    else if (CurrentObject.layer == 12)
+                    {
+                        ActivateObjectTrigger(CurrentObject);
+                    }
+                }
+                else if (e.type == EventType.MouseUp && e.button == 0)
+                {
+                    if (isDragging)
+                    {
+                        ReleaseObject();
+                    }
+                    else if (buttonDown && currentButton != null)
+                    {
+                        ReleaseObjectTrigger(currentButton);
+                    }
+                }
+            }
+
+            // keyboard events
+            else if (e.type == EventType.KeyDown)
+            {
+                if (e.keyCode == KeyCode.I)
+                {
+                    globalInvertMouse *= -1.0f;
+                }
+
+                if (e.keyCode == KeyCode.M)
+                {
+                    ToggleGameMode();
+                }
+
+                if (e.keyCode == KeyCode.Space)
+                {
+                    JumpSwim();
+                }
+
+                if (e.keyCode == KeyCode.LeftShift)
+                {
+                    runFactor = 2.0f;
+                }
+            }
+
+            else if (e.type == EventType.KeyUp)
+            {
+                if (e.keyCode == KeyCode.LeftShift)
+                {
+                    runFactor = 1.0f;
+                }
+            }
         }
-        */
+
+
+        #endregion ----- Input Handling -----
+
+
+        #region ----- Character Movement ------
+
+        private void OnXRChange(WebXRState state, int viewsCount, Rect leftRect, Rect rightRect)
+        {
+            xrState = state;
+            SetCursorParameters();
+        }
+
+        private Quaternion GetCameraRotationFromMouse(float sensitivity, float invertMouse)
+        {
+            if (runOne)
+            {
+                rotationX = Input.GetAxis("Mouse X");
+                rotationY = Input.GetAxis("Mouse Y");
+                runOne = false;
+            }
+            else
+            {
+                rotationX += (Input.GetAxis("Mouse X") * invertMouse) * sensitivity;
+                rotationY += (Input.GetAxis("Mouse Y") * invertMouse) * sensitivity;
+            }
+            rotationX = ClampAngle(rotationX, minimumX, maximumX);
+            rotationY = ClampAngle(rotationY, minimumY, maximumY);
+
+            return RelativeQuatFromIncrements(rotationX, rotationY);
+        }
+
+        private Quaternion RelativeQuatFromIncrements(float rotX, float rotY)
+        {
+            Quaternion xQuaternion = Quaternion.AngleAxis(rotationX, Vector3.up);
+            Quaternion yQuaternion = Quaternion.AngleAxis(rotationY, Vector3.left);
+            currentHeading = startRotation * xQuaternion * yQuaternion;
+            return currentHeading;
+        }
+
 
         private void MoveBodyWithKeyboard(GameObject referenceObject, float multiplier = 1.0f)
         {
@@ -325,225 +391,6 @@ namespace ICVR
                     StartCoroutine(RotateCamera(camQuat, mouseSensitivity));
                 }
             }
-
-
-        }
-
-
-        // touch vars
-        private bool isMouseDown = false;
-
-        // touch-rotation vars
-        private Vector3 firstpoint;
-        private Vector3 secondpoint;
-        private float xAngle = 0.0f;
-        private float yAngle = 0.0f;
-        private float xAngTemp = 0.0f;
-        private float yAngTemp = 0.0f;
-
-        private float MinTouchInterval = 2000000f; // 10,000,000 * noSecs
-
-        void OnGUI()
-        {
-            if (xrState != WebXRState.NORMAL) { return; }
-            if (!isEditor)
-            {
-                SetCursorImage();
-            }
-            Event e = Event.current;
-            int t = Input.touchCount;
-
-            if (t > 2 && activeMesh != null)
-            {
-                if (DateTime.UtcNow.Ticks - touchStartTick < MinTouchInterval / 5.0f) { return; }
-                touchStartTick = DateTime.UtcNow.Ticks;
-
-                Vector2 startTouches = (Input.GetTouch(0).position + Input.GetTouch(1).position) / 2.0f;
-                SimulateThrowForwards(startTouches, Input.GetTouch(2).position);
-
-                return;
-            }
-            else if (t == 2)
-            {
-                if (DateTime.UtcNow.Ticks - touchStartTick < MinTouchInterval) { return; }
-                touchStartTick = DateTime.UtcNow.Ticks;
-
-                if (CurrentObject != null && CurrentObject.layer == 12 && Input.GetTouch(1).phase == TouchPhase.Began)
-                {
-                    ActivateObjectTrigger(CurrentObject);
-                }
-
-            }
-            else if (t == 1)
-            {
-                currentTouch = Input.GetTouch(0);
-                touching = true;
-
-                if (currentTouch.phase == TouchPhase.Began)
-                {
-                    if (DateTime.UtcNow.Ticks - touchStartTick < MinTouchInterval) { return; }
-
-                    touchStartTick = DateTime.UtcNow.Ticks;
-                    firstpoint = currentTouch.position;
-                    xAngTemp = xAngle;
-                    yAngTemp = yAngle;
-
-                    CurrentObject = ScreenRaycast(true);
-
-                    if (CurrentObject != null && (CurrentObject.layer == 10 || CurrentObject.layer == 15))
-                    {
-                        PickUpObject(CurrentObject);
-                    }
-                    else if (CurrentObject != null && CurrentObject.layer == 12)
-                    {
-                        ActivateObjectTrigger(CurrentObject);
-                    }
-                }
-                else if (currentTouch.phase == TouchPhase.Moved)
-                {
-                    touching = true;
-
-                    if (buttonDown) return;
-
-                    float dragMod = isDragging ? -1.0f : 1.0f;
-
-                    secondpoint = currentTouch.position;
-
-                    xAngle = xAngTemp + (secondpoint.x - firstpoint.x) * -180.0f * dragMod / Screen.width;
-                    yAngle = yAngTemp - (secondpoint.y - firstpoint.y) * -90.0f * dragMod / Screen.height;
-
-                    Quaternion targetRotation = Quaternion.Euler(yAngle, xAngle, 0.0f);
-                    StartCoroutine(RotateCamera(targetRotation, mouseSensitivity));
-
-                }
-                else if (currentTouch.phase == TouchPhase.Ended)
-                {
-                    touching = false;
-                    if (isDragging)
-                    {
-                        ReleaseObject();
-                    }
-                    else if (buttonDown)
-                    {
-                        ReleaseObjectTrigger(CurrentObject);
-                    }
-                }
-                else if (currentTouch.phase == TouchPhase.Canceled)
-                {
-                    touching = false;
-                }
-
-            }
-
-            // next, mouse events
-            else if (e.isMouse)
-            {
-
-                if (e.button == 0)
-                {
-                    if (e.type == EventType.MouseDown)
-                    {
-                        isMouseDown = true;
-                    }
-                    else if (e.type == EventType.MouseUp)
-                    {
-                        isMouseDown = false;
-                    }
-                }
-
-                if (e.clickCount == 2)
-                {
-                    DoubleClick();
-                    isMouseDown = false;
-                }
-
-                if (e.type == EventType.MouseDown && e.button == 0 && CurrentObject != null)
-                {
-                    if (CurrentObject.layer == 9)
-                    {
-                        //start interation mode for furniture...
-                    }
-                    else if (CurrentObject.layer == 10 || CurrentObject.layer == 15)
-                    {
-
-                        // identify shared asset and assign currentTargetId
-                        SharedAsset sharedAsset = CurrentObject.GetComponent<SharedAsset>();
-
-                        if (sharedAsset)
-                        {
-                            if (!sharedAsset.IsBeingHandled)
-                            {
-                                currentSharedAsset = sharedAsset;
-                                PickUpObject(CurrentObject);
-                            }
-                            else
-                            {
-                                // asset is being used, do nothing
-                                Debug.Log("This object is being used by someone else. Please pester them until they let you play with it.");
-                            }
-                        }
-                        else
-                        {
-                            PickUpObject(CurrentObject);
-                        }
-
-                    }
-                    else if (CurrentObject.layer == 12) 
-                    {
-                        ActivateObjectTrigger(CurrentObject);
-
-                    }
-                    else if (CurrentObject.layer == 14)
-                    {
-                        //SendPersonTrigger(CurrentObject);
-                    }
-                }
-                else if (e.type == EventType.MouseUp && e.button == 0)
-                {
-                    if (isDragging)
-                    {
-                        ReleaseObject();
-                    }
-                    else if (buttonDown && currentButton != null)
-                    {
-                        ReleaseObjectTrigger(currentButton);
-                    }
-                }
-            }
-
-
-            // finally, keyboard events
-            else if (e.type == EventType.KeyDown)
-            {
-                if (e.keyCode == KeyCode.I)
-                {
-                    globalInvertMouse *= -1.0f;
-                }
-
-                if (e.keyCode == KeyCode.M)
-                {
-                    ToggleGameMode();
-                }
-
-                if (e.keyCode == KeyCode.Space)
-                {
-                    JumpSwim();
-                }
-
-                if (e.keyCode == KeyCode.LeftShift)
-                {
-                    runFactor = 2.0f;
-                }
-            }
-
-            else if (e.type == EventType.KeyUp)
-            {
-                if (e.keyCode == KeyCode.LeftShift)
-                {
-                    runFactor = 1.0f;
-                }
-            }
-
         }
 
         private void JumpSwim()
@@ -562,39 +409,39 @@ namespace ICVR
             }
         }
 
+        private static float ClampAngle(float angle, float min, float max)
+        {
+            if (angle < -360f)
+                angle += 360f;
+            if (angle > 360f)
+                angle -= 360f;
+            return Mathf.Clamp(angle, min, max);
+        }
+
+        private System.Collections.IEnumerator RotateCamera(Quaternion targetRot, float speed)
+        {
+            float rotationTimer = 0.0f;
+
+            while (rotationTimer < 0.8)
+            {
+                rotationTimer += Time.smoothDeltaTime * 1f;
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, rotationTimer * speed);
+                yield return new WaitForEndOfFrame();
+            }
+        }
+
+
+        #endregion ----- Character Movement ------
+
+
+        #region ----- Object Interaction ------
+
+
         private void ToggleGameMode()
         {
             isGameMode = !isGameMode;
             SetCrosshairVisibility();
             SetCursorParameters();
-        }
-
-        private Vector3 SetScreenPointOffset(Vector3 activeMeshPosition)
-        {
-            screenPoint = Camera.main.WorldToScreenPoint(activeMesh.transform.position);
-
-            if (float.IsNaN(screenPoint.z))
-            {
-                return Vector3.zero;
-            }
-
-            if (touching)
-            {
-                offset = activeMeshPosition - Camera.main.ScreenToWorldPoint(
-                    new Vector3(currentTouch.position.x, currentTouch.position.y, screenPoint.z));
-            }
-            else if (isGameMode)
-            {
-                offset = activeMeshPosition - Camera.main.ViewportToWorldPoint(
-                    new Vector3(0.5f, 0.5f, screenPoint.z));
-            }
-            else
-            {
-                offset = activeMeshPosition - Camera.main.ScreenToWorldPoint(
-                    new Vector3(Input.mousePosition.x, Input.mousePosition.y, screenPoint.z));
-            }
-
-            return offset;
         }
 
         private void SetCrosshairVisibility()
@@ -618,22 +465,20 @@ namespace ICVR
             }
         }
 
-
         private void SetCursorImage()
         {
             // ui buttons
             if (CurrentObject != null && CurrentObject.layer == 12)
             {
                 Cursor.SetCursor(cursorForInteractables, hotspot, cMode);
-
             }
-            //interactale objects
+            // interactale objects
             else if (CurrentObject != null && (CurrentObject.layer == 10 || CurrentObject.layer == 15))
             {
                 Cursor.SetCursor(cursorForObjects, hotspot, cMode);
                 if (isGameMode) crosshair.SetGap(18, true);
             }
-            //add furniture cursor
+            // furniture cursor
             else if (CurrentObject != null && CurrentObject.layer == 9)
             {
                 Cursor.SetCursor(cursorForInteractables, hotspot, cMode);
@@ -646,8 +491,7 @@ namespace ICVR
             }
         }
 
-
-        public GameObject PickUpObject(GameObject ooi)
+        private GameObject PickUpObject(GameObject ooi)
         {
             if (ooi != null)
             {
@@ -655,8 +499,6 @@ namespace ICVR
                 if (activeMesh == null) return null;
 
                 ViewObject(activeMesh);
-
-                //SetScreenPointOffset(activeMesh.transform.position);
 
                 Rigidbody actRB = activeMesh.GetComponent<Rigidbody>();
                 actRB.isKinematic = false;
@@ -756,26 +598,6 @@ namespace ICVR
             return eventFrame;
         }
 
-        private AvatarController GetAvatarController(GameObject testObject)
-        {
-            if (testObject.GetComponent<AvatarController>())
-            {
-                return testObject.GetComponent<AvatarController>();
-            }
-            else if (testObject.GetComponentInParent<AvatarController>())
-            {
-                return testObject.GetComponentInParent<AvatarController>();
-            }
-            else if (testObject.GetComponentInChildren<AvatarController>())
-            {
-                return testObject.GetComponentInChildren<AvatarController>();
-            }
-            else
-            {
-                return null;
-            }
-        }
-
         private GameObject GetActiveMesh(GameObject ooi)
         {
             // priority: self, parent, child rigidbody
@@ -797,8 +619,7 @@ namespace ICVR
             }
         }
 
-
-        public void ActivateObjectTrigger(GameObject currObj)
+        private void ActivateObjectTrigger(GameObject currObj)
         {
             if (currObj.TryGetComponent(out PressableButton pba) && (Time.time - triggerTick) > 0.5f)
             {
@@ -809,8 +630,7 @@ namespace ICVR
             }
         }
 
-
-        public void ReleaseObjectTrigger(GameObject currObj)
+        private void ReleaseObjectTrigger(GameObject currObj)
         {
             if (currObj.TryGetComponent(out PressableButton pba))
             {
@@ -825,23 +645,14 @@ namespace ICVR
             if (viewObject != null)
             {
                 string meshName = viewObject.name;
-                //Debug.Log(DateTime.Now.ToString("u") + "_Viewed_" + meshName);
 
                 if (prevMeshName != meshName && (viewObject.layer == 10 || viewObject.layer == 15))
                 {
                     prevMeshName = meshName;
-                    if (!isHudBusy)
-                    {
-                        //StartCoroutine(FloatUpAndOut(viewObject, meshName));
-                    }
                 }
                 else if (prevMeshName != meshName && viewObject.layer == 9)
                 {
                     prevMeshName = meshName;
-                    if (!isHudBusy)
-                    {
-                        // report object view
-                    }
                 }
                 return meshName;
             }
@@ -851,66 +662,6 @@ namespace ICVR
             }
         }
 
-        private Vector3 GetDraggingPoint()
-        {
-            if (isGameMode)
-            {
-                return Camera.main.ViewportToWorldPoint(new Vector3(0.5f, 0.5f, screenPoint.z)) + offset;
-            }
-            else
-            {
-                Vector3 curScreenPoint = new Vector3(Input.mousePosition.x, Input.mousePosition.y, screenPoint.z);
-                Vector3 objPos = Camera.main.ScreenToWorldPoint(curScreenPoint) + offset;
-                return objPos;
-            }
-        }
-
-        public void SimulateThrowForwards(Vector2 screenPos, Vector2 targetTouch)
-        {
-            isDragging = false;
-
-            activeMesh.GetComponent<Rigidbody>().isKinematic = false;
-
-            Vector3 startPos = Camera.main.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, screenPoint.z));
-            activeMesh.transform.position = startPos;
-
-            Vector3 targetPos = Camera.main.ScreenToWorldPoint(new Vector3(targetTouch.x, targetTouch.y, screenPoint.z * 3.0f));
-            Ray throwRay = new Ray(startPos, targetPos - startPos);
-
-            float forceMagnifier = activeMesh.GetComponent<Rigidbody>().mass * 5.0f;
-            Vector3 bowlTraj = (targetPos - startPos) * forceMagnifier;
-
-            activeMesh.GetComponent<Rigidbody>().AddForce(bowlTraj, ForceMode.Impulse);
-            activeMesh = null;
-        }
-
-
-
-
-
-        public static float ClampAngle(float angle, float min, float max)
-        {
-            if (angle < -360f)
-                angle += 360f;
-            if (angle > 360f)
-                angle -= 360f;
-            return Mathf.Clamp(angle, min, max);
-        }
-
-        IEnumerator RotateCamera(Quaternion targetRot, float speed)
-        {
-            float rotationTimer = 0.0f;
-
-            while (rotationTimer < 0.8)
-            {
-                rotationTimer += Time.smoothDeltaTime * 1f;
-                transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, rotationTimer * speed);
-                yield return new WaitForEndOfFrame();
-            }
-        }
-
-
-
         private void DoubleClick()
         {
             if (CurrentObject != null)
@@ -919,18 +670,13 @@ namespace ICVR
             }
         }
 
-
-        public GameObject ScreenRaycast(bool fromTouch = false)
+        private GameObject ScreenRaycast(bool fromTouch = false)
         {
             if (isDragging) return CurrentObject;
 
             Ray ray;
 
-            if (fromTouch)
-            {
-                ray = Camera.main.ScreenPointToRay(currentTouch.position);
-            }
-            else if (isGameMode)
+            if (isGameMode)
             {
                 ray = Camera.main.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
             }
@@ -951,16 +697,8 @@ namespace ICVR
             }
         }
 
+        #endregion ----- Object Interaction ------
 
-        private void OnEnable()
-        {
-            WebXRManager.OnXRChange += OnXRChange;
-        }
-
-        private void OnDisable()
-        {
-            WebXRManager.OnXRChange -= OnXRChange;
-        }
 
     }
 }
