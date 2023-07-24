@@ -21,17 +21,13 @@ A public property of type Dictionary<string, GameObject> that holds the shared a
 
 ### Public Methods
 
-**void Awake()**
-This method is called when the script instance is being loaded. It ensures that only one instance of the SharedAssetManager exists in the scene. If another instance is found, it is destroyed. If no other instance exists, the current instance is assigned to the _instance variable. Additionally, it initializes the SharedAssetRegister dictionary.
+- `void Awake()`: This method is called when the script instance is being loaded. It ensures that only one instance of the SharedAssetManager exists in the scene. If another instance is found, it is destroyed. If no other instance exists, the current instance is assigned to the _instance variable. Additionally, it initializes the SharedAssetRegister dictionary.
 
-**GameObject RetrieveAssetFromRegister(string id)**
-This method retrieves a shared asset from the SharedAssetRegister dictionary based on the given id. It returns the corresponding GameObject if found, otherwise, it returns null.
+- `RetrieveAssetFromRegister(string id)`: This method retrieves a shared asset from the SharedAssetRegister dictionary based on the given id. It returns the corresponding GameObject if found, otherwise, it returns null.
 
-**bool IncludeAssetInRegister(string Id, GameObject asset)**
-This method includes a new asset in the SharedAssetRegister dictionary. If the asset with the given id does not already exist in the dictionary, it is added and the method returns true. Otherwise, the method returns false.
+- `IncludeAssetInRegister(string Id, GameObject asset)`: This method includes a new asset in the SharedAssetRegister dictionary. If the asset with the given id does not already exist in the dictionary, it is added and the method returns true. Otherwise, the method returns false.
 
-**bool RemoveAssetFromRegister(string Id)**
-This method removes an asset from the SharedAssetRegister dictionary based on the given id. If the asset exists in the dictionary, it is removed and the method returns true. Otherwise, the method returns false.
+- `RemoveAssetFromRegister(string Id)`: This method removes an asset from the SharedAssetRegister dictionary based on the given id. If the asset exists in the dictionary, it is removed and the method returns true. Otherwise, the method returns false.
 
 
 ### How it works
