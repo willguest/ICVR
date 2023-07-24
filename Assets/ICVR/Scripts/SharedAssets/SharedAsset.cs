@@ -1,7 +1,10 @@
 using UnityEngine;
 
 namespace ICVR.SharedAssets 
-{ 
+{
+    /// <summary>
+    /// <see href="https://github.com/willguest/ICVR/tree/develop/Documentation/SharedAssets/SharedAsset.md"/>
+    /// </summary>
     public class SharedAsset : MonoBehaviour 
     { 
         public bool IsBeingHandled { get; set; }

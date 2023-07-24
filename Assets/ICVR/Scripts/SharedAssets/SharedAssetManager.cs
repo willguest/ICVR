@@ -3,6 +3,9 @@ using UnityEngine;
 
 namespace ICVR.SharedAssets
 {
+    /// <summary>
+    /// <see href="https://github.com/willguest/ICVR/tree/develop/Documentation/SharedAssets/SharedAssetManager.md"/>
+    /// </summary>
     public class SharedAssetManager : MonoBehaviour
     {
         public static SharedAssetManager Instance { get { return _instance; } }
