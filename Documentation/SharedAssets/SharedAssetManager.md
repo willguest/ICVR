@@ -1,32 +1,21 @@
 ## SharedAssetManager Documentation
 
 ### Summary
-
 The SharedAssetManager class is a Unity MonoBehaviour class that provides a centralized storage for shared GameObject assets. It ensures that only one instance of the SharedAssetManager exists in the scene and allows adding, retrieving, and removing assets from a shared asset register.
 
 ### Static Properties
-
-**Instance**
-A static property that returns the instance of the SharedAssetManager.
-
-### Private Variables
-
-**_instance**
-A private static variable to hold the instance of the SharedAssetManager.
+- `Instance`: A static property that returns the instance of the SharedAssetManager.
 
 ### Public Properties
+- `SharedAssetRegister`: A public property of type Dictionary<string, GameObject> that holds the shared asset references.
 
-**SharedAssetRegister**
-A public property of type Dictionary<string, GameObject> that holds the shared asset references.
+### Private Variables
+- `_instance`: A private static variable to hold the instance of the SharedAssetManager.
 
 ### Public Methods
-
 - `void Awake()`: This method is called when the script instance is being loaded. It ensures that only one instance of the SharedAssetManager exists in the scene. If another instance is found, it is destroyed. If no other instance exists, the current instance is assigned to the _instance variable. Additionally, it initializes the SharedAssetRegister dictionary.
-
 - `RetrieveAssetFromRegister(string id)`: This method retrieves a shared asset from the SharedAssetRegister dictionary based on the given id. It returns the corresponding GameObject if found, otherwise, it returns null.
-
 - `IncludeAssetInRegister(string Id, GameObject asset)`: This method includes a new asset in the SharedAssetRegister dictionary. If the asset with the given id does not already exist in the dictionary, it is added and the method returns true. Otherwise, the method returns false.
-
 - `RemoveAssetFromRegister(string Id)`: This method removes an asset from the SharedAssetRegister dictionary based on the given id. If the asset exists in the dictionary, it is removed and the method returns true. Otherwise, the method returns false.
 
 
