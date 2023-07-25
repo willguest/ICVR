@@ -5,21 +5,9 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 0
-    path: Assets/ICVR/Scenes/EmptyScene.unity
-    guid: 6754318437f355941aa3fb79c8edd5bf
-  - enabled: 0
-    path: Assets/ICVR_Scenes/ICVR1_Labyrinth/ICVR1.unity
-    guid: 05aef52f2565bf04ca2fa0363351cf64
-  - enabled: 0
-    path: Assets/ICVR_Scenes/ICVR2_TinyIsland/ICVR2.unity
-    guid: a4597d200a707074aa1df942719dac90
-  - enabled: 0
-    path: Assets/ICVR_Scenes/ICVR3_Spacepod/ICVR3.unity
-    guid: 23fce7cd1c5a8bf47b3a216f0828b646
   - enabled: 1
-    path: Assets/ICVR/Scenes/TestScene.unity
-    guid: 1f4d72a61c3259c4f8df6695d41123c4
+    path: Assets/ICVR_Scenes/ICVR5_spacestation/ICVR5.unity
+    guid: 9efeaff8b7b0830498a6a5f5a09db11c
   m_configObjects:
     WebXR.Settings: {fileID: 11400000, guid: e8fdd6e3f14016640b040ef1f2324635, type: 2}
     com.unity.xr.management.loader_settings: {fileID: 11400000, guid: 575d64860bdb58541984cae4634d7c57, type: 2}
