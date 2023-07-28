@@ -21,9 +21,6 @@ namespace ICVR
         public delegate void DictionaryChanged(int noPlayersNow);
         public event DictionaryChanged OnDictionaryChanged;
 
-        private string messageBuffer = "";
-        private bool newChatMessageReady = false;
-
         private bool readyToCreateAvatar = false;
         private NodeDataFrame currentDataFrame;
 
@@ -100,27 +97,11 @@ namespace ICVR
             if (avatarControllers.ContainsKey(nodeData.Id))
             {
                 avatarControllers[nodeData.Id].UpdateAvatar(nodeFrame.Latency, nodeData);
-
-                if (nodeData.EventType == AvatarEventType.Chat)
-                {
-                    PostChatMessage(nodeData.Id, nodeData.EventData);
-                }
             }
             else
             {
                 currentDataFrame = nodeData;
                 readyToCreateAvatar = true;
-            }
-        }
-
-        private void PostChatMessage(string id, string chatData)
-        {
-            AvatarChatData acd = JsonConvert.DeserializeObject<AvatarChatData>(chatData);
-
-            if (acd.Scope == "broadcast")
-            {
-                messageBuffer = id + ":\n" + acd.Message + "\n";
-                newChatMessageReady = true;
             }
         }
 

@@ -3,6 +3,9 @@ using UnityEngine;
 
 namespace ICVR
 {
+    /// <summary>
+    /// <see href="https://github.com/willguest/ICVR/tree/develop/Documentation/Interaction/ObjectInterface.md"/>
+    /// </summary>
     public class ObjectInterface : MonoBehaviour
     {
         [SerializeField] private Transform controlPoseLeft;
@@ -57,7 +60,7 @@ namespace ICVR
         {
             currentManipulator = manipulator.transform.Find("model").gameObject;
 
-            // disable mesh collider, to prevent interference with object colliders and rigidbodies
+            // disable hand colliders, to prevent interference with object colliders and rigidbodies
             foreach (CapsuleCollider cc in currentManipulator.GetComponentsInChildren<CapsuleCollider>())
             {
                 cc.enabled = false;
@@ -89,6 +92,7 @@ namespace ICVR
 
             StartCoroutine(LerpToControlPose(currentManipulator, Vector3.zero, Quaternion.identity, 0.4f));
 
+            // re-enable hand colliders
             foreach (CapsuleCollider cc in currentManipulator.GetComponentsInChildren<CapsuleCollider>())
             {
                 cc.enabled = true;

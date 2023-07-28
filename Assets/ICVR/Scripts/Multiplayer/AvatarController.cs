@@ -44,17 +44,14 @@ namespace ICVR
         private string currentAudioId = "";
 
         private bool ReadyToPlay = false;
-        private float updateFrequency = 4.0f;
+        
         private float avatarLerpTime;
-
-        private float triggerTick = 0;
 
 
         #region --- Start and Update ---
 
         void Start()
         {
-            updateFrequency = NetworkIO.Instance.NetworkUpdateFrequency;
             fixedJoint = head.GetComponent<FixedJoint>();
         }
 
@@ -62,12 +59,10 @@ namespace ICVR
         {
             if (ReadyToPlay)
             {
-                //Debug.Log("Playing track: " + currentAudioId + " (" + currentAudioURL + ")");
+                //Debug.Log("Playing audio: " + currentAudioId + " (" + currentAudioURL + ")");
                 ReadyToPlay = false;
                 Play(currentAudioURL, currentAudioId);
             }
-
-            
         }
 
         #endregion --- Start and Update ---
@@ -156,42 +151,9 @@ namespace ICVR
 
         #endregion --- Interface ---
 
+
         #region --- Avatar Interaction ---
 
-        private void OnTriggerEnter(Collider other)
-        {
-            if (other.gameObject.name == "torso" && other.GetType() == typeof(CapsuleCollider) && (Time.time - triggerTick) > 0.5f)
-            {
-                if (!audioIsActive())
-                {
-                    Debug.Log("starting audio stream");
-                    triggerTick = Time.time;
-                    //AvatarManager.Instance.AudioChannelOpen = true;
-                    //StartAudioStream(gameObject.name);
-                    
-                }
-                else
-                {
-                    Debug.Log("audio open elsewhere");
-                }
-            }
-            
-        }
-
-        private void OnTriggerExit(Collider other)
-        {
-            if (other.gameObject.name == "torso" && other.GetType() == typeof(CapsuleCollider) && (Time.time - triggerTick) > 0.5f )
-            {
-                if (audioIsActive())
-                {
-                    Debug.Log("stopping audio stream");
-                    triggerTick = Time.time;
-                    //AvatarManager.Instance.AudioChannelOpen = false;
-                    //StopAudioStream(gameObject.name);
-                }
-
-            }
-        }
 
         private void UpdateHandInteractions(string avatarHandlingEvent)
         {
@@ -213,7 +175,7 @@ namespace ICVR
                 {
                     rightHand.ReceiveInstruction(ahdFrame);
                 }
-                else // ControllerHand.NONE == desktopcontroller input
+                else // ControllerHand.NONE is desktopcontroller input
                 {
                     ReceiveInstruction(ahdFrame);
                 }
@@ -299,6 +261,7 @@ namespace ICVR
         }
 
         #endregion --- Avatar Interaction ---
+
 
         #region --- Avatar Colour Setting ---
 

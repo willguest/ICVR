@@ -8,7 +8,7 @@ using UnityEngine.Events;
 namespace ICVR
 {
 
-        [Serializable]
+    [Serializable]
     public class ControlEvent
     {
         public string state;
@@ -16,9 +16,10 @@ namespace ICVR
         public UnityEvent controlEffect;
     }
 
-    [Serializable]
-    public class TransformEvent : UnityEvent<Transform> { }
 
+    /// <summary>
+    /// <see href="https://github.com/willguest/ICVR/tree/develop/Documentation/Interaction/ControlDynamics.md"/>
+    /// </summary>
     [RequireComponent(typeof(Collider))]
     public class ControlDynamics : MonoBehaviour
     {
@@ -99,10 +100,12 @@ namespace ICVR
             }
         }
 
-        // interface for UI controllers
+
+        #region Controller interface
+
         public void StartInteraction(GameObject target)
         {
-            
+            // nothing yet
         }
 
         public void FinishInteraction()
@@ -162,6 +165,7 @@ namespace ICVR
                 "Effect=" + c.controlEffect.GetPersistentMethodName(0));
         }
 
+        #endregion Controller interface
 
     }
 

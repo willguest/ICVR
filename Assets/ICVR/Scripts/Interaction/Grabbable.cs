@@ -3,6 +3,9 @@ using UnityEngine;
 
 namespace ICVR
 {
+    /// <summary>
+    /// <see href="https://github.com/willguest/ICVR/tree/develop/Documentation/Interaction/Grabbable.md"/>
+    /// </summary>
     public class Grabbable : MonoBehaviour
     {
         [SerializeField] private Transform controlPoseLeft;

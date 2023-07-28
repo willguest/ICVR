@@ -5,25 +5,10 @@ namespace ICVR
 {
     public class AvatarHand : MonoBehaviour
     {
-        [SerializeField] private ControllerHand hand = ControllerHand.NONE;
-
-        public bool IsHandlingObject { get; set; }
-
-        // events
-        public delegate void ButtonPressed(float buttonValue);
-        public event ButtonPressed TriggerEvent;
-        public event ButtonPressed GripEvent;
-        public event ButtonPressed AButtonEvent;
-        public event ButtonPressed BButtonEvent;
-        public event ButtonPressed ThumbstickXEvent;
-        public event ButtonPressed ThumbstickYEvent;
-        public event ButtonPressed ThumbstickButtonEvent;
-
         private FixedJoint[] attachJoint;
         private Rigidbody currentNearRigidBody = null;
         private Rigidbody currentFarRigidBody = null;
         private string prevLayer = "";
-
 
         // Start is called before the first frame update
         void Start()
@@ -75,16 +60,11 @@ namespace ICVR
             currentNearRigidBody = target.GetComponent<Rigidbody>();
 
             if (!currentNearRigidBody) return;
-
-            // move avatar hand to interaction pose (remove interpolation errors)
-            //transform.position = acquisition.HandPosition;
-            //transform.rotation = acquisition.HandRotation;
             
             // move object to start pose 
             target.transform.position = acquisition.ObjectPosition;
             target.transform.rotation = acquisition.ObjectRotation;
 
-            //currentNearRigidBody.MovePosition(transform.position);
             attachJoint[0].connectedBody = currentNearRigidBody;
 
             // rememeber layer and set as tool
@@ -111,7 +91,6 @@ namespace ICVR
             // reset and forget
             SetLayerRecursively(currentNearRigidBody.gameObject, LayerMask.NameToLayer(prevLayer));
             prevLayer = "";
-            
             currentNearRigidBody = null;
         }
 
@@ -124,7 +103,6 @@ namespace ICVR
             target.transform.position = acquisition.ObjectPosition;
             target.transform.rotation = acquisition.ObjectRotation;
 
-            //currentFarRigidBody.MovePosition(transform.position);
             attachJoint[1].connectedBody = currentFarRigidBody;
         }
 
@@ -160,7 +138,6 @@ namespace ICVR
                 SetLayerRecursively(child.gameObject, newLayer);
             }
         }
-
 
     }
 }

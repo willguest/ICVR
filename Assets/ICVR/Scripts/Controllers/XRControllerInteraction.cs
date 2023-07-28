@@ -131,15 +131,10 @@ namespace ICVR
             anim.SetTrigger(animTrigger);
         }
 
-        // events, hook to these for 
+        // events, use as hooks for controller button functions
         public delegate void ButtonPressed(float buttonValue);
-        public event ButtonPressed TriggerEvent;
-        public event ButtonPressed GripEvent;
         public event ButtonPressed AButtonEvent;
         public event ButtonPressed BButtonEvent;
-        public event ButtonPressed ThumbstickXEvent;
-        public event ButtonPressed ThumbstickYEvent;
-        public event ButtonPressed ThumbstickButtonEvent;
 
         public delegate void HandInteraction(AvatarHandlingData interactionData);
         public event HandInteraction OnHandInteraction;
@@ -599,7 +594,7 @@ namespace ICVR
 
         void OnTriggerEnter(Collider other)
         {
-            if (other.gameObject.tag != "Interactable" )
+            if (other.gameObject.tag != "Interactable" || nearManip)
             {
                 return;
             }
@@ -978,6 +973,7 @@ namespace ICVR
                 return false;
             }
         }
+
 
         private bool InvokeReleaseEvent(string target, GameObject interactionObject, ManipulationDistance distance, ThrowData throwData)
         {
