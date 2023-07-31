@@ -1,18 +1,30 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
 using System.Collections;
 using UnityEngine;
 
 namespace ICVR
 {
     /// <summary>
+    /// This component allows object that are grabbed by the user to modify the hand pose. 
+    /// e.g. bowling balls, baseball bats or pool cues (2-handed). For more information 
     /// <see href="https://github.com/willguest/ICVR/tree/develop/Documentation/Interaction/Grabbable.md"/>
     /// </summary>
     public class Grabbable : MonoBehaviour
     {
+        [Tooltip("The pose (position and rotation) of the left hand, when held.")]
         [SerializeField] private Transform controlPoseLeft;
+        [Tooltip("The pose (position and rotation) of the right hand, when held.")]
         [SerializeField] private Transform controlPoseRight;
 
-        [SerializeField] private string primaryPoseTrigger;
-        [SerializeField] private string secondaryPoseTrigger;
+        [Tooltip("Name of the condition (in the animator) that identifies the hand transition")]
+        [SerializeField] private string primaryHandPose;
+        [Tooltip("Not yet active. To be added soon")]
+        [SerializeField] private string secondHandPose;
 
         public delegate void SecondHandGrab(ControllerHand hand, Transform thisHand, Transform otherHand);
         public event SecondHandGrab OnSecondHand;

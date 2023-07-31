@@ -1,3 +1,9 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -18,6 +24,9 @@ namespace ICVR
 
 
     /// <summary>
+    /// This component is used to control objects with user interaction. An attached collider, when contacting 
+    /// any of the control event sensors, will emit the relevant control effect. 
+    /// e.g. for user interfaces, switches or other jointed objects. For more information 
     /// <see href="https://github.com/willguest/ICVR/tree/develop/Documentation/Interaction/ControlDynamics.md"/>
     /// </summary>
     [RequireComponent(typeof(Collider))]

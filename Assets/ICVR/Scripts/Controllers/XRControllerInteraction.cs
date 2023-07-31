@@ -1,7 +1,13 @@
-﻿using UnityEngine;
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+using UnityEngine;
+using System;
 using System.Collections.Generic;
 using WebXR;
-using System;
 using ICVR.SharedAssets;
 
 #if UNITY_EDITOR || !UNITY_WEBGL
@@ -47,7 +53,9 @@ namespace ICVR
 
         [Tooltip("Controller hand to use.")]
         [SerializeField] private ControllerHand hand = ControllerHand.NONE;
+        [SerializeField] LayerMask PointerLayerMask;
 
+        #region Private Variables
         private float trigger;
         private float squeeze;
         private float thumbstick;
@@ -102,8 +110,6 @@ namespace ICVR
 
         private GameObject currentButton;
 
-        [SerializeField] LayerMask PointerLayerMask;
-
         // Object Handling
         private bool distanceManip = false;
         private bool nearManip = false;
@@ -119,6 +125,8 @@ namespace ICVR
         private float jumpTick;
         private float seaLevel = -4.5f;
 
+        #endregion Private Variables
+
         // flag used by ObjectInterface - used when the hand is bound to an object
         public bool IsUsingInterface { private get; set; }
 
@@ -129,6 +137,11 @@ namespace ICVR
         {
             animTrigger = gripPose;
             anim.SetTrigger(animTrigger);
+        }
+
+        public void ModifyJoint(int jointIndex, Rigidbody connectedBody = null)
+        {
+            attachJoint[jointIndex].connectedBody = connectedBody;
         }
 
         // events, use as hooks for controller button functions
@@ -346,6 +359,7 @@ namespace ICVR
             }
             return buttonStates[action].up;
         }
+
 
 
         void Start()
@@ -680,11 +694,7 @@ namespace ICVR
         }
 
 
-        public void ModifyJoint(int jointIndex, Rigidbody connectedBody = null)
-        {
-            attachJoint[jointIndex].connectedBody = connectedBody;
-        }
-
+        #region Interaction Functions
 
         public void PickupFar()
         {
@@ -1000,6 +1010,7 @@ namespace ICVR
             }
         }
 
+        #endregion Interaction Functions
 
         private Rigidbody GetDistantRigidBody()
         {
@@ -1063,4 +1074,5 @@ namespace ICVR
             return currentHitPoint;
         }
     }
+
 }

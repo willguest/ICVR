@@ -1,5 +1,8 @@
-﻿// Copyright (c) Will Guest 2023
-// Licensed under Mozilla Public License 2.0
+﻿/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
 
 using System;
 using System.Linq;
@@ -15,6 +18,9 @@ namespace ICVR
     }
 
     /// <summary>
+    /// Adding this component to an object extends the physics system, allowing it to be thrown with a force 
+    /// based on the hand velocity, as well as the weight of the object. Setting a new object density will 
+    /// automatically update the object's mass and, when the mesh is readable, will calculate its volume. 
     /// <see href="https://github.com/willguest/ICVR/tree/develop/Documentation/Interaction/RigidDynamics.md"/>
     /// </summary>
     [RequireComponent(typeof(Rigidbody))]

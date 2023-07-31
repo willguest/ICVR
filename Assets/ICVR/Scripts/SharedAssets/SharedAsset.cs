@@ -3,6 +3,8 @@ using UnityEngine;
 namespace ICVR.SharedAssets 
 {
     /// <summary>
+    /// This component makes the GameObject indexable in the shared asset register. 
+    /// During interaction, the presence of this component triggers p2p data transfer.
     /// <see href="https://github.com/willguest/ICVR/tree/develop/Documentation/SharedAssets/SharedAsset.md"/>
     /// </summary>
     public class SharedAsset : MonoBehaviour 

@@ -1,6 +1,11 @@
 ﻿using UnityEngine;
 using UnityEngine.Video;
 
+/// <summary>
+/// A simple script that demonstrates how to connect the DoubleClick function, which 
+/// is usable by any interactable, to play and pause either audio or video streams.
+/// Place this script as a component alongside whichever collider you wish to interact with.
+/// </summary>
 public class MediaPlayerBehaviour : MonoBehaviour
 {
     public void OnDoubleClick()
@@ -13,12 +18,10 @@ public class MediaPlayerBehaviour : MonoBehaviour
     {
         if (!gameObject.GetComponent<AudioSource>().isPlaying)
         {
-            //Debug.Log("playing audio");
             gameObject.GetComponent<AudioSource>().Play();
         }
         else 
         {
-            //Debug.Log("pausing audio");
             gameObject.GetComponent<AudioSource>().Pause();
         }
     }
@@ -31,19 +34,16 @@ public class MediaPlayerBehaviour : MonoBehaviour
         {
             if (vp.isPlaying)
             {
-                //Debug.Log("pausing video");
                 vp.Pause();
             }
             else
             {
-                //Debug.Log("playing video");
                 vp.Play();
             }
         }
         else
         {
-            // something that involves waiting
-            //Debug.Log("cannot play video");
+            // do nothing, the video is not ready yet
         }
     }
 }

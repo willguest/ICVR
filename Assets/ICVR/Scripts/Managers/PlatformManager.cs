@@ -1,11 +1,18 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
 using UnityEngine;
 using WebXR;
-using Newtonsoft.Json;
-using System.Runtime.InteropServices;
-using System.Collections;
 
 namespace ICVR
 {
+    /// <summary>
+    /// This class looks after mode detection and switching, interfacing with the WebXRManager. 
+    /// <see href="https://github.com/willguest/ICVR/tree/develop/Documentation/Managers/PlatformManager.md"/>
+    /// </summary>
     public class PlatformManager : MonoBehaviour
     {
         private static PlatformManager _instance;
@@ -17,6 +24,10 @@ namespace ICVR
 
         private bool discoveredVR = false;
 
+        public void StartVR()
+        {
+            discoveredVR = true;
+        }
 
         private void Awake()
         {
@@ -30,13 +41,10 @@ namespace ICVR
             }
         }
 
-
         private void Update()
         {
             if (discoveredVR)
             {
-                Debug.Log("Initiating VR...");
-
                 WebXRManager.Instance.ToggleVR();
                 discoveredVR = false;
             }
@@ -56,13 +64,7 @@ namespace ICVR
 
         private void CheckCapabilties(WebXRDisplayCapabilities capabilities)
         {
-            Debug.Log("haz VR? " + capabilities.canPresentVR.ToString());
             IsVRSupported = capabilities.canPresentVR;
-        }
-
-        public void StartVR()
-        {
-            discoveredVR = true;
         }
 
         private void OnXRChange(WebXRState state, int viewsCount, Rect leftRect, Rect rightRect)

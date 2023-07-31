@@ -1,19 +1,19 @@
-# Character Controller 
+# Desktop  Controller 
 This documentation describes the public objects used in the DesktopController class of an interactive WebXR scene.
 
-## Inspector Variables
-rotationEnabled (bool): Enable or disable rotation control in the Unity editor.
-translationEnabled (bool): Enable or disable translation control in the Unity editor.
-mouseSensitivity (float): The sensitivity of the mouse for rotation control.
-straffeSpeed (float): The lateral movement speed.
-seaLevel (float): The level at which the character is considered swimming.
-currentVehicle (GameObject): The object that the player can move around with using the mouse and keyboard.
-headObject (GameObject): The object associated with the player's head that moves around with the camera.
-Cursor Objects
-cursorForScene (Texture2D): The cursor texture to use when hovering over the scene.
-cursorForObjects (Texture2D): The cursor texture to use when hovering over objects.
-cursorForInteractables (Texture2D): The cursor texture to use when hovering over interactable objects.
-crosshair (SimpleCrosshair): The crosshair object used for aiming.
+## Unity Inspector Variables
+- rotationEnabled (bool): Enable or disable rotation control in the Unity editor.
+- translationEnabled (bool): Enable or disable translation control in the Unity editor.
+- mouseSensitivity (float): The sensitivity of the mouse for rotation control.
+- straffeSpeed (float): The lateral movement speed.
+- seaLevel (float): The level at which the character is considered swimming.
+- currentVehicle (GameObject): The object that the player can move around with using the mouse and keyboard.
+- headObject (GameObject): The object associated with the player's head that moves around with the camera.
+- Cursor Objects
+- cursorForScene (Texture2D): The cursor texture to use when hovering over the scene.
+- cursorForObjects (Texture2D): The cursor texture to use when hovering over objects.
+- cursorForInteractables (Texture2D): The cursor texture to use when hovering over interactable objects.
+- crosshair (SimpleCrosshair): The crosshair object used for aiming.
 
 ## Public Attributes
 - IsSwimming (bool, getter and setter): Indicates whether the character is swimming.
