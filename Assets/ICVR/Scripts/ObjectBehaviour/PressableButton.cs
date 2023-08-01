@@ -1,8 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
-
-
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Serialization;
@@ -360,102 +356,9 @@ namespace ICVR
             }
         }
 
-        #region IMixedRealityTouchHandler implementation
-        /*
-        private void PulseProximityLight()
-        {
-            // Pulse each proximity light on pointer cursors' interacting with this button.
-            if (currentInputSources.Count != 0)
-            {
-                foreach (var pointer in currentInputSources[currentInputSources.Count - 1].Pointers)
-                {
-                    ProximityLight[] proximityLights = pointer.BaseCursor?.GameObjectReference?.GetComponentsInChildren<ProximityLight>();
 
-                    if (proximityLights != null)
-                    {
-                        foreach (var proximityLight in proximityLights)
-                        {
-                            proximityLight.Pulse();
-                        }
-                    }
-                }
-            }
-        }
 
-        private bool HasPassedThroughStartPlane(HandTrackingInputEventData eventData)
-        {
-            foreach (var pointer in eventData.InputSource.Pointers)
-            {
-                // In the case that the input source has multiple poke pointers, this code
-                // will reason over the first such pointer that is actually interacting with
-                // an object. For input sources that have a single poke pointer, this is one
-                // and the same (i.e. this event will only fire for this object when the poke
-                // pointer is touching this object).
-                PokePointer poke = pointer as PokePointer;
-                if (poke && poke.CurrentTouchableObjectDown)
-                {
-                    // Extrapolate to get previous position.
-                    float previousDistance = GetDistanceAlongPushDirection(poke.PreviousPosition);
-                    return previousDistance <= StartPushDistance;
-                }
-            }
-
-            return false;
-        }
-        
-        void IMixedRealityTouchHandler.OnTouchStarted(HandTrackingInputEventData eventData)
-        {
-            if (touchPoints.ContainsKey(eventData.Controller))
-            {
-                return;
-            }
-
-            // Back-Press Detection:
-            // Accept touch only if controller pushed from the front.
-            if (enforceFrontPush && !HasPassedThroughStartPlane(eventData))
-            {
-                return;
-            }
-
-            touchPoints.Add(eventData.Controller, eventData.InputData);
-
-            // Make sure only one instance of this input source exists and is at the "top of the stack."
-            currentInputSources.Remove(eventData.InputSource);
-            currentInputSources.Add(eventData.InputSource);
-
-            IsTouching = true;
-
-            eventData.Use();
-        }
-
-        void IMixedRealityTouchHandler.OnTouchUpdated(HandTrackingInputEventData eventData)
-        {
-            if (touchPoints.ContainsKey(eventData.Controller))
-            {
-                touchPoints[eventData.Controller] = eventData.InputData;
-                eventData.Use();
-            }
-        }
-
-        void IMixedRealityTouchHandler.OnTouchCompleted(HandTrackingInputEventData eventData)
-        {
-            if (touchPoints.ContainsKey(eventData.Controller))
-            {
-                // When focus is lost, before removing controller, update the respective touch point to give a last chance for checking if pressed occurred 
-                touchPoints[eventData.Controller] = eventData.InputData;
-                UpdateTouch();
-
-                touchPoints.Remove(eventData.Controller);
-                currentInputSources.Remove(eventData.InputSource);
-
-                IsTouching = (touchPoints.Count > 0);
-                eventData.Use();
-            }
-        }
-        */
-        #endregion OnTouch
-
-        #region public transform utils
+        #region Transform Utils
 
         /// <summary>
         /// Returns world space position along the push direction for the given local distance
@@ -486,9 +389,6 @@ namespace ICVR
             return (distanceReferenceFrame == ReferenceFrame.Local) ? distance * WorldToLocalScale : distance;
         }
 
-        #endregion
-
-        #region private Methods
 
         protected virtual void UpdateMovingVisualsPosition()
         {

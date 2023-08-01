@@ -39,7 +39,7 @@ namespace ICVR
 
             if (other.gameObject.layer == 15)
             {
-                if (other.gameObject.TryGetComponent(out XRControllerInteraction xrctrl))
+                if (other.gameObject.TryGetComponent(out XRController xrctrl))
                 {
                     if (!xrctrl.IsControllingObject)
                     {
@@ -56,7 +56,7 @@ namespace ICVR
 
             if (other.gameObject.layer == 15)
             {
-                if (!other.gameObject.GetComponent<XRControllerInteraction>().IsControllingObject)
+                if (!other.gameObject.GetComponent<XRController>().IsControllingObject)
                 {
                     LoseControl();
                 }

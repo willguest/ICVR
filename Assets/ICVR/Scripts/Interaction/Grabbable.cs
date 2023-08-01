@@ -67,7 +67,7 @@ namespace ICVR
                             WieldState = ControllerHand.BOTH;
                             OnSecondHand?.Invoke(hand, handTransform, HandTracePrimary);
                             SetLayerRecursively(handTransform.gameObject, LayerMask.NameToLayer("Body"));
-                            HandTracePrimary.GetComponent<XRControllerInteraction>().ModifyJoint(0);
+                            HandTracePrimary.GetComponent<XRController>().ModifyJoint(0);
                             return true;
                         }
                         else
@@ -138,7 +138,7 @@ namespace ICVR
         {
             Transform cPose = (hand == ControllerHand.RIGHT) ? controlPoseRight : controlPoseLeft;
             StartCoroutine(LerpToGrabPose(handTransform, cPose, 0.5f, callback));
-            return primaryPoseTrigger;
+            return primaryHandPose;
         }
 
         private IEnumerator OrientToHand(Quaternion targetRotation, float duration, System.Action<Grabbable> callback)

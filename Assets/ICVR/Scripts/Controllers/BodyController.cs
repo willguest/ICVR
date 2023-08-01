@@ -1,3 +1,9 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
 using System.Collections;
 using System.Runtime.InteropServices;
 using Newtonsoft.Json;
@@ -44,8 +50,8 @@ namespace ICVR
         private void OnEnable()
         {
             Camera.main.gameObject.GetComponent<DesktopController>().OnNetworkInteraction += PackageEventData;
-            leftHand.GetComponent<XRControllerInteraction>().OnHandInteraction += PackageEventData;
-            rightHand.GetComponent<XRControllerInteraction>().OnHandInteraction += PackageEventData;
+            leftHand.GetComponent<XRController>().OnHandInteraction += PackageEventData;
+            rightHand.GetComponent<XRController>().OnHandInteraction += PackageEventData;
             WebXRManager.OnXRChange += OnXRChange;
 
         }
@@ -69,8 +75,8 @@ namespace ICVR
             {
                 Camera.main.gameObject.GetComponent<DesktopController>().OnNetworkInteraction -= PackageEventData;
             }
-            leftHand.GetComponent<XRControllerInteraction>().OnHandInteraction -= PackageEventData;
-            rightHand.GetComponent<XRControllerInteraction>().OnHandInteraction -= PackageEventData;
+            leftHand.GetComponent<XRController>().OnHandInteraction -= PackageEventData;
+            rightHand.GetComponent<XRController>().OnHandInteraction -= PackageEventData;
         }
 
         private void OnXRChange(WebXRState state, int viewsCount, Rect leftRect, Rect rightRect)

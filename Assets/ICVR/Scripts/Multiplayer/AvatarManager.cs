@@ -1,3 +1,9 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
 using Newtonsoft.Json;
 using ICVR.SharedAssets;
 using System.Collections.Generic;
@@ -38,7 +44,23 @@ namespace ICVR
             }
         }
 
-        
+        void Start()
+        {
+            otherPlayers = new Dictionary<string, GameObject>();
+            avatarControllers = new Dictionary<string, AvatarController>();
+            AudioChannelOpen = false;
+        }
+
+        private void Update()
+        {
+            if (readyToCreateAvatar && currentDataFrame != null)
+            {
+                createNewPlayerAvatar(currentDataFrame);
+                readyToCreateAvatar = false;
+                currentDataFrame = null;
+            }
+
+        }
 
         private void OnDestroy()
         {
@@ -49,6 +71,7 @@ namespace ICVR
             otherPlayers.Clear();
             otherPlayers = null;
         }
+
 
         public void ResetScene()
         {
@@ -72,23 +95,6 @@ namespace ICVR
             AudioChannelOpen = false;
         }
 
-        void Start()
-        {
-            otherPlayers = new Dictionary<string, GameObject>();
-            avatarControllers = new Dictionary<string, AvatarController>();
-            AudioChannelOpen = false;
-        }
-
-        private void Update()
-        {
-            if (readyToCreateAvatar && currentDataFrame != null)
-            {
-                createNewPlayerAvatar(currentDataFrame);
-                readyToCreateAvatar = false;
-                currentDataFrame = null;
-            }
-
-        }
 
         public void ProcessAvatarData(NodeInputData nodeFrame)
         {

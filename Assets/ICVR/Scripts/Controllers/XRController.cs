@@ -17,9 +17,21 @@ using UnityEngine.XR;
 namespace ICVR
 {
 
-    public class XRControllerInteraction : MonoBehaviour
+    public class XRController : MonoBehaviour
     {
         [SerializeField] private bool debugHand;
+        [SerializeField] private GameObject CharacterRoot;
+        [SerializeField] private BodyController BodyController;
+
+        [SerializeField] private float MaxInteractionDistance = 15.0f;
+        [SerializeField] private Renderer[] GameObjectRenderers;
+
+        [SerializeField] private ControllerHand hand = ControllerHand.NONE;
+        [SerializeField] LayerMask PointerLayerMask;
+
+
+        #region Public Variables, Functions and Attributes
+
 
         public enum ButtonTypes
         {
@@ -45,17 +57,38 @@ namespace ICVR
         public Action<bool> OnHandActive;
         public Action<WebXRHandData> OnHandUpdate;
 
-        [SerializeField] private GameObject CharacterRoot;
-        [SerializeField] private BodyController BodyController;
+        
+        // flag used by ObjectInterface - used when the hand is bound to an object
+        public bool IsUsingInterface { private get; set; }
 
-        [SerializeField] private float MaxInteractionDistance = 15.0f;
-        [SerializeField] private Renderer[] GameObjectRenderers;
+        // flag set by ControlDynamics - used when the controller is articulating equipment
+        public bool IsControllingObject { get; set; }
 
-        [Tooltip("Controller hand to use.")]
-        [SerializeField] private ControllerHand hand = ControllerHand.NONE;
-        [SerializeField] LayerMask PointerLayerMask;
+        public void SetGripPose(string gripPose)
+        {
+            animTrigger = gripPose;
+            anim.SetTrigger(animTrigger);
+        }
+
+        public void ModifyJoint(int jointIndex, Rigidbody connectedBody = null)
+        {
+            attachJoint[jointIndex].connectedBody = connectedBody;
+        }
+
+        // events, use as hooks for controller button functions
+        public delegate void ButtonPressed(float buttonValue);
+        public event ButtonPressed AButtonEvent;
+        public event ButtonPressed BButtonEvent;
+
+        public delegate void HandInteraction(AvatarHandlingData interactionData);
+        public event HandInteraction OnHandInteraction;
+
+
+        #endregion Public Variables, Functions and Attributes
+
 
         #region Private Variables
+
         private float trigger;
         private float squeeze;
         private float thumbstick;
@@ -125,32 +158,14 @@ namespace ICVR
         private float jumpTick;
         private float seaLevel = -4.5f;
 
+        private WebXRCamera xrCameras;
+        private Camera vrGuideCam;
+
+
         #endregion Private Variables
 
-        // flag used by ObjectInterface - used when the hand is bound to an object
-        public bool IsUsingInterface { private get; set; }
 
-        // flag set by ControlDynamics - used when the controller is articulating equipment
-        public bool IsControllingObject { get; set; }
-
-        public void SetGripPose (string gripPose)
-        {
-            animTrigger = gripPose;
-            anim.SetTrigger(animTrigger);
-        }
-
-        public void ModifyJoint(int jointIndex, Rigidbody connectedBody = null)
-        {
-            attachJoint[jointIndex].connectedBody = connectedBody;
-        }
-
-        // events, use as hooks for controller button functions
-        public delegate void ButtonPressed(float buttonValue);
-        public event ButtonPressed AButtonEvent;
-        public event ButtonPressed BButtonEvent;
-
-        public delegate void HandInteraction(AvatarHandlingData interactionData);
-        public event HandInteraction OnHandInteraction;
+        #region Unity Functions
 
         private void OnEnable()
         {
@@ -171,6 +186,133 @@ namespace ICVR
             SetControllerActive(false);
             SetHandActive(false);
         }
+
+
+        void Start()
+        {
+            attachJoint = new FixedJoint[] { GetComponents<FixedJoint>()[0], GetComponents<FixedJoint>()[1] };
+            myPointer = transform.Find("pointer").gameObject;
+
+            xrCameras = CharacterRoot.GetComponent<WebXRCamera>();
+            vrGuideCam = xrCameras.GetCamera(WebXRCamera.CameraID.LeftVR);
+
+            if (!debugHand)
+            {
+                ToggleRenderers(xrState == WebXRState.VR);
+            }
+
+            jumpTick = Time.time;
+        }
+
+        void FixedUpdate()
+        {
+            // only do this in a webxr session
+            if (xrState != WebXRState.VR && debugHand == false) { return; }
+
+            DetectSwimming();
+
+            // left stick controls movement
+            if (hand == ControllerHand.LEFT)
+            {
+                if (Math.Abs(thumbstickX) > thAT || Math.Abs(thumbstickY) > thAT)
+                {
+                    MoveBodyWithJoystick(thumbstickX, thumbstickY, 2.0f);
+                }
+            }
+            // right stick turns in 60 degree steps and forwards-backwards
+            else if (hand == ControllerHand.RIGHT)
+            {
+                if (Mathf.Abs(thumbstickX) > rightThumbstickThreshold && prevRightThX <= rightThumbstickThreshold)
+                {
+                    RotateWithJoystick(thumbstickX);
+                }
+                prevRightThX = Mathf.Abs(thumbstickX);
+
+                if (Math.Abs(thumbstickY) > thAT)
+                {
+                    MoveBodyWithJoystick(0.0f, thumbstickY, 2.0f);
+                }
+            }
+
+            // trigger for distance manipulation
+            float trigVal = GetAxis(AxisTypes.Trigger);
+            if (trigVal > trigThresUp && prevTrig <= trigThresUp)
+            {
+                PickupFar();
+            }
+            else if (trigVal < trigThresDn && prevTrig >= trigThresDn)
+            {
+                if (distanceManip)
+                {
+                    DropFar();
+                }
+                else if (currentButton != null)
+                {
+                    DropFar();
+                }
+            }
+
+            // grip for near interaction only
+            float gripVal = GetAxis(AxisTypes.Grip);
+            if (gripVal > gripThresUp && prevGrip <= gripThresUp)
+            {
+                PickupNear();
+            }
+            else if (gripVal < gripThresDn && prevGrip >= gripThresDn)
+            {
+                DropNear();
+            }
+
+            if (thumbstick == 1)
+            {
+                JumpSwim();
+            }
+
+            // isusinginterface interface..
+            if (IsUsingInterface)
+            {
+                if (GetButtonDown(ButtonTypes.ButtonA))
+                {
+                    AButtonEvent.Invoke(1.0f);
+                }
+                else if (GetButtonUp(ButtonTypes.ButtonA))
+                {
+                    AButtonEvent.Invoke(0.0f);
+                }
+
+                if (GetButtonDown(ButtonTypes.ButtonB))
+                {
+                    BButtonEvent.Invoke(1.0f);
+                }
+                else if (GetButtonUp(ButtonTypes.ButtonB))
+                {
+                    BButtonEvent.Invoke(0.0f);
+                }
+            }
+
+            prevTrig = trigVal;
+            prevGrip = gripVal;
+
+            // set pointers
+            PlacePointer();
+            SetActiveFarMesh();
+        }
+
+#if UNITY_EDITOR || !UNITY_WEBGL
+        private InputDevice? inputDevice;
+        private int buttonsFrameUpdate = -1;
+
+        private void LateUpdate()
+        {
+            TryUpdateButtons();
+        }
+#endif
+
+
+        #endregion Unity Functions
+
+
+        #region State Functions
 
         private void ToggleRenderers(bool onOrOff)
         {
@@ -227,15 +369,48 @@ namespace ICVR
             ToggleRenderers(xrState == WebXRState.VR);
         }
 
-#if UNITY_EDITOR || !UNITY_WEBGL
-        private InputDevice? inputDevice;
-        private int buttonsFrameUpdate = -1;
-
-        private void LateUpdate()
+        private void DetectSwimming()
         {
-            TryUpdateButtons();
+            float elevation = CharacterRoot.transform.position.y;
+
+            if (elevation < seaLevel && currentElevation >= seaLevel)
+            {
+                IsSwimming = true;
+                CharacterRoot.GetComponent<Rigidbody>().mass = 2.0f;
+            }
+            else if (elevation > seaLevel && currentElevation <= seaLevel)
+            {
+                IsSwimming = false;
+                CharacterRoot.GetComponent<Rigidbody>().mass = 70.0f;
+            }
+            currentElevation = elevation;
         }
-#endif
+
+        private void JumpSwim()
+        {
+            if (IsSwimming && Time.time - jumpTick > 0.2f)
+            {
+                jumpTick = Time.time;
+                Vector3 swimForce = new Vector3(0f, 150f, 0f) + (CharacterRoot.transform.forward * 50f);
+                Debug.Log("stroke");
+                CharacterRoot.GetComponent<Rigidbody>().AddForce(swimForce, ForceMode.Acceleration);
+            }
+            else if (Time.time - jumpTick > 2.0f)
+            {
+                jumpTick = Time.time;
+                Vector3 jumpForce = new Vector3(0f, 350f, 0f) + (CharacterRoot.transform.forward * 50f);
+                Debug.Log("hop");
+                CharacterRoot.GetComponent<Rigidbody>().AddForce(jumpForce, ForceMode.Impulse);
+            }
+        }
+
+
+
+        #endregion State Functions
+
+
+        #region Button Functionality
+
 
         private void TryUpdateButtons()
         {
@@ -361,154 +536,10 @@ namespace ICVR
         }
 
 
+        #endregion Controller Functionality
 
-        void Start()
-        {
-            attachJoint = new FixedJoint[] { GetComponents<FixedJoint>()[0], GetComponents<FixedJoint>()[1] };
-            myPointer = transform.Find("pointer").gameObject;
 
-            xrCameras = CharacterRoot.GetComponent<WebXRCamera>();
-            vrGuideCam = xrCameras.GetCamera(WebXRCamera.CameraID.LeftVR);
-
-            if (!debugHand)
-            {
-                ToggleRenderers(xrState == WebXRState.VR);
-            }
-
-            jumpTick = Time.time;
-        }
-
-        void FixedUpdate()
-        {
-            // only do this in a webxr session
-            if (xrState != WebXRState.VR && debugHand == false) { return; }
-
-            DetectSwimming();
-
-            // left stick controls movement
-            if (hand == ControllerHand.LEFT)
-            {
-                if (Math.Abs(thumbstickX) > thAT || Math.Abs(thumbstickY) > thAT)
-                {
-                    MoveBodyWithJoystick(thumbstickX, thumbstickY, 2.0f);
-                }
-            }
-            // right stick turns in 60 degree steps and forwards-backwards
-            else if (hand == ControllerHand.RIGHT)
-            {
-                if (Mathf.Abs(thumbstickX) > rightThumbstickThreshold && prevRightThX <= rightThumbstickThreshold)
-                {
-                    RotateWithJoystick(thumbstickX);
-                }
-                prevRightThX = Mathf.Abs(thumbstickX);
-
-                if (Math.Abs(thumbstickY) > thAT)
-                {
-                    MoveBodyWithJoystick(0.0f, thumbstickY, 2.0f);
-                }
-            }
-
-            // trigger for distance manipulation
-            float trigVal = GetAxis(AxisTypes.Trigger);
-            if (trigVal > trigThresUp && prevTrig <= trigThresUp)
-            {
-                PickupFar();   
-            }
-            else if (trigVal < trigThresDn && prevTrig >= trigThresDn)
-            {
-                if (distanceManip)
-                {
-                    DropFar();
-                }
-                else if (currentButton != null)
-                {
-                    DropFar();
-                }
-            }
-
-            // grip for near interaction only
-            float gripVal = GetAxis(AxisTypes.Grip);
-            if (gripVal > gripThresUp && prevGrip <= gripThresUp)
-            {
-                PickupNear();
-            }
-            else if (gripVal < gripThresDn && prevGrip >= gripThresDn)
-            {
-                DropNear();
-            }
-
-            if (thumbstick == 1)
-            {
-                JumpSwim();
-            }
-
-            // isusinginterface interface..
-            if (IsUsingInterface)
-            {
-                if (GetButtonDown(ButtonTypes.ButtonA))
-                {
-                    AButtonEvent.Invoke(1.0f);
-                }
-                else if (GetButtonUp(ButtonTypes.ButtonA))
-                {
-                    AButtonEvent.Invoke(0.0f);
-                }
-
-                if (GetButtonDown(ButtonTypes.ButtonB))
-                {
-                    BButtonEvent.Invoke(1.0f);
-                }
-                else if (GetButtonUp(ButtonTypes.ButtonB))
-                {
-                    BButtonEvent.Invoke(0.0f);
-                }
-            }
-
-            prevTrig = trigVal;
-            prevGrip = gripVal;
-
-            // set pointers
-            PlacePointer();
-            SetActiveFarMesh();
-        }
-
-        private void DetectSwimming()
-        {
-            float elevation = CharacterRoot.transform.position.y;
-
-            if (elevation < seaLevel && currentElevation >= seaLevel)
-            {
-                IsSwimming = true;
-                CharacterRoot.GetComponent<Rigidbody>().mass = 2.0f;
-            }
-            else if (elevation > seaLevel && currentElevation <= seaLevel)
-            {
-                IsSwimming = false;
-                CharacterRoot.GetComponent<Rigidbody>().mass = 70.0f;
-            }
-            currentElevation = elevation;
-        }
-
-        private void JumpSwim()
-        {
-            if (IsSwimming && Time.time - jumpTick > 0.2f)
-            {
-                jumpTick = Time.time;
-                Vector3 swimForce = new Vector3(0f, 150f, 0f) + (CharacterRoot.transform.forward * 50f);
-                Debug.Log("stroke");
-                CharacterRoot.GetComponent<Rigidbody>().AddForce(swimForce, ForceMode.Acceleration);
-            }
-            else if (Time.time - jumpTick > 2.0f)
-            {
-                jumpTick = Time.time;
-                Vector3 jumpForce = new Vector3(0f, 350f, 0f) + (CharacterRoot.transform.forward * 50f);
-                Debug.Log("hop");
-                CharacterRoot.GetComponent<Rigidbody>().AddForce(jumpForce, ForceMode.Impulse);
-            }
-        }
-
-        private WebXRCamera xrCameras;
-        private Camera vrGuideCam;
+        #region Character Movement
 
         private void MoveBodyWithJoystick(float xax, float yax, float multiplier = 1.0f)
         {
@@ -545,153 +576,8 @@ namespace ICVR
             }
         }
 
-        private void SetActiveFarMesh()
-        {
-            // only active when there is a focused object
-            if (currentObject != null)
-            {
-                string meshName = currentObject.name;
-                int layer = currentObject.layer;
 
-                // layer-dependent actions
-                if (layer == 10 || layer == 15)         //  interactable objects or tools
-                {
-                    pointingAtButton = false;
-                    currentButton = null;
-
-                    // must be solid and not near-only interaction
-                    if (currentObject.GetComponent<Rigidbody>() && !GetComponent<ControlDynamics>())
-                    {
-                        if (meshName != prevMeshName)
-                        {
-                            farcontactRigidBodies.Clear();
-                            farcontactRigidBodies.Add(currentObject.GetComponent<Rigidbody>());
-                        }
-
-                        // set pointer appearance for heavy objects
-                        // ...
-                    }
-                }
-                else if (layer == 12)       // buttons
-                {
-                    pointingAtButton = true;
-                    currentButton = currentObject;
-
-                    // set pointer appearance for buttons
-                    // ...
-                }
-                else
-                {
-                    if (!distanceManip)
-                    {
-                        farcontactRigidBodies.Clear();
-                        prevMeshName = "";
-                    }
-                }
-
-                prevMeshName = meshName;
-            }
-            else
-            {
-                if (!distanceManip)
-                {
-                    farcontactRigidBodies.Clear();
-                    prevMeshName = "";
-                }
-                pointingAtButton = false;
-                currentButton = null;
-
-                // set default pointer appearance 
-                // ...
-            }
-        }
-
-        void OnTriggerEnter(Collider other)
-        {
-            if (other.gameObject.tag != "Interactable" || nearManip)
-            {
-                return;
-            }
-
-            int objectLayer = other.gameObject.layer;
-
-            if (objectLayer == 12) // buttons
-            {
-                touchingButton = true;
-                currentButton = other.gameObject;
-
-                if (other.gameObject.TryGetComponent(out PressableButton pb) &&
-                    (Time.time - triggerEnterTick) > 0.2f)
-                {
-                    triggerEnterTick = Time.time;
-                    pb.ButtonPressed?.Invoke();
-                }
-                
-            }
-            else if (objectLayer == 10 || objectLayer == 15) // interactable objects or tools
-            {
-                if (other.gameObject.TryGetComponent(out Rigidbody rb) && 
-                    (Time.time - triggerEnterTick) > 0.2f)
-                {
-                    triggerEnterTick = Time.time;
-                    if (!nearcontactRigidBodies.Contains(rb))
-                    {
-                        nearcontactRigidBodies.Add(rb);
-                    }
-                }
-            }
-        }
-
-        void OnTriggerExit(Collider other)
-        {
-            if (other.gameObject.tag != "Interactable")
-                return;
-
-            int objectLayer = other.gameObject.layer;
-
-            if (objectLayer == 12) // buttons
-            {
-                currentButton = null;
-                touchingButton = false;
-
-                if (other.gameObject.TryGetComponent(out PressableButton pb) &&
-                    (Time.time - triggerEnterTick) > 0.2f)
-                {
-                    triggerEnterTick = Time.time;
-                    pb.ButtonReleased?.Invoke();
-                }
-
-            }
-            else if (objectLayer == 10 || objectLayer == 15) // interactable objects or tools
-            {
-                if (other.gameObject.TryGetComponent(out Rigidbody rb) 
-                    && (Time.time - triggerExitTick) > 0.2f)
-                {
-                    triggerExitTick = Time.time;
-
-                    if (nearcontactRigidBodies.Contains(rb))
-                    {
-                        nearcontactRigidBodies.Remove(rb);
-                    }
-                }
-            }
-        }
-
-
-        private AvatarHandlingData BuildEventFrame(string targetId, ManipulationDistance distance,
-            AvatarInteractionEventType eventType, AcquireData acqDataFrame = null, ReleaseData relDataFrame = null)
-        {
-            AvatarHandlingData eventFrame = new AvatarHandlingData
-            {
-                Hand = hand,
-                TargetId = targetId,
-                Distance = distance,
-                EventType = eventType,
-                AcquisitionEvent = acqDataFrame,
-                ReleaseEvent = relDataFrame
-            };
-            return eventFrame;
-        }
+        #endregion Character Movement
 
 
         #region Interaction Functions
@@ -1010,7 +896,159 @@ namespace ICVR
             }
         }
 
+        private AvatarHandlingData BuildEventFrame(string targetId, ManipulationDistance distance,
+            AvatarInteractionEventType eventType, AcquireData acqDataFrame = null, ReleaseData relDataFrame = null)
+        {
+            AvatarHandlingData eventFrame = new AvatarHandlingData
+            {
+                Hand = hand,
+                TargetId = targetId,
+                Distance = distance,
+                EventType = eventType,
+                AcquisitionEvent = acqDataFrame,
+                ReleaseEvent = relDataFrame
+            };
+            return eventFrame;
+        }
+
+
         #endregion Interaction Functions
+
+
+        #region Low-Level Interaction
+
+        private void SetActiveFarMesh()
+        {
+            // only active when there is a focused object
+            if (currentObject != null)
+            {
+                string meshName = currentObject.name;
+                int layer = currentObject.layer;
+
+                // layer-dependent actions
+                if (layer == 10 || layer == 15)         //  interactable objects or tools
+                {
+                    pointingAtButton = false;
+                    currentButton = null;
+
+                    // must be solid and not near-only interaction
+                    if (currentObject.GetComponent<Rigidbody>() && !GetComponent<ControlDynamics>())
+                    {
+                        if (meshName != prevMeshName)
+                        {
+                            farcontactRigidBodies.Clear();
+                            farcontactRigidBodies.Add(currentObject.GetComponent<Rigidbody>());
+                        }
+
+                        // set pointer appearance for heavy objects
+                        // ...
+                    }
+                }
+                else if (layer == 12)       // buttons
+                {
+                    pointingAtButton = true;
+                    currentButton = currentObject;
+
+                    // set pointer appearance for buttons
+                    // ...
+                }
+                else
+                {
+                    if (!distanceManip)
+                    {
+                        farcontactRigidBodies.Clear();
+                        prevMeshName = "";
+                    }
+                }
+
+                prevMeshName = meshName;
+            }
+            else
+            {
+                if (!distanceManip)
+                {
+                    farcontactRigidBodies.Clear();
+                    prevMeshName = "";
+                }
+                pointingAtButton = false;
+                currentButton = null;
+
+                // set default pointer appearance 
+                // ...
+            }
+        }
+
+        void OnTriggerEnter(Collider other)
+        {
+            if (other.gameObject.tag != "Interactable" || nearManip)
+            {
+                return;
+            }
+
+            int objectLayer = other.gameObject.layer;
+
+            if (objectLayer == 12) // buttons
+            {
+                touchingButton = true;
+                currentButton = other.gameObject;
+
+                if (other.gameObject.TryGetComponent(out PressableButton pb) &&
+                    (Time.time - triggerEnterTick) > 0.2f)
+                {
+                    triggerEnterTick = Time.time;
+                    pb.ButtonPressed?.Invoke();
+                }
+
+            }
+            else if (objectLayer == 10 || objectLayer == 15) // interactable objects or tools
+            {
+                if (other.gameObject.TryGetComponent(out Rigidbody rb) &&
+                    (Time.time - triggerEnterTick) > 0.2f)
+                {
+                    triggerEnterTick = Time.time;
+                    if (!nearcontactRigidBodies.Contains(rb))
+                    {
+                        nearcontactRigidBodies.Add(rb);
+                    }
+                }
+            }
+        }
+
+        void OnTriggerExit(Collider other)
+        {
+            if (other.gameObject.tag != "Interactable")
+                return;
+
+            int objectLayer = other.gameObject.layer;
+
+            if (objectLayer == 12) // buttons
+            {
+                currentButton = null;
+                touchingButton = false;
+
+                if (other.gameObject.TryGetComponent(out PressableButton pb) &&
+                    (Time.time - triggerEnterTick) > 0.2f)
+                {
+                    triggerEnterTick = Time.time;
+                    pb.ButtonReleased?.Invoke();
+                }
+
+            }
+            else if (objectLayer == 10 || objectLayer == 15) // interactable objects or tools
+            {
+                if (other.gameObject.TryGetComponent(out Rigidbody rb)
+                    && (Time.time - triggerExitTick) > 0.2f)
+                {
+                    triggerExitTick = Time.time;
+
+                    if (nearcontactRigidBodies.Contains(rb))
+                    {
+                        nearcontactRigidBodies.Remove(rb);
+                    }
+                }
+            }
+        }
+
 
         private Rigidbody GetDistantRigidBody()
         {
@@ -1073,6 +1111,10 @@ namespace ICVR
             }
             return currentHitPoint;
         }
+
+        #endregion Low-Level Interaction
+    
+    
     }
 
 }
