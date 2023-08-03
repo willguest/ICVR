@@ -15,6 +15,11 @@ using UnityEngine.Networking;
 
 namespace ICVR
 {
+    /// <summary>
+    /// Acts as the functional centre and data hub for each avatar. Routes messages to and from the hands, 
+    /// manages audio events and other messages.
+    /// <para /><see href="https://github.com/willguest/ICVR/tree/develop/Documentation/Multiplayer/AvatarController.md"/>
+    /// </summary>
     public class AvatarController : MonoBehaviour
     {
         [DllImport("__Internal")]
@@ -100,9 +105,9 @@ namespace ICVR
 
         public void AddAudioStream(string message)
         {
-            if (String.IsNullOrEmpty(message))
+            if (string.IsNullOrEmpty(message))
             {
-                Debug.Log("Add audio event was empty");
+                // audio event was empty
                 return;
             }
 
@@ -110,7 +115,7 @@ namespace ICVR
 
             if (string.IsNullOrEmpty(audioData.Userid))
             {
-                Debug.Log("no user identified");
+                // no user identified
                 return;
             }
 
@@ -123,9 +128,6 @@ namespace ICVR
 
         public void UpdateAvatar(long latency, NodeDataFrame ndf)
         {
-            //int eventDataLength = ndf.EventData.Length;
-            //avatarLerpTime = avatarLerpTime / (1 + eventDataLength);
-
             latencyText.text = latency.ToString();
 
             // set avatar body position
@@ -165,7 +167,7 @@ namespace ICVR
         {
             if (string.IsNullOrEmpty(avatarHandlingEvent))
             {
-                Debug.Log("null or empty event string");
+                Debug.Log("null or empty hand event string");
                 return;
             }
 
@@ -188,7 +190,7 @@ namespace ICVR
             }
             catch (Exception e)
             {
-                Debug.Log("error talking to hands:" + e.Message);
+                Debug.LogError("Error when talking to hands:" + e.Message);
             }
         }
 

@@ -10,10 +10,13 @@ using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEngine.UI;
 
-//using UnityEngine.Localization.Settings;
-using System.Collections;
 
-namespace ICVR {
+namespace ICVR 
+{
+    /// <summary>
+    /// This class is responsible for managing rooms in a multiplayer game. It handles room creation, joining, and updating room information.
+    /// <para /><see href="https://github.com/willguest/ICVR/tree/develop/Documentation/Multiplayer/RoomManager.md"/>
+    /// </summary>
     public class RoomManager : MonoBehaviour
     {
         [SerializeField] private Text roomName;
@@ -65,27 +68,8 @@ namespace ICVR {
             roomName.text = GetNewRoomName();
         }
 
-
-
         private void Update()
         {
-            if (Input.GetKeyUp(KeyCode.C))
-            {
-                RoomCheck(gameObject.name);
-            }
-            else if (Input.GetKeyUp(KeyCode.Insert))
-            {
-                var ro = new RoomObject
-                {
-                    MaxParticipantsAllowed = 2,
-                    Sessionid = "sally walk",
-                    Participants = new string[0]
-                };
-
-                ReceiveRoomInfo(JsonConvert.SerializeObject(ro));
-
-            }
-
             if (newRoomFound)
             {
                 newRoomFound = false;
@@ -157,10 +141,7 @@ namespace ICVR {
 
         private void RoomCreated(string message)
         {
-            //currentRoom = JsonConvert.DeserializeObject<string>(message);
-            Debug.Log("Room '" + message + "' created");
             currentRoom = message;
-
             CheckForRooms();
 
             // prevent further room creation or joining
@@ -217,8 +198,7 @@ namespace ICVR {
 
                 if (room.Sessionid == newRoom.Sessionid)
                 {
-                    Debug.Log("Room already exists. Updating..");
-
+                    // room already exists
                     roomExists = true;
                     room.Owner = newRoom.Owner;
                     room.Participants = newRoom.Participants;
@@ -244,7 +224,6 @@ namespace ICVR {
         {
             string roomDetails = room.Sessionid + " (" + room.Participants.Length + "/" + room.MaxParticipantsAllowed.ToString() + ")";
 
-            
             // create new room label from prefab
             GameObject roomObject = Instantiate(roomTemplate.gameObject);
             roomObject.name = room.Sessionid;

@@ -14,8 +14,8 @@ using WebXR;
 namespace ICVR
 {
     /// <summary>
-    /// The BodyController is the meeting point for all data and where they get packaged,
-    /// and sent across the network. 
+    /// The BodyController is the meeting point for all data and where they get packaged and sent across the network. 
+    /// <para /><see href="https://github.com/willguest/ICVR/tree/develop/Documentation/Controllers/BodyController.md"/>
     /// </summary>
     public class BodyController : MonoBehaviour
     {
@@ -218,7 +218,5 @@ namespace ICVR
                 return null;
             }
         }
-
-
     }
 }

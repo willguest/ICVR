@@ -14,7 +14,7 @@ using UnityEngine.UI;
 namespace ICVR
 {
     /// <summary>
-    /// <see href="https://github.com/willguest/ICVR/tree/develop/Documentation/Media/JukeboxController.md"/>
+    /// <para /><see href="https://github.com/willguest/ICVR/tree/develop/Documentation/Media/JukeboxController.md"/>
     /// </summary>
     public class JukeboxController : MonoBehaviour
     {

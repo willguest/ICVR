@@ -5,12 +5,15 @@
  */
 
 using Newtonsoft.Json;
-using ICVR.SharedAssets;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace ICVR
 {
+    /// <summary>
+    /// Handles the visualisation of the avatars, and receives messages about network events.
+    /// <para /><see href="https://github.com/willguest/ICVR/tree/develop/Documentation/Multiplayer/AvatarManager.md"/>
+    /// </summary>
     public class AvatarManager : MonoBehaviour
     {
         private static AvatarManager _instance;
@@ -18,18 +21,17 @@ namespace ICVR
 
         [SerializeField] private GameObject avatarTemplate;
 
-        private Dictionary<string, GameObject> otherPlayers;
-        private Dictionary<string, AvatarController> avatarControllers;
-
         public bool AudioChannelOpen { get; set; }
 
         // events
         public delegate void DictionaryChanged(int noPlayersNow);
         public event DictionaryChanged OnDictionaryChanged;
 
+        private Dictionary<string, GameObject> otherPlayers;
+        private Dictionary<string, AvatarController> avatarControllers;
+
         private bool readyToCreateAvatar = false;
         private NodeDataFrame currentDataFrame;
-
 
 
         private void Awake()
@@ -55,7 +57,7 @@ namespace ICVR
         {
             if (readyToCreateAvatar && currentDataFrame != null)
             {
-                createNewPlayerAvatar(currentDataFrame);
+                CreateNewPlayerAvatar(currentDataFrame);
                 readyToCreateAvatar = false;
                 currentDataFrame = null;
             }
@@ -112,7 +114,7 @@ namespace ICVR
         }
 
 
-        public void createNewPlayerAvatar(NodeDataFrame nodeFrame)
+        public void CreateNewPlayerAvatar(NodeDataFrame nodeFrame)
         {
             GameObject newPlayerObject = Instantiate(avatarTemplate, nodeFrame.HeadPosition, nodeFrame.HeadRotation, this.transform);
             newPlayerObject.name = nodeFrame.Id;

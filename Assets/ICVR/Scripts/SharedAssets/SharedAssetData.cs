@@ -26,16 +26,6 @@ namespace ICVR.SharedAssets
     }
 
     [Serializable]
-    public partial class AvatarChatData
-    {
-        [JsonProperty("scope")]
-        public string Scope = ""; // 'private' | 'broadcast'
-
-        [JsonProperty("message")]
-        public string Message = ""; // the message content
-    }
-
-    [Serializable]
     public partial class AvatarHandlingData
     {
         [JsonProperty("hand")]

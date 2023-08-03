@@ -14,7 +14,7 @@ namespace ICVR
 {
     /// <summary>
     /// A general purpose media controller, which can be connected to the PressableButtonAction events. 
-    /// <see href="https://github.com/willguest/ICVR/tree/develop/Documentation/Media/MediaController.md"/>
+    /// <para /><see href="https://github.com/willguest/ICVR/tree/develop/Documentation/Media/MediaController.md"/>
     /// </summary>
     [RequireComponent(typeof(AudioSource))]
     public class MediaController : MonoBehaviour

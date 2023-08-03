@@ -13,7 +13,7 @@ namespace ICVR
     /// Identifies the Object as containing media in the `StreamingAssets` folder which is accessed on-
     /// demand by the MediaController. This class uses the StreamingAssetHandler in Unity to populate 
     /// the file paths that will be loaded at runtime.
-    /// <see href="https://github.com/willguest/ICVR/tree/develop/Documentation/Media/StreamingAsset.md"/>
+    /// <para /><see href="https://github.com/willguest/ICVR/tree/develop/Documentation/Media/StreamingAsset.md"/>
     /// </summary>
     public class StreamingAsset : MonoBehaviour
     {

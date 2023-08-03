@@ -16,7 +16,13 @@ using UnityEngine.XR;
 
 namespace ICVR
 {
-
+    /// <summary>
+    /// Interaction handler for XR controllers on the web. Uses the thumbstick, grip and trigger buttons 
+    /// to control the character, including jumping and swimming. Connect interaction events to the 
+    /// virtual world's collision and data layers. Warning: modifying this without proper knowledge can 
+    /// really mess things up.
+    /// <para /><see href="https://github.com/willguest/ICVR/tree/develop/Documentation/Controllers/XRController.md"/>
+    /// </summary>
     public class XRController : MonoBehaviour
     {
         [SerializeField] private bool debugHand;
@@ -915,7 +921,7 @@ namespace ICVR
         #endregion Interaction Functions
 
 
-        #region Low-Level Interaction
+        #region Low-Level Interaction Methods
 
         private void SetActiveFarMesh()
         {
@@ -1112,7 +1118,7 @@ namespace ICVR
             return currentHitPoint;
         }
 
-        #endregion Low-Level Interaction
+        #endregion Low-Level Interaction Methods
     
     
     }

@@ -9,6 +9,10 @@ using UnityEngine;
 
 namespace ICVR
 {
+    /// <summary>
+    /// Handles interaction events for the avatar's virtual hand. For more information see 
+    /// <para /><see href="https://github.com/willguest/ICVR/tree/develop/Documentation/Multiplayer/AvatarHand.md"/>
+    /// </summary>
     public class AvatarHand : MonoBehaviour
     {
         private FixedJoint[] attachJoint;
@@ -16,7 +20,6 @@ namespace ICVR
         private Rigidbody currentFarRigidBody = null;
         private string prevLayer = "";
 
-        // Start is called before the first frame update
         void Start()
         {
             attachJoint = new FixedJoint[] { GetComponents<FixedJoint>()[0], GetComponents<FixedJoint>()[1] };
@@ -25,7 +28,7 @@ namespace ICVR
 
         public void ReceiveInstruction(AvatarHandlingData instruction)
         {
-            // nullable object - target of avatar interaction
+            // nullable target of avatar interaction
             GameObject target;
 
             if (SharedAssetManager.Instance.SharedAssetRegister.TryGetValue(instruction.TargetId, out target))

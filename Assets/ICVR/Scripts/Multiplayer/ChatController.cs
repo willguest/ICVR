@@ -7,8 +7,12 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace ICVR.SharedAssets
+namespace ICVR
 {
+    /// <summary>
+    /// Stores and sends text chat data over the network.
+    /// <para /><see href="https://github.com/willguest/ICVR/tree/develop/Documentation/Multiplayer/ChatController.md"/>
+    /// </summary>
     public class ChatController : MonoBehaviour
     {
         public bool HasFocus { get; private set; }
@@ -97,7 +101,5 @@ namespace ICVR.SharedAssets
                 currentDraft = message;
             }
         }
-
-
     }
 }

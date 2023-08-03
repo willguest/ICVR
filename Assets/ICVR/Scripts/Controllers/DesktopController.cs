@@ -11,6 +11,11 @@ using ICVR.SharedAssets;
 
 namespace ICVR
 {
+    /// <summary>
+    /// Handles all mouse and keyboard inputs, orients and propels the user in the space.
+    /// Connects the user to the objects and tools around them and connects to other components.
+    /// <para /><see href="https://github.com/willguest/ICVR/tree/develop/Documentation/Controllers/DesktopController.md"/>
+
     public class DesktopController : MonoBehaviour
     {
         // Inspector Variables

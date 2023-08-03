@@ -6,8 +6,8 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/ICVR_Scenes/ICVR5_spacestation/ICVR5.unity
-    guid: 9efeaff8b7b0830498a6a5f5a09db11c
+    path: Assets/ICVR/Scenes/TestScene.unity
+    guid: 1f4d72a61c3259c4f8df6695d41123c4
   m_configObjects:
     WebXR.Settings: {fileID: 11400000, guid: e8fdd6e3f14016640b040ef1f2324635, type: 2}
     com.unity.xr.management.loader_settings: {fileID: 11400000, guid: 575d64860bdb58541984cae4634d7c57, type: 2}
