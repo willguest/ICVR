@@ -1,3 +1,9 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
 using Newtonsoft.Json;
 using ICVR.SharedAssets;
 using System;
@@ -9,6 +15,11 @@ using UnityEngine.Networking;
 
 namespace ICVR
 {
+    /// <summary>
+    /// Acts as the functional centre and data hub for each avatar. Routes messages to and from the hands, 
+    /// manages audio events and other messages.
+    /// <para /><see href="https://github.com/willguest/ICVR/tree/develop/Documentation/Multiplayer/AvatarController.md"/>
+    /// </summary>
     public class AvatarController : MonoBehaviour
     {
         [DllImport("__Internal")]
@@ -44,17 +55,14 @@ namespace ICVR
         private string currentAudioId = "";
 
         private bool ReadyToPlay = false;
-        private float updateFrequency = 4.0f;
+        
         private float avatarLerpTime;
-
-        private float triggerTick = 0;
 
 
         #region --- Start and Update ---
 
         void Start()
         {
-            updateFrequency = NetworkIO.Instance.NetworkUpdateFrequency;
             fixedJoint = head.GetComponent<FixedJoint>();
         }
 
@@ -62,12 +70,10 @@ namespace ICVR
         {
             if (ReadyToPlay)
             {
-                //Debug.Log("Playing track: " + currentAudioId + " (" + currentAudioURL + ")");
+                //Debug.Log("Playing audio: " + currentAudioId + " (" + currentAudioURL + ")");
                 ReadyToPlay = false;
                 Play(currentAudioURL, currentAudioId);
             }
-
-            
         }
 
         #endregion --- Start and Update ---
@@ -99,9 +105,9 @@ namespace ICVR
 
         public void AddAudioStream(string message)
         {
-            if (String.IsNullOrEmpty(message))
+            if (string.IsNullOrEmpty(message))
             {
-                Debug.Log("Add audio event was empty");
+                // audio event was empty
                 return;
             }
 
@@ -109,7 +115,7 @@ namespace ICVR
 
             if (string.IsNullOrEmpty(audioData.Userid))
             {
-                Debug.Log("no user identified");
+                // no user identified
                 return;
             }
 
@@ -122,9 +128,6 @@ namespace ICVR
 
         public void UpdateAvatar(long latency, NodeDataFrame ndf)
         {
-            //int eventDataLength = ndf.EventData.Length;
-            //avatarLerpTime = avatarLerpTime / (1 + eventDataLength);
-
             latencyText.text = latency.ToString();
 
             // set avatar body position
@@ -156,48 +159,15 @@ namespace ICVR
 
         #endregion --- Interface ---
 
+
         #region --- Avatar Interaction ---
 
-        private void OnTriggerEnter(Collider other)
-        {
-            if (other.gameObject.name == "torso" && other.GetType() == typeof(CapsuleCollider) && (Time.time - triggerTick) > 0.5f)
-            {
-                if (!audioIsActive())
-                {
-                    Debug.Log("starting audio stream");
-                    triggerTick = Time.time;
-                    //AvatarManager.Instance.AudioChannelOpen = true;
-                    //StartAudioStream(gameObject.name);
-                    
-                }
-                else
-                {
-                    Debug.Log("audio open elsewhere");
-                }
-            }
-            
-        }
-
-        private void OnTriggerExit(Collider other)
-        {
-            if (other.gameObject.name == "torso" && other.GetType() == typeof(CapsuleCollider) && (Time.time - triggerTick) > 0.5f )
-            {
-                if (audioIsActive())
-                {
-                    Debug.Log("stopping audio stream");
-                    triggerTick = Time.time;
-                    //AvatarManager.Instance.AudioChannelOpen = false;
-                    //StopAudioStream(gameObject.name);
-                }
-
-            }
-        }
 
         private void UpdateHandInteractions(string avatarHandlingEvent)
         {
             if (string.IsNullOrEmpty(avatarHandlingEvent))
             {
-                Debug.Log("null or empty event string");
+                Debug.Log("null or empty hand event string");
                 return;
             }
 
@@ -213,14 +183,14 @@ namespace ICVR
                 {
                     rightHand.ReceiveInstruction(ahdFrame);
                 }
-                else // ControllerHand.NONE == desktopcontroller input
+                else // ControllerHand.NONE is desktopcontroller input
                 {
                     ReceiveInstruction(ahdFrame);
                 }
             }
             catch (Exception e)
             {
-                Debug.Log("error talking to hands:" + e.Message);
+                Debug.LogError("Error when talking to hands:" + e.Message);
             }
         }
 
@@ -299,6 +269,7 @@ namespace ICVR
         }
 
         #endregion --- Avatar Interaction ---
+
 
         #region --- Avatar Colour Setting ---
 

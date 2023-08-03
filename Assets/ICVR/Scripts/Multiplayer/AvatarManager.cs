@@ -1,10 +1,19 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
 using Newtonsoft.Json;
-using ICVR.SharedAssets;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace ICVR
 {
+    /// <summary>
+    /// Handles the visualisation of the avatars, and receives messages about network events.
+    /// <para /><see href="https://github.com/willguest/ICVR/tree/develop/Documentation/Multiplayer/AvatarManager.md"/>
+    /// </summary>
     public class AvatarManager : MonoBehaviour
     {
         private static AvatarManager _instance;
@@ -12,21 +21,17 @@ namespace ICVR
 
         [SerializeField] private GameObject avatarTemplate;
 
-        private Dictionary<string, GameObject> otherPlayers;
-        private Dictionary<string, AvatarController> avatarControllers;
-
         public bool AudioChannelOpen { get; set; }
 
         // events
         public delegate void DictionaryChanged(int noPlayersNow);
         public event DictionaryChanged OnDictionaryChanged;
 
-        private string messageBuffer = "";
-        private bool newChatMessageReady = false;
+        private Dictionary<string, GameObject> otherPlayers;
+        private Dictionary<string, AvatarController> avatarControllers;
 
         private bool readyToCreateAvatar = false;
         private NodeDataFrame currentDataFrame;
-
 
 
         private void Awake()
@@ -41,7 +46,23 @@ namespace ICVR
             }
         }
 
-        
+        void Start()
+        {
+            otherPlayers = new Dictionary<string, GameObject>();
+            avatarControllers = new Dictionary<string, AvatarController>();
+            AudioChannelOpen = false;
+        }
+
+        private void Update()
+        {
+            if (readyToCreateAvatar && currentDataFrame != null)
+            {
+                CreateNewPlayerAvatar(currentDataFrame);
+                readyToCreateAvatar = false;
+                currentDataFrame = null;
+            }
+
+        }
 
         private void OnDestroy()
         {
@@ -52,6 +73,7 @@ namespace ICVR
             otherPlayers.Clear();
             otherPlayers = null;
         }
+
 
         public void ResetScene()
         {
@@ -75,23 +97,6 @@ namespace ICVR
             AudioChannelOpen = false;
         }
 
-        void Start()
-        {
-            otherPlayers = new Dictionary<string, GameObject>();
-            avatarControllers = new Dictionary<string, AvatarController>();
-            AudioChannelOpen = false;
-        }
-
-        private void Update()
-        {
-            if (readyToCreateAvatar && currentDataFrame != null)
-            {
-                createNewPlayerAvatar(currentDataFrame);
-                readyToCreateAvatar = false;
-                currentDataFrame = null;
-            }
-
-        }
 
         public void ProcessAvatarData(NodeInputData nodeFrame)
         {
@@ -100,11 +105,6 @@ namespace ICVR
             if (avatarControllers.ContainsKey(nodeData.Id))
             {
                 avatarControllers[nodeData.Id].UpdateAvatar(nodeFrame.Latency, nodeData);
-
-                if (nodeData.EventType == AvatarEventType.Chat)
-                {
-                    PostChatMessage(nodeData.Id, nodeData.EventData);
-                }
             }
             else
             {
@@ -113,19 +113,8 @@ namespace ICVR
             }
         }
 
-        private void PostChatMessage(string id, string chatData)
-        {
-            AvatarChatData acd = JsonConvert.DeserializeObject<AvatarChatData>(chatData);
 
-            if (acd.Scope == "broadcast")
-            {
-                messageBuffer = id + ":\n" + acd.Message + "\n";
-                newChatMessageReady = true;
-            }
-        }
-
-
-        public void createNewPlayerAvatar(NodeDataFrame nodeFrame)
+        public void CreateNewPlayerAvatar(NodeDataFrame nodeFrame)
         {
             GameObject newPlayerObject = Instantiate(avatarTemplate, nodeFrame.HeadPosition, nodeFrame.HeadRotation, this.transform);
             newPlayerObject.name = nodeFrame.Id;

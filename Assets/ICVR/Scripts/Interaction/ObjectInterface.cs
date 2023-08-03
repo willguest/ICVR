@@ -1,8 +1,18 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
 using System.Collections;
 using UnityEngine;
 
 namespace ICVR
 {
+    /// <summary>
+    /// A simplified version of 'Grabbable', for single handed interaction only. For more information 
+    /// <see href="https://github.com/willguest/ICVR/tree/develop/Documentation/Interaction/ObjectInterface.md"/>
+    /// </summary>
     public class ObjectInterface : MonoBehaviour
     {
         [SerializeField] private Transform controlPoseLeft;
@@ -29,7 +39,7 @@ namespace ICVR
 
             if (other.gameObject.layer == 15)
             {
-                if (other.gameObject.TryGetComponent(out XRControllerInteraction xrctrl))
+                if (other.gameObject.TryGetComponent(out XRController xrctrl))
                 {
                     if (!xrctrl.IsControllingObject)
                     {
@@ -46,7 +56,7 @@ namespace ICVR
 
             if (other.gameObject.layer == 15)
             {
-                if (!other.gameObject.GetComponent<XRControllerInteraction>().IsControllingObject)
+                if (!other.gameObject.GetComponent<XRController>().IsControllingObject)
                 {
                     LoseControl();
                 }
@@ -57,7 +67,7 @@ namespace ICVR
         {
             currentManipulator = manipulator.transform.Find("model").gameObject;
 
-            // disable mesh collider, to prevent interference with object colliders and rigidbodies
+            // disable hand colliders, to prevent interference with object colliders and rigidbodies
             foreach (CapsuleCollider cc in currentManipulator.GetComponentsInChildren<CapsuleCollider>())
             {
                 cc.enabled = false;
@@ -89,6 +99,7 @@ namespace ICVR
 
             StartCoroutine(LerpToControlPose(currentManipulator, Vector3.zero, Quaternion.identity, 0.4f));
 
+            // re-enable hand colliders
             foreach (CapsuleCollider cc in currentManipulator.GetComponentsInChildren<CapsuleCollider>())
             {
                 cc.enabled = true;

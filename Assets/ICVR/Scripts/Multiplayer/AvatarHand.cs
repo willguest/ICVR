@@ -1,31 +1,25 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
 using ICVR.SharedAssets;
 using UnityEngine;
 
 namespace ICVR
 {
+    /// <summary>
+    /// Handles interaction events for the avatar's virtual hand. For more information see 
+    /// <para /><see href="https://github.com/willguest/ICVR/tree/develop/Documentation/Multiplayer/AvatarHand.md"/>
+    /// </summary>
     public class AvatarHand : MonoBehaviour
     {
-        [SerializeField] private ControllerHand hand = ControllerHand.NONE;
-
-        public bool IsHandlingObject { get; set; }
-
-        // events
-        public delegate void ButtonPressed(float buttonValue);
-        public event ButtonPressed TriggerEvent;
-        public event ButtonPressed GripEvent;
-        public event ButtonPressed AButtonEvent;
-        public event ButtonPressed BButtonEvent;
-        public event ButtonPressed ThumbstickXEvent;
-        public event ButtonPressed ThumbstickYEvent;
-        public event ButtonPressed ThumbstickButtonEvent;
-
         private FixedJoint[] attachJoint;
         private Rigidbody currentNearRigidBody = null;
         private Rigidbody currentFarRigidBody = null;
         private string prevLayer = "";
 
-
-        // Start is called before the first frame update
         void Start()
         {
             attachJoint = new FixedJoint[] { GetComponents<FixedJoint>()[0], GetComponents<FixedJoint>()[1] };
@@ -34,7 +28,7 @@ namespace ICVR
 
         public void ReceiveInstruction(AvatarHandlingData instruction)
         {
-            // nullable object - target of avatar interaction
+            // nullable target of avatar interaction
             GameObject target;
 
             if (SharedAssetManager.Instance.SharedAssetRegister.TryGetValue(instruction.TargetId, out target))
@@ -75,16 +69,11 @@ namespace ICVR
             currentNearRigidBody = target.GetComponent<Rigidbody>();
 
             if (!currentNearRigidBody) return;
-
-            // move avatar hand to interaction pose (remove interpolation errors)
-            //transform.position = acquisition.HandPosition;
-            //transform.rotation = acquisition.HandRotation;
             
             // move object to start pose 
             target.transform.position = acquisition.ObjectPosition;
             target.transform.rotation = acquisition.ObjectRotation;
 
-            //currentNearRigidBody.MovePosition(transform.position);
             attachJoint[0].connectedBody = currentNearRigidBody;
 
             // rememeber layer and set as tool
@@ -111,7 +100,6 @@ namespace ICVR
             // reset and forget
             SetLayerRecursively(currentNearRigidBody.gameObject, LayerMask.NameToLayer(prevLayer));
             prevLayer = "";
-            
             currentNearRigidBody = null;
         }
 
@@ -124,7 +112,6 @@ namespace ICVR
             target.transform.position = acquisition.ObjectPosition;
             target.transform.rotation = acquisition.ObjectRotation;
 
-            //currentFarRigidBody.MovePosition(transform.position);
             attachJoint[1].connectedBody = currentFarRigidBody;
         }
 
@@ -160,7 +147,6 @@ namespace ICVR
                 SetLayerRecursively(child.gameObject, newLayer);
             }
         }
-
 
     }
 }

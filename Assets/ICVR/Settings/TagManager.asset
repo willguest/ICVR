@@ -7,8 +7,6 @@ TagManager:
   - Interactable
   - crosshair
   - UI
-  - pinpack
-  - xthumb
   layers:
   - Default
   - TransparentFX

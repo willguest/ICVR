@@ -1,14 +1,26 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
 using UnityEngine;
 
 namespace ICVR.SharedAssets 
-{ 
+{
+    /// <summary>
+    /// This component makes the GameObject indexable in the shared asset register. 
+    /// During interaction, the presence of this component triggers p2p data transfer.
+    /// <see href="https://github.com/willguest/ICVR/tree/develop/Documentation/SharedAssets/SharedAsset.md"/>
+    /// </summary>
     public class SharedAsset : MonoBehaviour 
     { 
-        public string Id { get; private set; }
         public bool IsBeingHandled { get; set; }
-        public Vector3 DefaultLocation { get; set; }
-        public Quaternion DefaultRotation { get; set; }
-        public Vector3 DefaultScale { get; set; }
+
+        public string Id { get; private set; }
+        public Vector3 DefaultLocation { get; private set; }
+        public Quaternion DefaultRotation { get; private set; }
+        public Vector3 DefaultScale { get; private set; }
 
         private bool isNetworkAvailable = false;
         private SharedAssetManager _manager;

@@ -1,9 +1,14 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
 using System;
 using Newtonsoft.Json;
 
 namespace ICVR.SharedAssets
 {
-
     [Serializable]
     public enum AvatarInteractionEventType
     {
@@ -18,36 +23,6 @@ namespace ICVR.SharedAssets
         None = 0,
         Near = 1,
         Far = 2
-    }
-
-    [Serializable]
-    public enum AvatarOperationType
-    {
-        None = 0,
-        Button = 1
-    }
-
-    [Serializable]
-    public partial class AvatarOperationData
-    {
-        [JsonProperty("operationType")]
-        public AvatarOperationType OperationType = AvatarOperationType.None;
-
-        [JsonProperty("operationPath")]
-        public string OperationPath = "";
-
-        [JsonProperty("operationMethod")]
-        public string OperationMethod = "";
-    }
-
-    [Serializable]
-    public partial class AvatarChatData
-    {
-        [JsonProperty("scope")]
-        public string Scope = ""; // 'private' | 'broadcast'
-
-        [JsonProperty("message")]
-        public string Message = ""; // the message content
     }
 
     [Serializable]

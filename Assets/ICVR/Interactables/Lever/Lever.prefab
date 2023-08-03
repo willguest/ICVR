@@ -701,7 +701,7 @@ MonoBehaviour:
   resetReference: {fileID: 2250353065255517559}
   stickySensors: 0
   controlEvents:
-  - state: Off
+  - state: On
     sensor: {fileID: 2250353065376847035}
     controlEffect:
       m_PersistentCalls:
@@ -718,7 +718,7 @@ MonoBehaviour:
             m_StringArgument: 
             m_BoolArgument: 0
           m_CallState: 1
-  - state: On
+  - state: Off
     sensor: {fileID: 2250353066229053171}
     controlEffect:
       m_PersistentCalls:

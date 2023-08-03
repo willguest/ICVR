@@ -1,18 +1,22 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
 using UnityEngine;
 using WebXR;
-using Newtonsoft.Json;
-using System.Runtime.InteropServices;
-using System.Collections;
 
 namespace ICVR
 {
+    /// <summary>
+    /// This class looks after mode detection and switching, interfacing with the WebXRManager. 
+    /// <see href="https://github.com/willguest/ICVR/tree/develop/Documentation/Managers/PlatformManager.md"/>
+    /// </summary>
     public class PlatformManager : MonoBehaviour
     {
         private static PlatformManager _instance;
         public static PlatformManager Instance { get { return _instance; } }
-
-        [DllImport("__Internal")]
-        private static extern void GetBrowserInfo(string sender);
 
         public bool IsVRSupported { get; private set; }
 
@@ -20,13 +24,14 @@ namespace ICVR
 
         private bool discoveredVR = false;
 
-        //private string[] VRBrowsers;
-        //private NavigatorData BrowserData;
-        //[SerializeField] private UnityEngine.UI.Text platformDetailText;
+        public void StartVR()
+        {
+            discoveredVR = true;
+        }
 
         private void Awake()
         {
-            if (_instance != null && _instance != this)
+            if (_instance != null && _instance != this) 
             {
                 Destroy(this.gameObject);
             }
@@ -36,17 +41,10 @@ namespace ICVR
             }
         }
 
-        private void Start()
-        {
-            //VRBrowsers = new string[4] { "Oculus Browser", "Firefox Reality", "Wolvic", "Pico Browser" };
-        }
-
         private void Update()
         {
             if (discoveredVR)
             {
-                Debug.Log("Initiating VR...");
-
                 WebXRManager.Instance.ToggleVR();
                 discoveredVR = false;
             }
@@ -66,13 +64,7 @@ namespace ICVR
 
         private void CheckCapabilties(WebXRDisplayCapabilities capabilities)
         {
-            Debug.Log("haz VR? " + capabilities.canPresentVR.ToString());
             IsVRSupported = capabilities.canPresentVR;
-        }
-
-        public void StartVR()
-        {
-            discoveredVR = true;
         }
 
         private void OnXRChange(WebXRState state, int viewsCount, Rect leftRect, Rect rightRect)
@@ -80,44 +72,5 @@ namespace ICVR
             XrState = state;
         }
 
-
-        /* Browser Interrogation functions (currently unused)
-        private void OnBrowserInfo(string message)
-        {
-            if (string.IsNullOrEmpty(message))
-            {
-                Debug.Log("Browser info was empty");
-                return;
-            }
-
-
-            BrowserData = JsonConvert.DeserializeObject<NavigatorData>(message);
-
-            Debug.Log("Hi " + BrowserData.Browser.Name + " user. Just checking to see if you're VR-ready  8-]");
-
-            for (int s = 0; s < VRBrowsers.Length; s++)
-            {
-                if (BrowserData.Browser.Name == VRBrowsers[s])
-                {
-                    Debug.Log("VR check success, using " + VRBrowsers[s]);
-                    //StartCoroutine(TriggerAfterDelay(2.0f));
-                    break;
-                }
-            }
-        }
-
-
-        private string DisplayNavigatorSummary(NavigatorData data)
-        {
-            string navDataText =
-                "\n\tNavigator Data" + '\n' +
-                "\n\tBrowser: " + data.Browser.Name + " (" + data.Browser.Version + ")" +
-                "\n\tDevice: " + data.Device.Model + " (" + data.Device.Type + ")" +
-                "\n\tEngine: " + data.Engine.Name + " (" + data.Engine.Version + ")";
-
-            return navDataText;
-        }
-
-        */
     }
 }

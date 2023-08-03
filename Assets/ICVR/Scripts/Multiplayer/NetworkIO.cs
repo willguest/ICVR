@@ -1,3 +1,9 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -7,6 +13,10 @@ using System.Runtime.InteropServices;
 
 namespace ICVR
 {
+    /// <summary>
+    /// The main entry point for P2P network communication. 
+    /// <para /><see href="https://github.com/willguest/ICVR/tree/develop/Documentation/Multiplayer/NetworkIO.md"/>
+    /// </summary>
     public class NetworkIO : MonoBehaviour
     {
         // singleton
@@ -32,7 +42,7 @@ namespace ICVR
         public string CurrentUserId { get; private set; }
         public bool IsConnected { get; private set; }
 
-        // unity-assigned objects
+        // inspector objects
         [SerializeField] private string SignalingServerUrl = "https://rtcmulticonnection-sockets.herokuapp.com:443/";
         
         [SerializeField] private Renderer connectionIndicator;
@@ -257,7 +267,7 @@ namespace ICVR
             {
                 return;
             }
-            else if (String.IsNullOrEmpty(message))
+            else if (string.IsNullOrEmpty(message))
             {
                 Debug.Log("Data message was empty");
                 return;
@@ -270,13 +280,13 @@ namespace ICVR
             }
             catch (Exception e)
             {
-                Debug.Log("Error in pose deserialisation: " + e.Message);
+                Debug.LogError("Error in pose deserialisation: " + e.Message);
             }
         }
 
         private void HandlePoseData(NodeInputData data)
         {
-            if (String.IsNullOrEmpty(data.Data))
+            if (string.IsNullOrEmpty(data.Data))
             {
                 Debug.Log("null data.Data");
                 return;
@@ -288,7 +298,7 @@ namespace ICVR
 
         private void OnConnectedToNetwork(string message)
         {
-            if (String.IsNullOrEmpty(message))
+            if (string.IsNullOrEmpty(message))
             {
                 Debug.Log("Connection event was empty");
                 return;
@@ -318,7 +328,7 @@ namespace ICVR
 
         private void OnDisconnectedFromNetwork(string message)
         {
-            if (String.IsNullOrEmpty(message))
+            if (string.IsNullOrEmpty(message))
             {
                 Debug.Log("Disconnection event was empty");
                 return;
@@ -334,7 +344,7 @@ namespace ICVR
             }
             catch (Exception e)
             {
-                Debug.Log("error in disconnection:" + e.Message);
+                Debug.LogError("error in disconnection:" + e.Message);
             }
         }
 

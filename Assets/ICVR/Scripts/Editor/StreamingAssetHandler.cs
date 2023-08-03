@@ -4,69 +4,72 @@ using System.IO;
 using UnityEditor;
 using UnityEngine;
 
-[CustomEditor(typeof(StreamingAsset))]
-public class StreamingAssetHandler : Editor
+namespace ICVR
 {
-
-    SerializedProperty extension;
-    SerializedProperty filePaths;
-    SerializedProperty streamingAssetFolder;
-
-    const string kAssetPrefix = "Assets/StreamingAssets";
-
-    void OnEnable()
+    [CustomEditor(typeof(StreamingAsset))]
+    public class StreamingAssetHandler : Editor
     {
-        extension = serializedObject.FindProperty("extension");
-        filePaths = serializedObject.FindProperty("filePaths");
-        streamingAssetFolder = serializedObject.FindProperty("streamingAssetFolder");
-    }
 
-    public override void OnInspectorGUI()
-    {
-        serializedObject.Update();
+        SerializedProperty extension;
+        SerializedProperty filePaths;
+        SerializedProperty streamingAssetFolder;
 
-        EditorGUILayout.PropertyField(streamingAssetFolder);
-        EditorGUILayout.PropertyField(extension);
+        const string kAssetPrefix = "Assets/StreamingAssets";
 
-        if (streamingAssetFolder.objectReferenceValue == null)
+        void OnEnable()
         {
-            return;
+            extension = serializedObject.FindProperty("extension");
+            filePaths = serializedObject.FindProperty("filePaths");
+            streamingAssetFolder = serializedObject.FindProperty("streamingAssetFolder");
         }
 
-        var Paths = Directory.GetFiles(
-            AssetDatabase.GetAssetPath(
-                streamingAssetFolder.objectReferenceValue.GetInstanceID()),
-                "*." + extension.stringValue,
-                SearchOption.TopDirectoryOnly);
-
-
-        int noEntries = Paths.Length;
-        filePaths.arraySize = noEntries;
-
-        for (int x = 0; x < noEntries; x++)
+        public override void OnInspectorGUI()
         {
-            if (Paths[x].StartsWith(kAssetPrefix))
+            serializedObject.Update();
+
+            EditorGUILayout.PropertyField(streamingAssetFolder);
+            EditorGUILayout.PropertyField(extension);
+
+            if (streamingAssetFolder.objectReferenceValue == null)
             {
-                Paths[x] = Paths[x].Substring(kAssetPrefix.Length);
+                return;
             }
 
-            if (filePaths.arraySize < noEntries)
+            var Paths = Directory.GetFiles(
+                AssetDatabase.GetAssetPath(
+                    streamingAssetFolder.objectReferenceValue.GetInstanceID()),
+                    "*." + extension.stringValue,
+                    SearchOption.TopDirectoryOnly);
+
+
+            int noEntries = Paths.Length;
+            filePaths.arraySize = noEntries;
+
+            for (int x = 0; x < noEntries; x++)
             {
-                //filePaths.AddArrayItem(Paths[x]);
-                filePaths.InsertArrayElementAtIndex(filePaths.arraySize - 1);
-                Debug.Log("added new array element at " + (filePaths.arraySize - 1) + "(x=" + x + ")");
-            }
-            else
-            {
-                SerializedProperty filepath = filePaths.GetArrayElementAtIndex(x);
-                filepath.stringValue = Paths[x];
+                if (Paths[x].StartsWith(kAssetPrefix))
+                {
+                    Paths[x] = Paths[x].Substring(kAssetPrefix.Length);
+                }
+
+                if (filePaths.arraySize < noEntries)
+                {
+                    //filePaths.AddArrayItem(Paths[x]);
+                    filePaths.InsertArrayElementAtIndex(filePaths.arraySize - 1);
+                    Debug.Log("added new array element at " + (filePaths.arraySize - 1) + "(x=" + x + ")");
+                }
+                else
+                {
+                    SerializedProperty filepath = filePaths.GetArrayElementAtIndex(x);
+                    filepath.stringValue = Paths[x];
+                }
+
             }
 
+            EditorGUILayout.PropertyField(filePaths, true); // draw property with it's children
+
+            serializedObject.ApplyModifiedProperties();
         }
-
-        EditorGUILayout.PropertyField(filePaths, true); // draw property with it's children
-
-        serializedObject.ApplyModifiedProperties();
     }
 }
 #endif

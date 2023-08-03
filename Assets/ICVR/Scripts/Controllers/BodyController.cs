@@ -1,3 +1,9 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
 using System.Collections;
 using System.Runtime.InteropServices;
 using Newtonsoft.Json;
@@ -8,13 +14,14 @@ using WebXR;
 namespace ICVR
 {
     /// <summary>
-    /// The BodyController is the meeting point for all data and where they get packaged,
-    /// and sent across the network. 
+    /// The BodyController is the meeting point for all data and where they get packaged and sent across the network. 
+    /// <para /><see href="https://github.com/willguest/ICVR/tree/develop/Documentation/Controllers/BodyController.md"/>
     /// </summary>
     public class BodyController : MonoBehaviour
     {
         public static string CurrentUserId { get; private set; }
         public static int CurrentNoPeers { get; set; }
+        public float BodyMass { get; private set; }
 
         [DllImport("__Internal")]
         private static extern void SendData(string msg);
@@ -29,6 +36,8 @@ namespace ICVR
 
         [SerializeField] private GameObject hudFollower;
 
+
+
         private bool IsConnectionReady = false;
         private bool hasInteractionEvent = false;
 
@@ -41,8 +50,8 @@ namespace ICVR
         private void OnEnable()
         {
             Camera.main.gameObject.GetComponent<DesktopController>().OnNetworkInteraction += PackageEventData;
-            leftHand.GetComponent<XRControllerInteraction>().OnHandInteraction += PackageEventData;
-            rightHand.GetComponent<XRControllerInteraction>().OnHandInteraction += PackageEventData;
+            leftHand.GetComponent<XRController>().OnHandInteraction += PackageEventData;
+            rightHand.GetComponent<XRController>().OnHandInteraction += PackageEventData;
             WebXRManager.OnXRChange += OnXRChange;
 
         }
@@ -66,8 +75,8 @@ namespace ICVR
             {
                 Camera.main.gameObject.GetComponent<DesktopController>().OnNetworkInteraction -= PackageEventData;
             }
-            leftHand.GetComponent<XRControllerInteraction>().OnHandInteraction -= PackageEventData;
-            rightHand.GetComponent<XRControllerInteraction>().OnHandInteraction -= PackageEventData;
+            leftHand.GetComponent<XRController>().OnHandInteraction -= PackageEventData;
+            rightHand.GetComponent<XRController>().OnHandInteraction -= PackageEventData;
         }
 
         private void OnXRChange(WebXRState state, int viewsCount, Rect leftRect, Rect rightRect)
@@ -150,7 +159,7 @@ namespace ICVR
 
         private void playersChanged(int numberofplayers)
         {
-            //Debug.Log("Dictionary changed. There are now " + numberofplayers + " players");
+            //Debug.Log("There are now " + numberofplayers + " peers");
             CurrentNoPeers = numberofplayers;
 
             // send a packet to start communication
@@ -209,7 +218,5 @@ namespace ICVR
                 return null;
             }
         }
-
-
     }
 }

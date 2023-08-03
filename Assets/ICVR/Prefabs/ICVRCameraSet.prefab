@@ -572,7 +572,6 @@ MonoBehaviour:
   debugHand: 0
   CharacterRoot: {fileID: 7676236854016821913}
   BodyController: {fileID: 403641477948328616}
-  LabelObject: {fileID: 5584353305773740648, guid: f86f646a433c3dd4982c40524d3b9bfd, type: 3}
   MaxInteractionDistance: 15
   GameObjectRenderers:
   - {fileID: 336957402041660420}
@@ -4323,7 +4322,6 @@ MonoBehaviour:
   debugHand: 0
   CharacterRoot: {fileID: 7676236854016821913}
   BodyController: {fileID: 403641477948328616}
-  LabelObject: {fileID: 5584353305773740648, guid: f86f646a433c3dd4982c40524d3b9bfd, type: 3}
   MaxInteractionDistance: 15
   GameObjectRenderers:
   - {fileID: 8959524282438529362}
@@ -4532,7 +4530,7 @@ MeshRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8190434127449728961}
   m_Enabled: 1
-  m_CastShadows: 1
+  m_CastShadows: 0
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
   m_MotionVectors: 1
@@ -4680,7 +4678,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 20, y: 25, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 1.1, y: -0.6}
+  m_AnchoredPosition: {x: 1.1, y: -0.5}
   m_SizeDelta: {x: 2, y: 1}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!223 &8190434128086257527
@@ -4807,7 +4805,7 @@ MeshRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8190434128174369439}
   m_Enabled: 1
-  m_CastShadows: 1
+  m_CastShadows: 0
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
   m_MotionVectors: 1
@@ -5207,7 +5205,7 @@ MeshRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8598607687944568453}
   m_Enabled: 1
-  m_CastShadows: 1
+  m_CastShadows: 0
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
   m_MotionVectors: 1
