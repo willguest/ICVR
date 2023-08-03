@@ -16,7 +16,7 @@ It is currently provided "as is" and the code is licensed under the [Mozilla Pub
 
 ## How to make an ICVR Experience?
 
-- Using Unity [2020.3 LTS](https://download.unity3d.com/download_unity/4f4e359ec3fc/UnityDownloadAssistant-2023.1.7f1.exe), make a URP project.
+- Using Unity [2020.3 LTS](https://download.unity3d.com/download_unity/b805b124c6b7/UnityDownloadAssistant-2020.3.48f1.exe), make a URP project.
 - Import the ICVR_Core and, if desired, the ICVR_DLC unity packages.
 - Follow the configuration tutorial, which is currently designed for a Unity user with 1-2 years experience, which covers:
     * Project setting import / configuration    
