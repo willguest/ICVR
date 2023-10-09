@@ -1,5 +1,5 @@
-using System.IO;
 using UnityEditor;
+using UnityEditor.Presets;
 using UnityEngine;
 
 
@@ -7,62 +7,111 @@ namespace ICVR.Settings {
 
     public class PresetToggleEditorWindow : EditorWindow
     {
-        public delegate void SettingsChanged(string presetName);
-        public event SettingsChanged OnSettingsChanged;
+
+        private ICVRSettingsData ICVRSettingsData;
+
+        private static string TAG_MNGR_ASSET = "ProjectSettings/TagManager.asset";
+        private static string PHYS_MNGR_ASSET = "ProjectSettings/DynamicsManager.asset";
+        private static string GRAPH_MNGR_ASSET = "ProjectSettings/GraphicsSettings.asset";
+        private static string QUAL_MNGR_ASSET = "ProjectSettings/QualitySettings.asset";
+        private static string PLAY_MNGR_ASSET = "ProjectSettings/ProjectSettings.asset";
+        private static string EDTR_MNGR_ASSET = "ProjectSettings/EditorSettings.asset";
 
 
-        // This list will hold the names of the .preset files
-        private string[] presetFiles;
-
-        // This list will hold the state (on/off) of each .preset file
-        private bool[] presetStates;
-
-        [MenuItem("Window/Preset Toggle")]
+        [MenuItem("Window/WebXR/ICVR Settings")]
         public static void ShowWindow()
         {
-            GetWindow<PresetToggleEditorWindow>("Preset Toggle");
+            GetWindow<PresetToggleEditorWindow>("ICVR Settings");
         }
 
-        private void OnEnable()
+        private void CreateGUI()
         {
-            // Get the path to the folder containing the .preset files
-            string folderPath = "Assets/ICVR/Settings/Presets";
-
-            // Get the names of the .preset files in the folder
-            presetFiles = Directory.GetFiles(folderPath, "*.preset");
-
-            // Initialize the presetStates list with the same length as presetFiles
-            presetStates = new bool[presetFiles.Length];
-
-            // Set the default state of each preset to false (off)
-            for (int i = 0; i < presetStates.Length; i++)
-            {
-                presetStates[i] = false;
-            }
+            ICVRSettingsData = ICVRSettingsData.instance;
+            ICVRSettingsData.Initialise(); 
         }
+
+
 
         private void OnGUI()
         {
-            // Iterate over each .preset file
-            for (int i = 0; i < presetFiles.Length; i++)
-            {
+            GUILayout.TextArea("IMPORTANT: \nChanges made are irreversible. \n" +
+                    "When checked, use preset files to make changes:\n" +
+                    "Assets/ICVR/Settings/Presets");
+
+            foreach (var sObj in ICVRSettingsData.instance.ICVRSettings)
+                {
 
                 GUILayout.BeginHorizontal();
 
-                // Display the name of the .preset file
-                GUILayout.Label(Path.GetFileNameWithoutExtension(presetFiles[i]));
+                GUILayout.Label(sObj.FileName);
                 GUILayout.FlexibleSpace();
-
+                 
                 EditorGUI.BeginChangeCheck();
-                presetStates[i] = EditorGUILayout.Toggle(presetStates[i], GUILayout.Width(25));
+
+                sObj.PresetState = EditorGUILayout.Toggle(sObj.PresetState, GUILayout.Width(20));
 
                 if (EditorGUI.EndChangeCheck())
                 {
-                    Debug.Log(Path.GetFileNameWithoutExtension(presetFiles[i]) + " is " + presetStates[i].ToString());
-                    OnSettingsChanged.Invoke(Path.GetFileNameWithoutExtension(presetFiles[i]));
+                    if (sObj.PresetState)
+                    {
+                        Debug.Log(sObj.FileName + " is " + sObj.PresetState); 
+                        ICVRSettingsData.UpdateAsset(sObj, sObj.PresetState);
+                        UpdateSettings(sObj.FilePath, IdentifyManager(sObj.FileName));
+                    }
                 }
                 GUILayout.EndHorizontal();
             }
+
+            if (GUILayout.Button("Apply All"))
+            {
+                bool isConfirmed = EditorUtility.DisplayDialog("Confirm", "Are you sure you want to apply all presets?", "OK", "Cancel");
+
+                if (isConfirmed)
+                {
+                    foreach (var sObj in ICVRSettingsData.instance.ICVRSettings.ToArray())
+                    {
+                        if (!sObj.PresetState)
+                        {
+                            Debug.Log(sObj.FileName + " is " + sObj.PresetState);
+                            ICVRSettingsData.UpdateAsset(sObj, sObj.PresetState);
+                            string manager = IdentifyManager(sObj.FileName);
+                            UpdateSettings(sObj.FilePath, manager);
+                        }
+                    }
+                }
+            }
+        }
+
+
+        private string IdentifyManager(string presetName)
+        {
+            switch (presetName)
+            {
+                case "ICVR_Tags":
+                    return TAG_MNGR_ASSET;         
+                case "ICVR_Physics":
+                    return PHYS_MNGR_ASSET;
+                case "ICVR_Graphics":
+                    return GRAPH_MNGR_ASSET;
+                case "ICVR_Quality":
+                    return QUAL_MNGR_ASSET;
+                case "ICVR_PlayerSettings":
+                    return PLAY_MNGR_ASSET;
+                case "ICVR_EditorSettings":
+                    return EDTR_MNGR_ASSET;
+                default:
+                    return string.Empty;
+            }
+        }
+
+
+        private static void UpdateSettings(string preset, string manager)
+        {
+            Preset settingsPreset = AssetDatabase.LoadMainAssetAtPath(preset) as Preset;
+            SerializedObject settingsManager = new SerializedObject(AssetDatabase.LoadMainAssetAtPath(manager));
+            settingsPreset.ApplyTo(settingsManager.targetObject);
+            settingsManager.ApplyModifiedProperties();
+            settingsManager.Update();
         }
     }
 }

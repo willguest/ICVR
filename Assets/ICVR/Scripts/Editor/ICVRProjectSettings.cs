@@ -20,85 +20,20 @@ namespace ICVR.Settings
         static AddRequest Request;
         static WebXRSettings WebXRSettings;
 
-        private static string TAGS_ASSET = "Assets/ICVR/Settings/Presets/ICVR_Tags.preset";
-        private static string PHYS_ASSET = "Assets/ICVR/Settings/Presets/ICVR_Physics.preset";
-        private static string GRAPH_ASSET = "Assets/ICVR/Settings/Presets/ICVR_Graphics.preset";
-        private static string QUAL_ASSET = "Assets/ICVR/Settings/Presets/ICVR_Quality.preset";
-
-        private static string PLAY_ASSET = "Assets/ICVR/Settings/Presets/ICVR_PlayerSettings.preset";
-        private static string EDTR_ASSET = "Assets/ICVR/Settings/Presets/ICVR_EditorSettings.preset";
-
         private static string LIGHT_DATA_ASSET = "Assets/ICVR/Settings/Presets/ICVR_LightingSettings.preset";
         private static string LIGHT_SETTINGS = "Assets/ICVR/Settings/ICVR_Lighting.lighting";
 
-        private static string TAG_MNGR_ASSET = "ProjectSettings/TagManager.asset";
-        private static string PHYS_MNGR_ASSET = "ProjectSettings/DynamicsManager.asset";
-        private static string GRAPH_MNGR_ASSET = "ProjectSettings/GraphicsSettings.asset";
-        private static string QUAL_MNGR_ASSET = "ProjectSettings/QualitySettings.asset";
-
-        private static string PLAY_MNGR_ASSET = "ProjectSettings/ProjectSettings.asset";
-        private static string EDTR_MNGR_ASSET = "ProjectSettings/EditorSettings.asset";
-
-
-        private void OnEnable()
-        {
-            // Get a reference to the PresetToggleEditorWindow
-            
-        }
 
         static ICVRProjectSettings()
         {
             Debug.Log("Updating ICVR Settings");
 
+            //IncludeWebXR();
+            //IncludePackage("Newtonsoft Json", "com.unity.nuget.newtonsoft-json");
 
+            //UpdateLighting();
 
-            IncludeWebXR();
-            IncludePackage("Newtonsoft Json", "com.unity.nuget.newtonsoft-json");
-
-
-            presetToggleEditorWindow = (PresetToggleEditorWindow)EditorWindow.GetWindow(typeof(PresetToggleEditorWindow));
-
-            // Subscribe to the CheckboxChanged event
-            presetToggleEditorWindow.OnSettingsChanged += EnableSettingsPreset;
-            /*
-            UpdateSettings(TAGS_ASSET, TAG_MNGR_ASSET);
-            UpdateSettings(PHYS_ASSET, PHYS_MNGR_ASSET);
-            UpdateSettings(GRAPH_ASSET, GRAPH_MNGR_ASSET);
-            UpdateSettings(QUAL_ASSET, QUAL_MNGR_ASSET);
-            UpdateSettings(PLAY_ASSET, PLAY_MNGR_ASSET);
-            UpdateSettings(EDTR_ASSET, EDTR_MNGR_ASSET);
-
-            UpdateLighting();
-
-            AssetDatabase.Refresh();
-            */
         }
-
-        private static void EnableSettingsPreset(string presetName)
-        {
-            switch (presetName)
-            {
-                case "ICVR_Tags":
-                    UpdateSettings(TAGS_ASSET, TAG_MNGR_ASSET);
-                    break;
-                case "ICVR_Physics":
-                    UpdateSettings(PHYS_ASSET, PHYS_MNGR_ASSET);
-                    break;
-                case "ICVR_Grpahics":
-                    UpdateSettings(GRAPH_ASSET, GRAPH_MNGR_ASSET);
-                    break;
-                case "ICVR_Quality":
-                    UpdateSettings(QUAL_ASSET, QUAL_MNGR_ASSET);
-                    break;
-                case "ICVR_PlayerSettings":
-                    UpdateSettings(PLAY_ASSET, PLAY_MNGR_ASSET);
-                    break;
-                case "ICVR_EditorSettings":
-                    UpdateSettings(EDTR_ASSET, EDTR_MNGR_ASSET);
-                    break;
-            }
-        }
-
 
 
         private static void IncludeWebXR()
@@ -139,16 +74,6 @@ namespace ICVR.Settings
                 WebXRSettings.VRRequiredReferenceSpace = ReferenceSpaceTypes.local;
                 WebXRSettings.VROptionalFeatures = 0;
             }
-        }
-
-        private static void UpdateSettings(string preset, string manager)
-        {
-            Preset settingsPreset = AssetDatabase.LoadMainAssetAtPath(preset) as Preset;
-            SerializedObject settingsManager = new SerializedObject(AssetDatabase.LoadMainAssetAtPath(manager));
-
-            settingsPreset.ApplyTo(settingsManager.targetObject);
-            settingsManager.ApplyModifiedProperties();
-            settingsManager.Update();
         }
 
         private static void UpdateLighting()
