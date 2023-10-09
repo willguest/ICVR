@@ -578,10 +578,10 @@ MonoBehaviour:
   - {fileID: 1387404379743011317}
   - {fileID: 2029920845896817832}
   hand: 1
-  anim: {fileID: 1213760803710728572}
   PointerLayerMask:
     serializedVersion: 2
     m_Bits: 48673
+  anim: {fileID: 1213760803710728572}
 --- !u!1 &895399434054560962
 GameObject:
   m_ObjectHideFlags: 0
@@ -3261,6 +3261,7 @@ MonoBehaviour:
   cameraARL: {fileID: 8115926526948981323}
   cameraARR: {fileID: 2579254202555722744}
   cameraFollower: {fileID: 6506267113760641647}
+  updateCameraTag: 0
 --- !u!54 &7676236854016821919
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -4328,10 +4329,10 @@ MonoBehaviour:
   - {fileID: 1598730907443622633}
   - {fileID: 1474721211075632337}
   hand: 2
-  anim: {fileID: 6703491511808171512}
   PointerLayerMask:
     serializedVersion: 2
     m_Bits: 48673
+  anim: {fileID: 6703491511808171512}
 --- !u!1 &8135289702252706077
 GameObject:
   m_ObjectHideFlags: 0

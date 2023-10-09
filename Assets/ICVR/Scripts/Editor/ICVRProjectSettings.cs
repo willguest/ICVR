@@ -1,9 +1,9 @@
 #if UNITY_EDITOR
 
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.PackageManager;
 using UnityEditor.PackageManager.Requests;
-using UnityEditor.Presets;
 using UnityEngine;
 using WebXR;
 using static WebXR.WebXRSettings;
@@ -14,55 +14,70 @@ namespace ICVR.Settings
     [InitializeOnLoad]
     public class ICVRProjectSettings : Editor
     {
-        private static PresetToggleEditorWindow presetToggleEditorWindow;
-
-        //static PresetToggleEditorWindow setts;
         static AddRequest Request;
+        static ListRequest ListRequest;
+
         static WebXRSettings WebXRSettings;
+        static List<string> projectPackages;
 
-        private static string LIGHT_DATA_ASSET = "Assets/ICVR/Settings/Presets/ICVR_LightingSettings.preset";
-        private static string LIGHT_SETTINGS = "Assets/ICVR/Settings/ICVR_Lighting.lighting";
+        
 
-
-        static ICVRProjectSettings()
+        public void GetProjectPackages()
         {
-            Debug.Log("Updating ICVR Settings");
+            projectPackages = new List<string>();
+            ListRequest = Client.List(true, false); 
+            EditorApplication.update += PackageProgress;
+        }
 
-            //IncludeWebXR();
-            //IncludePackage("Newtonsoft Json", "com.unity.nuget.newtonsoft-json");
+        public bool QueryPackageStatus(string packageName)
+        {
+            ListRequest = Client.List(true, false);
 
-            //UpdateLighting();
+            while (!ListRequest.IsCompleted)
+            {
+                // Waiting for the request to complete
+            }
+
+            if (ListRequest.Status == StatusCode.Success)
+            {
+
+                foreach (var package in ListRequest.Result)
+                {
+                    if (package.name == packageName)
+                    {
+                        Debug.Log(packageName + " is installed");
+                        return true;
+                    }
+                }
+            }
+            else if (ListRequest.Status >= StatusCode.Failure)
+            {
+                Debug.Log(ListRequest.Error.message);
+            }
+
+            return false;
 
         }
 
-
-        private static void IncludeWebXR()
+        public static void IncludePackage(string assetId)
         {
-            if (!EditorPrefs.GetBool("WebXRPresent"))
-            {
-                Request = Client.Add("com.de-panther.webxr");
-                EditorApplication.update += WebXRProgress;
-            }
-            else
-            {
-                Debug.Log("WebXR already Installed");
-                UpdateWebXrSettings();
-            }
-        }
-
-        private static void IncludePackage(string packageName, string assetId)
-        {
-            if (!EditorPrefs.GetBool(packageName))
+            if (!projectPackages.Contains(assetId))
             {
                 Request = Client.Add(assetId);
                 EditorApplication.update += Progress;
             }
             else
             {
-                Debug.Log(packageName + " already Installed");
-                EditorPrefs.SetBool(assetId, true);
+                Debug.Log(assetId + " already installed");
+                if (assetId == "com.de-panther.webxr")
+                {
+                    UpdateWebXrSettings();
+                }
             }
         }
+
+
+
 
         private static void UpdateWebXrSettings()
         {
@@ -76,48 +91,42 @@ namespace ICVR.Settings
             }
         }
 
-        private static void UpdateLighting()
-        {
-            var lightingDataAsset = AssetDatabase.LoadMainAssetAtPath(LIGHT_DATA_ASSET) as Preset;
-            var lightingSettings = AssetDatabase.LoadMainAssetAtPath(LIGHT_SETTINGS) as LightingSettings;
-
-            try { lightingDataAsset.ApplyTo(lightingSettings); } catch (System.Exception e) { Debug.Log("light err"); };
-
-            Lightmapping.SetLightingSettingsForScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene(), lightingSettings);
-        }
-
-        private static void WebXRProgress()
-        {
-            if (Request.IsCompleted)
-            {
-                if (Request.Status == StatusCode.Success)
-                {
-                    Debug.Log("Installed: " + Request.Result.packageId);
-                    EditorPrefs.SetBool("WebXRPresent", true);
-                    UpdateWebXrSettings();
-                }
-                else if (Request.Status >= StatusCode.Failure)
-                {
-                    Debug.Log(Request.Error.message);
-                }
-                EditorApplication.update -= WebXRProgress;
-            }
-        }
 
         private static void Progress()
         {
             if (Request.IsCompleted)
-            {
+            { 
                 if (Request.Status == StatusCode.Success)
                 {
                     Debug.Log("Installed: " + Request.Result.packageId);
-                    EditorPrefs.SetBool("Newtonsoft Json", true);
                 }
                 else if (Request.Status >= StatusCode.Failure)
                 {
                     Debug.Log(Request.Error.message);
                 }
                 EditorApplication.update -= Progress;
+            }
+        }
+
+        private void PackageProgress()
+        {
+            if (ListRequest.IsCompleted)
+            {
+                if (ListRequest.Status == StatusCode.Success)
+                {
+                    projectPackages = new List<string>();
+                    foreach (var package in ListRequest.Result)
+                    {
+                        projectPackages.Add(package.name);
+                    }
+
+                    Debug.Log("Found " + projectPackages.Count + " project packages"); 
+                }
+                else if (Request.Status >= StatusCode.Failure)
+                {
+                    Debug.Log(Request.Error.message);
+                }
+                EditorApplication.update -= PackageProgress;
             }
         }
     }

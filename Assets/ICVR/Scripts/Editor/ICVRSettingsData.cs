@@ -1,101 +1,109 @@
+#if UNITY_EDITOR
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
 
 
-[System.Serializable]
-public class ICVRSettingsObject
-{
-    public string Id;
-    public string FileName = string.Empty;
-    public string FilePath = string.Empty;
-    public bool PresetState = false;
-
-}
-
-
-[FilePath("Assets/ICVR/Settings/ICVRSettingsData.asset", FilePathAttribute.Location.ProjectFolder)]
-public class ICVRSettingsData : ScriptableSingleton<ICVRSettingsData>
+namespace ICVR.Settings
 {
 
-    [SerializeField]
-    public List<ICVRSettingsObject> ICVRSettings;
-
-
-    int checkAsset(ICVRSettingsData asset)
+    [System.Serializable]
+    public class ICVRSettingsObject
     {
-        var list = asset.ICVRSettings;
-        return list.Count;
-    } 
-
-
-    public void Initialise()
-    {
-        var asset = AssetDatabase.LoadMainAssetAtPath(GetFilePath()) as ICVRSettingsData;
-
-        if (checkAsset(asset) < 1)
-        {
-            Debug.Log("making empty preset list");
-            MakeEmptyDataAsset();
-            AssetDatabase.Refresh();
-        }
-        else
-        {
-            ICVRSettings = asset.ICVRSettings;
-        }
+        public string Id;
+        public string FileName = string.Empty;
+        public string FilePath = string.Empty;
+        public bool PresetState = false;
     }
 
-
-    void MakeEmptyDataAsset()
+    [System.Serializable, FilePath("Assets/ICVR/Settings/ICVRSettingsData.asset", FilePathAttribute.Location.ProjectFolder)]
+    public class ICVRSettingsData : ScriptableSingleton<ICVRSettingsData>
     {
-        ICVRSettings = new List<ICVRSettingsObject>();
+        [SerializeField]
+        public List<ICVRSettingsObject> ICVRSettings;
 
-        // Get the path to the folder containing the .preset files
-        string folderPath = "Assets/ICVR/Settings/Presets";
 
-        // Get the names of the .preset files in the folder
-        string[] presetFiles = Directory.GetFiles(folderPath, "*.preset");
-
-        // Set the default state of each preset to false (off)
-        for (int i = 0; i < presetFiles.Length; i++)
+        int checkAsset(ICVRSettingsData asset)
         {
-            string name = Path.GetFileNameWithoutExtension(presetFiles[i]);
-            string path = presetFiles[i];
-
-            var icvrso = new ICVRSettingsObject
-            {
-                Id = AssetDatabase.AssetPathToGUID(path),
-                FileName = name,
-                FilePath = path,
-                PresetState = false
-            };
-
-            ICVRSettings.Add(icvrso);
+            var list = asset.ICVRSettings;
+            return list.Count;
         }
 
-        Save(true);
-        Debug.Log("Saved " + presetFiles.Length + " presets to: " + GetFilePath());
-    }
-
-
-
-    public void UpdateAsset(ICVRSettingsObject so, bool newValue)
-    {
-        foreach (ICVRSettingsObject o in ICVRSettings)
+        public bool Initialise()
         {
-            if (o.FileName == so.FileName)
+            if (instance == null || checkAsset(instance) < 1)
             {
-                Debug.Log("Found " + so.Id + " also called " + o.FileName);
-                o.Id = so.Id;
-                o.FilePath = so.FilePath;
-                o.PresetState = so.PresetState;
+                MakeEmptyDataAsset();
+                return false;
+            }
+            else
+            {
+                return true;
             }
         }
 
-        Save(true);
-        Debug.Log("Saved to: " + GetFilePath());
+        public void ModifyDataAsset(string fn, bool pstate)
+        {
+            List<ICVRSettingsObject> buffer = ICVRSettings.GetRange(0, ICVRSettings.Count);
+            ICVRSettings.Clear();
+
+            for (int i = 0; i < buffer.Count; i++)
+            {
+                bool marked = false;
+                if (buffer[i].FileName == fn)
+                {
+                    marked = true;
+                }
+
+                var icvrso = new ICVRSettingsObject
+                {
+                    Id = buffer[i].Id,
+                    FileName = buffer[i].FileName,
+                    FilePath = buffer[i].FilePath,
+                    PresetState = marked ? pstate : buffer[i].PresetState
+                };
+                ICVRSettings.Add(icvrso);
+            }
+
+            Save(true);
+        }
+
+        private void MakeEmptyDataAsset()
+        {
+            ICVRSettings = new List<ICVRSettingsObject>();
+
+            // Get the path to the folder containing the .preset files
+            string folderPath = "Assets/ICVR/Settings/Presets";
+
+            // Get the names of the .preset files in the folder
+            string[] presetFiles = Directory.GetFiles(folderPath, "*.preset");
+
+            // Set the default state of each preset to false (off)
+            for (int i = 0; i < presetFiles.Length; i++)
+            {
+                string name = Path.GetFileNameWithoutExtension(presetFiles[i]);
+                string path = presetFiles[i];
+
+                var icvrso = new ICVRSettingsObject
+                {
+                    Id = AssetDatabase.AssetPathToGUID(path),
+                    FileName = name,
+                    FilePath = path,
+                    PresetState = false
+                };
+
+                ICVRSettings.Add(icvrso);
+            }
+
+            EditorUtility.SetDirty(instance);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+
+            Save(true);
+            Debug.Log("Created " + ICVRSettings.Count + " presets in: " + GetFilePath());
+        }
+
     }
-
-
 }
+#endif

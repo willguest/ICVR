@@ -2,7 +2,7 @@
 %TAG !u! tag:unity3d.com,2011:
 --- !u!114 &1
 MonoBehaviour:
-  m_ObjectHideFlags: 0
+  m_ObjectHideFlags: 61
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dcc5eeabef2531b4696d3f790782749b, type: 3}
-  m_Name: ICVRSettingsData
+  m_Name: 
   m_EditorClassIdentifier: 
   ICVRSettings:
   - Id: e595df610983fc24fabf148fcd6b8dbd
@@ -28,7 +28,7 @@ MonoBehaviour:
   - Id: 9027402e45d495c47b95b741e5dbcb6f
     FileName: ICVR_Physics
     FilePath: Assets/ICVR/Settings/Presets\ICVR_Physics.preset
-    PresetState: 1
+    PresetState: 0
   - Id: 5f429bba94d323345a111cc3f19381ef
     FileName: ICVR_PlayerSettings
     FilePath: Assets/ICVR/Settings/Presets\ICVR_PlayerSettings.preset

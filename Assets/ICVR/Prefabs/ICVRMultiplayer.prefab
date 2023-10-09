@@ -761,5 +761,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   controlPoseLeft: {fileID: 0}
   controlPoseRight: {fileID: 0}
-  primaryPoseTrigger: 
-  secondaryPoseTrigger: 
+  primaryHandPose: 
+  secondHandPose: 
