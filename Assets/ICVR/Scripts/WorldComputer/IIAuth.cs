@@ -1,23 +1,35 @@
 using Newtonsoft.Json;
 using UnityEngine;
 
-using UnityEngine.UI;
-
 namespace ICVR
 {
+    [System.Serializable]
+    public class UserProfile
+    {
+        public string principal;
+        public string accountId;
+        public string status;
+    }
+
     public class IIAuth : MonoBehaviour
     {
-        public UserProfile iiUserProfile { get; set; }
+        public UserProfile iiUserProfile { get; private set; }
 
         private float authTick;
-        private bool isIIConnected = false; 
+        private bool isIIConnected = false;
 
-        // Start is called before the first frame update
         void Start()
         {
             authTick = Time.time;
         }
 
+        void Update()
+        {
+            if (Input.GetKeyUp(KeyCode.Pause))
+            {
+                BeginAuth();
+            }
+        }
 
         /// <summary>
         /// Begin Internet Identity authentication
@@ -35,10 +47,10 @@ namespace ICVR
         }
 
         /// <summary>
-        /// Check current Internet Identity values
+        /// Check current II user values
         /// </summary>
         /// <returns></returns>
-        public UserProfile CheckStatus()
+        public UserProfile GetUserProfile()
         {
             return new UserProfile
             {
@@ -48,21 +60,20 @@ namespace ICVR
             };
         }
 
-
-
         private void onAuth(string jsonData)
         {
             iiUserProfile = UserAuth(jsonData);
-            isIIConnected = iiUserProfile.status == "Connected";
+            isIIConnected = (iiUserProfile.status == "Connected");
+
+            Debug.Log("II authentication finished with status: " + iiUserProfile.status);
 
             // Request Screen Update
             // ... update relevant object with 'connected' status
 
         }
-
         private UserProfile UserAuth(string jsonData)
         {
-            AuthResponse response = new AuthResponse();
+            AuthResponse response;
             UserProfile user = new UserProfile();
 
             try
@@ -82,12 +93,10 @@ namespace ICVR
             ChainAPI.Instance.FinaliseCallback(response.cbIndex);
             return user;
         }
-
         private void OnDisconnect()
         {
             isIIConnected = false;
         }
 
     }
-
 }

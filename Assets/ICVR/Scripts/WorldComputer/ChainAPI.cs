@@ -2,70 +2,85 @@ using System.Collections.Generic;
 using Newtonsoft.Json;
 using UnityEngine;
 
-public class ChainAPI : MonoBehaviour
+namespace ICVR
 {
-    private Dictionary<int, System.Action<string>> callbacks = new Dictionary<int, System.Action<string>>();
-    private int cbIndex;
-
-    public static ChainAPI Instance;
-    private void Awake()
+    public sealed class ChainAPI : MonoBehaviour
     {
-        Instance = this;
-    }
+        private static ChainAPI instance = null;
+        private ChainAPI() { }
 
-    private int GetCallbackIndex(System.Action<string> cb)
-    {
-        cbIndex = (int)Mathf.Repeat(++cbIndex, 100);
-
-        if (cb != null)
+        public static ChainAPI Instance
         {
+            get
+            {
+                if (instance == null)
+                {
+                    instance = new ChainAPI();
+                }
+                return instance;
+            }
+        }
 
+        private static Dictionary<int, System.Action<string>> callbacks = new Dictionary<int, System.Action<string>>();
+        private int cbIndex;
+
+        private int GetCallbackIndex(System.Action<string> cb)
+        {
+            cbIndex = (int)Mathf.Repeat(++cbIndex, 100);
+            if (cb != null)
+            {
 #if UNITY_EDITOR
-            cb.Invoke(string.Empty);
-            return cbIndex;
+                cb.Invoke(string.Empty);
+                return cbIndex;
+#else
+                callbacks.Add(cbIndex, cb);
 #endif
-            callbacks.Add(cbIndex, cb);
+            }
+            return cbIndex;
         }
 
-        return cbIndex;
-    }
-
-    public void HandleCallback(string jsonData)
-    {
-        Debug.Log("Received JSON Data: " + jsonData);
-
-        var response = JsonConvert.DeserializeObject<CallbackResponse>(jsonData);
-        if (response == null)
+        public void HandleCallback(string jsonData)
         {
-            Debug.LogError("Unable to parse JSON cbIndex. There is no response");
-            return;
+            var response = JsonConvert.DeserializeObject<CallbackResponse>(jsonData);
+            if (response == null)
+            {
+                Debug.LogError("Unable to parse JSON cbIndex. There is no response");
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(response.error))
+            {
+                Debug.LogError("There was an error processing callback " + 
+                    response.cbIndex + "\n" + response.error);
+                return;
+            }
+
+            if (!callbacks.ContainsKey(response.cbIndex))
+            {
+                Debug.LogError("The cbIndex=" + response.cbIndex + " does not exist in callbacks");
+                return;
+            }
+
+            callbacks[response.cbIndex]?.Invoke(jsonData);
         }
 
-        if (!string.IsNullOrEmpty(response.error))
+        public void FinaliseCallback(int cbIndex)
         {
-            Debug.LogError("There was an error processing callback " + response.cbIndex);
-            return;
+            callbacks.Remove(cbIndex);
         }
 
-        if (!callbacks.ContainsKey(response.cbIndex))
+        // Add new canister functions here
+
+
+        public void ICLogin(System.Action<string> cb)
         {
-            Debug.LogError("The cbIndex=" + response.cbIndex + " does not exist in callbacks");
-            return;
+            CanisterUtils.StartIIAuth(GetCallbackIndex(cb));
         }
 
-        callbacks[response.cbIndex]?.Invoke(jsonData);
+        public void GetCoin(System.Action<string> cb)
+        {
+            TokenUtils.GetSomeIslandCoin(GetCallbackIndex(cb));
+        }
+
     }
-
-    public void FinaliseCallback(int cbIndex)
-    {
-        callbacks.Remove(cbIndex);
-    }
-
-    public void ICLogin(System.Action<string> cb)
-    {
-        CanisterUtils.StartIIAuth(GetCallbackIndex(cb));
-    }
-
-
-
 }

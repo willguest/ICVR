@@ -173,7 +173,7 @@ namespace ICVR.Settings {
                             presetStates[i] = true;
                             presets.SetValue(new KeyValuePair<string, bool>(filename, true), i);
 
-                            Debug.Log(filename + " is now " + presetStates[i]);
+                            //Debug.Log(filename + " is now " + presetStates[i]);
 
                             ICVRSettingsData.ModifyDataAsset(filename, presetStates[i]);
                             string filepath = presetFiles[i];

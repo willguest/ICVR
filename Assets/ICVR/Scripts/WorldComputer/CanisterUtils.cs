@@ -4,9 +4,6 @@ public static class CanisterUtilsInternal
 {
     [DllImport("__Internal")]
     public static extern void ICLogin(int cbIndex);
-
-    [DllImport("__Internal")]
-    public static extern void GetCoin(int cbIndex);
 }
 
 public static class CanisterUtils
@@ -18,10 +15,4 @@ public static class CanisterUtils
 #endif
     }
 
-    public static void GetSomeIslandCoin(int cbIndex)
-    {
-#if UNITY_WEBGL && !UNITY_EDITOR
-        CanisterUtilsInternal.GetCoin(cbIndex);
-#endif
-    }
 }

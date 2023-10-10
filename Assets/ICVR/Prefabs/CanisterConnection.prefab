@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &2649388943303551524
+--- !u!1 &6805116770671463771
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,8 +8,9 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 2649388943303551525}
-  - component: {fileID: 2649388943303551522}
+  - component: {fileID: 6805116770671463770}
+  - component: {fileID: 9046791805372701300}
+  - component: {fileID: 8841732174422583153}
   m_Layer: 0
   m_Name: CanisterConnection
   m_TagString: Untagged
@@ -17,13 +18,13 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &2649388943303551525
+--- !u!4 &6805116770671463770
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2649388943303551524}
+  m_GameObject: {fileID: 6805116770671463771}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -3.804406, y: 0.9435295, z: 0.08486187}
   m_LocalScale: {x: 1, y: 1, z: 1}
@@ -31,13 +32,25 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2649388943303551522
+--- !u!114 &9046791805372701300
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2649388943303551524}
+  m_GameObject: {fileID: 6805116770671463771}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6aa3535754dc324290bed7973abfa54, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &8841732174422583153
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6805116770671463771}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f486bb473c5d2224d8645b7d54100820, type: 3}

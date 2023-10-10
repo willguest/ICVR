@@ -108,7 +108,7 @@ namespace ICVR.Settings
             }
         }
 
-        private void PackageProgress()
+        private static void PackageProgress()
         {
             if (ListRequest.IsCompleted)
             {
