@@ -45,7 +45,7 @@ namespace ICVR.Settings
                 {
                     if (package.name == packageName)
                     {
-                        Debug.Log(packageName + " is installed");
+                        //Debug.Log(packageName + " is installed");
                         return true;
                     }
                 }
@@ -119,8 +119,7 @@ namespace ICVR.Settings
                     {
                         projectPackages.Add(package.name);
                     }
-
-                    Debug.Log("Found " + projectPackages.Count + " project packages"); 
+                    //Debug.Log("Found " + projectPackages.Count + " project packages"); 
                 }
                 else if (Request.Status >= StatusCode.Failure)
                 {

@@ -197,6 +197,11 @@ namespace ICVR.Settings {
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField(label, GUILayout.Width(100));
             GUILayout.FlexibleSpace();
+
+            if (packageStatus == null)
+            {
+                packageStatus = new Dictionary<string, bool>();
+            }
             
             if (packageStatus.TryGetValue(packageName, out bool isPresent))
             {
