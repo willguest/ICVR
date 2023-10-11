@@ -10,6 +10,7 @@ using Newtonsoft.Json;
 using ICVR.SharedAssets;
 using UnityEngine;
 using WebXR;
+using System;
 
 namespace ICVR
 {
@@ -19,6 +20,10 @@ namespace ICVR
     /// </summary>
     public class BodyController : MonoBehaviour
     {
+        // Singleton pattern
+        private static BodyController _instance;
+        public static BodyController Instance { get { return _instance; } }
+
         public static string CurrentUserId { get; private set; }
         public static int CurrentNoPeers { get; set; }
         public float BodyMass { get; private set; }
@@ -36,7 +41,7 @@ namespace ICVR
 
         [SerializeField] private GameObject hudFollower;
 
-
+        private bool IsVR;
 
         private bool IsConnectionReady = false;
         private bool hasInteractionEvent = false;
@@ -49,34 +54,13 @@ namespace ICVR
 
         private void OnEnable()
         {
-            Camera.main.gameObject.GetComponent<DesktopController>().OnNetworkInteraction += PackageEventData;
-            leftHand.GetComponent<XRController>().OnHandInteraction += PackageEventData;
-            rightHand.GetComponent<XRController>().OnHandInteraction += PackageEventData;
+            IsVR = (WebXRManager.Instance.XRState != WebXRState.NORMAL);
             WebXRManager.OnXRChange += OnXRChange;
-
         }
 
         private void OnDisable()
         {
-            if (AvatarManager.Instance)
-            {
-                AvatarManager.Instance.OnDictionaryChanged -= playersChanged;
-            }
-            if (NetworkIO.Instance)
-            {
-                NetworkIO.Instance.OnConnectionChanged -= SetConnectionReady;
-                NetworkIO.Instance.OnJoinedRoom -= InitialiseDataChannel;
-            }
-            WebXRManager.OnXRChange -= OnXRChange;
-
-            IsConnectionReady = false;
-
-            if (Camera.main)
-            {
-                Camera.main.gameObject.GetComponent<DesktopController>().OnNetworkInteraction -= PackageEventData;
-            }
-            leftHand.GetComponent<XRController>().OnHandInteraction -= PackageEventData;
-            rightHand.GetComponent<XRController>().OnHandInteraction -= PackageEventData;
+            MapEvents(false);
         }
 
         private void OnXRChange(WebXRState state, int viewsCount, Rect leftRect, Rect rightRect)
@@ -86,19 +70,71 @@ namespace ICVR
 
             // Turn off the following UI when in VR.
             hudFollower.SetActive(state == WebXRState.NORMAL);
+
+            IsVR = (state == WebXRState.VR);
+
+        }
+
+        void MapEvents(bool isOn)
+        {
+            if (isOn)
+            {
+                if (AvatarManager.Instance)
+                {
+                    AvatarManager.Instance.OnDictionaryChanged += playersChanged;
+                }
+                if (NetworkIO.Instance)
+                {
+                    NetworkIO.Instance.OnConnectionChanged += SetConnectionReady;
+                    NetworkIO.Instance.OnJoinedRoom += InitialiseDataChannel;
+                }
+                if (!IsVR)
+                {
+                    DesktopController.Instance.OnObjectFocus += HandleObjectFocus;
+                    DesktopController.Instance.OnNetworkInteraction += PackageEventData;
+                }
+                else
+                {
+                    leftHand.GetComponent<XRController>().OnHandInteraction += PackageEventData;
+                    rightHand.GetComponent<XRController>().OnHandInteraction += PackageEventData;
+                }
+            }
+            else
+            {
+                if (AvatarManager.Instance)
+                {
+                    AvatarManager.Instance.OnDictionaryChanged -= playersChanged;
+                }
+                if (NetworkIO.Instance)
+                {
+                    NetworkIO.Instance.OnConnectionChanged -= SetConnectionReady;
+                    NetworkIO.Instance.OnJoinedRoom -= InitialiseDataChannel;
+                }
+                WebXRManager.OnXRChange -= OnXRChange;
+
+                IsConnectionReady = false;
+
+                if (!IsVR)
+                {
+                    DesktopController.Instance.OnObjectFocus -= HandleObjectFocus;
+                    DesktopController.Instance.OnNetworkInteraction -= PackageEventData;
+                }
+                else
+                {
+                    leftHand.GetComponent<XRController>().OnHandInteraction -= PackageEventData;
+                    rightHand.GetComponent<XRController>().OnHandInteraction -= PackageEventData;
+                }
+            }
+        }
+
+        private void Awake()
+        {
+            _instance = this;
         }
 
         void Start()
         {
-            if (AvatarManager.Instance)
-            {
-                AvatarManager.Instance.OnDictionaryChanged += playersChanged;
-            }
-            if (NetworkIO.Instance)
-            {
-                NetworkIO.Instance.OnConnectionChanged += SetConnectionReady;
-                NetworkIO.Instance.OnJoinedRoom += InitialiseDataChannel;
-            }
+            MapEvents(true);
 
             UiStartPos.position = hudFollower.transform.position;
             UiStartPos.rotation = hudFollower.transform.rotation;
@@ -136,6 +172,16 @@ namespace ICVR
                     SendData(JsonConvert.SerializeObject(BuildDataFrame()));
                 }
             }
+        }
+
+        private void HandleObjectFocus(GameObject go, bool state)
+        {
+            // pass the object to the interface (only desktop)
+            if (go != null && go.TryGetComponent(out ObjectInterface objInt))
+            {
+                objInt.ToggleActivation(go, state);
+            }
+            
         }
 
         private bool notifyingNetwork = false;

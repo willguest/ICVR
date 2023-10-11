@@ -6,20 +6,9 @@ namespace ICVR
 {
     public sealed class ChainAPI : MonoBehaviour
     {
-        private static ChainAPI instance = null;
-        private ChainAPI() { }
-
-        public static ChainAPI Instance
-        {
-            get
-            {
-                if (instance == null)
-                {
-                    instance = new ChainAPI();
-                }
-                return instance;
-            }
-        }
+        // Singleton pattern
+        private static ChainAPI _instance;
+        public static ChainAPI Instance { get { return _instance; } }
 
         private static Dictionary<int, System.Action<string>> callbacks = new Dictionary<int, System.Action<string>>();
         private int cbIndex;

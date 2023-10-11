@@ -36,7 +36,7 @@ namespace ICVR
         /// </summary>
         public void BeginAuth()
         {
-            if (!isIIConnected)
+            if (!isIIConnected && Application.platform != RuntimePlatform.WindowsEditor)
             {
                 if (Time.time - authTick > 1.0f)
                 {
@@ -65,7 +65,8 @@ namespace ICVR
             iiUserProfile = UserAuth(jsonData);
             isIIConnected = (iiUserProfile.status == "Connected");
 
-            Debug.Log("II authentication finished with status: " + iiUserProfile.status);
+            Debug.Log("II authentication completed." +
+                "\nStatus: " + iiUserProfile.status);
 
             // Request Screen Update
             // ... update relevant object with 'connected' status

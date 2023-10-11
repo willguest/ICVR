@@ -240,11 +240,23 @@ namespace ICVR
                 }
             }
 
-            // trigger for distance manipulation
+            // trigger effects, either for distance interaction or events using ObjectInterface
             float trigVal = GetAxis(AxisTypes.Trigger);
+
             if (trigVal > trigThresUp && prevTrig <= trigThresUp)
             {
-                PickupFar();
+                if (IsUsingInterface && currentNearRigidBody)
+                {
+                    if (currentNearRigidBody.TryGetComponent(out ObjectInterface objInt))
+                    {
+                        objInt.OnTrigger();
+                    }
+                }
+                else
+                {
+                    PickupFar();
+                }
+                
             }
             else if (trigVal < trigThresDn && prevTrig >= trigThresDn)
             {
@@ -637,7 +649,6 @@ namespace ICVR
         }
 
 
-
         public void DropFar()
         {
             if (touchingButton || pointingAtButton)
@@ -987,7 +998,7 @@ namespace ICVR
         void OnTriggerEnter(Collider other)
         {
             if (other.gameObject.tag != "Interactable" || nearManip)
-            {
+            { 
                 return;
             }
 
@@ -1006,7 +1017,7 @@ namespace ICVR
                 }
 
             }
-            else if (objectLayer == 10 || objectLayer == 15) // interactable objects or tools
+            else if (objectLayer == 9 || objectLayer == 10 || objectLayer == 15) // furniture, objects or tools
             {
                 if (other.gameObject.TryGetComponent(out Rigidbody rb) &&
                     (Time.time - triggerEnterTick) > 0.2f)
@@ -1040,7 +1051,7 @@ namespace ICVR
                 }
 
             }
-            else if (objectLayer == 10 || objectLayer == 15) // interactable objects or tools
+            else if (objectLayer == 9 || objectLayer == 10 || objectLayer == 15) // furniture, objects or tools
             {
                 if (other.gameObject.TryGetComponent(out Rigidbody rb)
                     && (Time.time - triggerExitTick) > 0.2f)

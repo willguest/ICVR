@@ -6,6 +6,7 @@
 
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace ICVR
 {
@@ -17,20 +18,44 @@ namespace ICVR
     {
         [SerializeField] private Transform controlPoseLeft;
         [SerializeField] private Transform controlPoseRight;
+        [SerializeField] private UnityEvent OnFocusEvent;
+        [SerializeField] private UnityEvent OnTriggerEvent;
 
         private Transform previousParent;
         private GameObject currentManipulator;
-
         private bool IsBeingUsed;
 
-        public void ToggleActivation()
+        public void ToggleActivation(GameObject manipulator, bool state)
         {
-            IsBeingUsed = !IsBeingUsed;
-
-            if (currentManipulator != null && !IsBeingUsed)
+            // PC, lose control event
+            if (!state)
             {
                 LoseControl();
             }
+            else
+            {
+                if (manipulator.TryGetComponent(out XRController xrctrl))
+                {
+                    // VR: position hands
+                    if (!xrctrl.IsControllingObject)
+                    {
+                        xrctrl.IsUsingInterface = state;
+                        previousParent = manipulator.transform;
+                        ReceiveControl(manipulator);
+                    }
+                }
+                else
+                {
+                    // PC: do nothing, already setting cursor
+                }
+            }
+            OnFocusEvent?.Invoke();
+            IsBeingUsed = state;
+        }
+
+        public void OnTrigger()
+        {
+            OnTriggerEvent?.Invoke();
         }
 
         private void OnTriggerEnter(Collider other)
@@ -39,14 +64,16 @@ namespace ICVR
 
             if (other.gameObject.layer == 15)
             {
+                ToggleActivation(other.gameObject, true);
+                /*
                 if (other.gameObject.TryGetComponent(out XRController xrctrl))
                 {
                     if (!xrctrl.IsControllingObject)
                     {
                         previousParent = other.gameObject.transform;
-                        ReceiveControl(other.gameObject);
                     }
                 }
+                */
             }
         }
 
@@ -56,10 +83,13 @@ namespace ICVR
 
             if (other.gameObject.layer == 15)
             {
+                ToggleActivation(null, false);
+                /*
                 if (!other.gameObject.GetComponent<XRController>().IsControllingObject)
                 {
                     LoseControl();
                 }
+                */
             }
         }
 
@@ -82,7 +112,6 @@ namespace ICVR
             }
 
             StartCoroutine(LerpToControlPose(currentManipulator, activeControlPose.localPosition, activeControlPose.localRotation, 0.4f));
-            IsBeingUsed = true;
         }
 
 
@@ -92,9 +121,14 @@ namespace ICVR
 
             currentManipulator.transform.parent = previousParent.transform;
 
-            if (gameObject.GetComponent<ControlDynamics>())
+            if (gameObject.TryGetComponent(out ControlDynamics cd))
             {
-                gameObject.GetComponent<ControlDynamics>().ResetPose();
+                cd.ResetPose();
+            }
+
+            if (currentManipulator.transform.parent.gameObject.TryGetComponent(out XRController xrc))
+            {
+                xrc.IsUsingInterface = false;
             }
 
             StartCoroutine(LerpToControlPose(currentManipulator, Vector3.zero, Quaternion.identity, 0.4f));
@@ -106,7 +140,6 @@ namespace ICVR
             }
 
             currentManipulator = null;
-            IsBeingUsed = false;
         }
 
 
