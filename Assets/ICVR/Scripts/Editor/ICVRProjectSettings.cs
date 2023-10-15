@@ -40,12 +40,10 @@ namespace ICVR.Settings
 
             if (ListRequest.Status == StatusCode.Success)
             {
-
                 foreach (var package in ListRequest.Result)
                 {
                     if (package.name == packageName)
                     {
-                        //Debug.Log(packageName + " is installed");
                         return true;
                     }
                 }
@@ -56,10 +54,9 @@ namespace ICVR.Settings
             }
 
             return false;
-
         }
 
-        public static void IncludePackage(string assetId)
+        public void IncludePackage(string assetId)
         {
             if (!projectPackages.Contains(assetId))
             {
@@ -71,19 +68,15 @@ namespace ICVR.Settings
                 Debug.Log(assetId + " already installed");
                 if (assetId == "com.de-panther.webxr")
                 {
-                    UpdateWebXrSettings();
+                    TryUpdateWebXrSettings();
                 }
             }
         }
 
 
-
-
-        private static void UpdateWebXrSettings()
+        public static void TryUpdateWebXrSettings()
         {
-            bool gotSettings = EditorBuildSettings.TryGetConfigObject("WebXR.Settings", out WebXRSettings);
-
-            if (gotSettings)
+            if (EditorBuildSettings.TryGetConfigObject("WebXR.Settings", out WebXRSettings))
             {
                 WebXRSettings = EditorUtility.InstanceIDToObject(WebXRSettings.GetInstanceID()) as WebXRSettings;
                 WebXRSettings.VRRequiredReferenceSpace = ReferenceSpaceTypes.local;

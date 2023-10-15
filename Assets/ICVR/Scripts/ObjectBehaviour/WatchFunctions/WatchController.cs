@@ -5,7 +5,7 @@ using UnityEngine;
 public class WatchController : MonoBehaviour
 {
     [SerializeField] private GameObject InventoryContainer;
-    [SerializeField] private List<GameObject> modeCanvases;
+    [SerializeField] private GameObject[] modeCanvases;
 
     [SerializeField] private GameObject characterRoot;
     //[SerializeField] private UnityEngine.UI.Button faceButton;
@@ -21,14 +21,6 @@ public class WatchController : MonoBehaviour
     private void Start()
     {
         
-    }
-
-    private void SetMode(int newMode)
-    {
-        foreach (GameObject g in modeCanvases)
-        {
-            g.SetActive(modeCanvases.IndexOf(g) == newMode);
-        }
     }
 
     void Update()
@@ -50,21 +42,34 @@ public class WatchController : MonoBehaviour
                 StartCoroutine(LerpToTarget(myStuff, targetPos, targetRot, 0.5f));
             }
         }
-
-
-        if (Input.GetKeyUp(KeyCode.End))
-        {
-            ToggleInventory();
-        }
-
     }
+
+    public void OnWake()
+    {
+        SetMode(0);
+    }
+
+    public void OnSleep()
+    {
+        SetMode(-1);
+    }
+
 
     public void ChangeMode()
     {
         currentMode++;
-        if (currentMode > modeCanvases.Count - 1) currentMode = 0;
+        if (currentMode > modeCanvases.Length - 1) currentMode = 0;
         SetMode(currentMode);
     }
+
+    private void SetMode(int newMode)
+    {
+        for (int g = 0; g < modeCanvases.Length; g++)
+        {
+            modeCanvases[g].SetActive(g == newMode);
+        }
+    }
+
 
     public void ToggleInventory()
     {

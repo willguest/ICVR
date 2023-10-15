@@ -36,6 +36,7 @@ namespace ICVR
         /// </summary>
         public void BeginAuth()
         {
+            Debug.Log("II authentication started");
             if (!isIIConnected && Application.platform != RuntimePlatform.WindowsEditor)
             {
                 if (Time.time - authTick > 1.0f)

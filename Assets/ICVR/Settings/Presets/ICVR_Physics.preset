@@ -126,23 +126,23 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: m_LayerCollisionMatrix.Array.data[11]
-    value: 4294934527
+    value: 4294914047
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: m_LayerCollisionMatrix.Array.data[12]
-    value: 4294942207
+    value: 4294940159
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: m_LayerCollisionMatrix.Array.data[13]
-    value: 4294920703
+    value: 4294904319
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: m_LayerCollisionMatrix.Array.data[14]
-    value: 4294912511
+    value: 4294935039
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: m_LayerCollisionMatrix.Array.data[15]
-    value: 4294940159
+    value: 4294956543
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: m_LayerCollisionMatrix.Array.data[16]

@@ -749,12 +749,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   controlPoseLeft: {fileID: 2250353066569041560}
   controlPoseRight: {fileID: 2250353065580433694}
-  OnFocusEvent:
+  OnGetFocusEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  OnLoseFocusEvent:
     m_PersistentCalls:
       m_Calls: []
   OnTriggerEvent:
     m_PersistentCalls:
       m_Calls: []
+  gripPose: holdIt
 --- !u!114 &2250353065954608359
 MonoBehaviour:
   m_ObjectHideFlags: 0

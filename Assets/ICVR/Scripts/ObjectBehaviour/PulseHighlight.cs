@@ -4,7 +4,7 @@ public class PulseHighlight : MonoBehaviour
 {
     private Color baseColour;
     private Color highlightColour;
-    private bool is_highlighted = true;
+    private bool is_highlighted = false;
     private Material material;
 
     void Start()
@@ -14,15 +14,27 @@ public class PulseHighlight : MonoBehaviour
         highlightColour = new Color(0.62f, 0.58f, 0.32f, 0.5f);
     }
 
+    public void EnableHighlight()
+    {
+        is_highlighted = true;
+        if (is_highlighted) material.color = highlightColour;
+    }
+
+    public void DisableHighlight()
+    {
+        is_highlighted = false;
+        if (is_highlighted) material.color = highlightColour;
+    }
+
     public void ToggleHighlight()
     {
         is_highlighted = !is_highlighted;
-        if (!is_highlighted) material.color = highlightColour;
+        if (is_highlighted) material.color = highlightColour;
     }
 
     void Update()
     {
-        if (is_highlighted)
+        if (!is_highlighted)
         {
             var ratio = Mathf.Abs(Mathf.Sin(Time.time));
             material.color = Color.Lerp(baseColour, highlightColour, ratio);

@@ -6,12 +6,10 @@ using UnityEditor;
 using UnityEditor.Presets;
 using UnityEngine;
 
-
 namespace ICVR.Settings {
 
     public class PresetToggleEditorWindow : EditorWindow
     {
-
         private ICVRSettingsData ICVRSettingsData;
         private ICVRProjectSettings ICVRProjectSettings;
 
@@ -27,21 +25,18 @@ namespace ICVR.Settings {
         private static string PLAY_MNGR_ASSET = "ProjectSettings/ProjectSettings.asset";
         private static string EDTR_MNGR_ASSET = "ProjectSettings/EditorSettings.asset";
 
-
         [MenuItem("Window/WebXR/ICVR Settings")]
         public static void ShowWindow()
         {
             GetWindow<PresetToggleEditorWindow>("ICVR Settings");
         }
 
-        private Dictionary<string, bool> packageStatus;
 
+        private Dictionary<string, bool> packageStatus;
+        KeyValuePair<string, bool>[] presets;
         bool hasDataAsset = false;
 
-        KeyValuePair<string, bool>[] presets;
-
         string[] presetFiles;
-        string[] presetPaths;
         bool[] presetStates;
         
 
@@ -52,20 +47,20 @@ namespace ICVR.Settings {
 
             packageStatus = new Dictionary<string, bool>();
 
-            CheckPackagePresence("com.de-panther.webxr");
+            if (CheckPackagePresence("com.de-panther.webxr"))
+            {
+                ICVRProjectSettings.TryUpdateWebXrSettings();
+            }
             CheckPackagePresence("com.unity.nuget.newtonsoft-json");
 
             // start the settings scriptable object
             ICVRSettingsData = ICVRSettingsData.instance;
             hasDataAsset = ICVRSettingsData.Initialise();
 
-
             // Get the properties of the .preset files
             presetFiles = Directory.GetFiles(PRESET_PATH, "*.preset");
-            presetPaths = new string[presetFiles.Length];
             presetStates = new bool[presetFiles.Length];
             presets = new KeyValuePair<string, bool>[presetFiles.Length];
-
 
             if (hasDataAsset)
             {
@@ -122,7 +117,6 @@ namespace ICVR.Settings {
             for (int i = 0; i < presets.Length; i++) 
             {
                 string filename = Path.GetFileNameWithoutExtension(presetFiles[i]);
-                presetPaths[i] = presetFiles[i];
                 presetStates[i] = presets[i].Value;
 
                 GUILayout.BeginHorizontal();
@@ -189,7 +183,6 @@ namespace ICVR.Settings {
             }
 
             EditorGUILayout.EndVertical();
-
         }
 
         void DisplayPackage(string label, string packageName)
@@ -216,20 +209,18 @@ namespace ICVR.Settings {
             EditorGUI.BeginDisabledGroup(isPresent);
             if (GUILayout.Button("Install", GUILayout.Width(50)))
             {
-
-
                 ICVRProjectSettings.IncludePackage(packageName);
             }
             EditorGUI.EndDisabledGroup();
             EditorGUILayout.EndHorizontal();
         }
 
-        private void CheckPackagePresence(string packageName)
+        private bool CheckPackagePresence(string packageName)
         {
             bool isPresent = ICVRProjectSettings.QueryPackageStatus(packageName);
             packageStatus.Add(packageName, isPresent);
+            return isPresent;
         }
-
 
         private string IdentifyManager(string presetName)
         {
@@ -276,8 +267,6 @@ namespace ICVR.Settings {
             lightManager.ApplyModifiedProperties();
             lightManager.UpdateIfRequiredOrScript();
         }
-
-
         private static void UpdateSettings(string preset, string manager)
         {
             Preset settingsPreset = AssetDatabase.LoadMainAssetAtPath(preset) as Preset;
@@ -286,9 +275,6 @@ namespace ICVR.Settings {
             settingsManager.ApplyModifiedProperties();
             settingsManager.Update();
         }
-
-
-
     }
 }
 #endif
