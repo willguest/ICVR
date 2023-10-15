@@ -1,0 +1,22 @@
+fileFormatVersion: 2
+guid: 927bf0adf4541694aaf5f1ef699c9e4e
+TrueTypeFontImporter:
+  externalObjects: {}
+  serializedVersion: 4
+  fontSize: 16
+  forceTextureCase: -2
+  characterSpacing: 0
+  characterPadding: 1
+  includeFontData: 1
+  fontNames:
+  - SourceHanSerifCN-Regular
+  fallbackFontReferences:
+  - {fileID: 12800000, guid: ef372b257c503ea4ebba05f1e6d38388, type: 3}
+  customCharacters: " ()23456:ACDEHIJMNPRSUabcdegiklmnoprstuvxz\xF3\u4E09\u4E8C\u4E94\u4EBA\u4EE3\u4EE5\u4EFD\u5165\u516C\u516D\u5171\u5217\u521B\u52A0\u52A8\u5316\u540C\u540D\u56DB\u5EFA\u5F88\u5FEB\u6001\u623F\u627E\u62D6\u62E9\u63A5\u65B0\u72B6\u73B0\u7684\u79C1\u79F0\u7A7A\u884C\u8868\u8EAB\u8FDE\u9009\u9020\u95F4"
+  fontRenderingMode: 0
+  ascentCalculationMode: 1
+  useLegacyBoundsCalculation: 0
+  shouldRoundAdvanceValue: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

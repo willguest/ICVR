@@ -577,6 +577,9 @@ MonoBehaviour:
   - {fileID: 336957402041660420}
   - {fileID: 1387404379743011317}
   - {fileID: 2029920845896817832}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
   hand: 1
   PointerLayerMask:
     serializedVersion: 2

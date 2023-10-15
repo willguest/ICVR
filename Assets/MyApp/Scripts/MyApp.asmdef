@@ -1,0 +1,19 @@
+{
+    "name": "MyApp",
+    "rootNamespace": "",
+    "references": [
+        "GUID:ce24957eeee54d04b8dd593d66d49ab7"
+    ],
+    "includePlatforms": [
+        "Editor",
+        "WebGL"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
