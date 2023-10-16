@@ -5,6 +5,8 @@ using System.IO;
 using UnityEditor;
 using UnityEditor.Presets;
 using UnityEngine;
+using WebXR;
+using static WebXR.WebXRSettings;
 
 namespace ICVR.Settings {
 
@@ -25,35 +27,34 @@ namespace ICVR.Settings {
         private static string PLAY_MNGR_ASSET = "ProjectSettings/ProjectSettings.asset";
         private static string EDTR_MNGR_ASSET = "ProjectSettings/EditorSettings.asset";
 
+
         [MenuItem("Window/WebXR/ICVR Settings")]
         public static void ShowWindow()
         {
             GetWindow<PresetToggleEditorWindow>("ICVR Settings");
         }
 
-
+        static WebXRSettings WebXRSettings;
         private Dictionary<string, bool> packageStatus;
         KeyValuePair<string, bool>[] presets;
         bool hasDataAsset = false;
 
         string[] presetFiles;
         bool[] presetStates;
-        
+
 
         private void CreateGUI()
         {
+            // Create settings objects
             ICVRProjectSettings = CreateInstance<ICVRProjectSettings>();
             ICVRProjectSettings.GetProjectPackages();
-
             packageStatus = new Dictionary<string, bool>();
 
-            if (CheckPackagePresence("com.de-panther.webxr"))
-            {
-                ICVRProjectSettings.TryUpdateWebXrSettings();
-            }
+            // Get dependencies
+            CheckPackagePresence("com.de-panther.webxr");
             CheckPackagePresence("com.unity.nuget.newtonsoft-json");
 
-            // start the settings scriptable object
+            // Start the settings scriptable object
             ICVRSettingsData = ICVRSettingsData.instance;
             hasDataAsset = ICVRSettingsData.Initialise();
 
@@ -62,7 +63,7 @@ namespace ICVR.Settings {
             presetStates = new bool[presetFiles.Length];
             presets = new KeyValuePair<string, bool>[presetFiles.Length];
 
-            if (hasDataAsset)
+            if (hasDataAsset) 
             {
                 for (int f = 0; f < presetFiles.Length; f++)
                 {
@@ -77,7 +78,7 @@ namespace ICVR.Settings {
                         //Debug.Log("adding new item");
                         presets[f] = new KeyValuePair<string, bool>(presetFiles[f], false);
                     }
-                }
+                }   
             }
         }
 
@@ -95,9 +96,7 @@ namespace ICVR.Settings {
             DisplayPackage("WebXR Export", "com.de-panther.webxr");
             DisplayPackage("Newtonsoft Json","com.unity.nuget.newtonsoft-json");
             
-            EditorGUILayout.EndVertical();
-
-            
+            EditorGUILayout.EndVertical(); 
             EditorGUILayout.Space(15, true);
 
             GUILayout.TextArea("IMPORTANT: Changes to settings are irreversible. " +
@@ -105,11 +104,8 @@ namespace ICVR.Settings {
                     "-> " + PRESET_PATH);
 
             EditorGUILayout.Separator();
-
-
             EditorGUILayout.BeginVertical();
             EditorGUILayout.LabelField("Settings", titleStyle);
-
 
             if (presets == null) return;
 
@@ -117,10 +113,11 @@ namespace ICVR.Settings {
             for (int i = 0; i < presets.Length; i++) 
             {
                 string filename = Path.GetFileNameWithoutExtension(presetFiles[i]);
+                string shortName = filename.Substring(5, filename.Length - 5);
                 presetStates[i] = presets[i].Value;
 
                 GUILayout.BeginHorizontal();
-                GUILayout.Label(filename);
+                GUILayout.Label(shortName);
                 GUILayout.FlexibleSpace();
                  
                 EditorGUI.BeginChangeCheck();
@@ -129,7 +126,6 @@ namespace ICVR.Settings {
 
                 if (EditorGUI.EndChangeCheck())
                 {
-                    //Debug.Log(filename + " is " + presetStates[i]);
                     presets.SetValue(new KeyValuePair<string, bool>(filename, presetStates[i]), i);
                     ICVRSettingsData.ModifyDataAsset(filename, presetStates[i]);
 
@@ -149,8 +145,7 @@ namespace ICVR.Settings {
                 }
                 GUILayout.EndHorizontal();
             }
-
-            
+     
             if (GUILayout.Button("Apply All"))
             {
                 bool isConfirmed = EditorUtility.DisplayDialog("Confirmation", 
@@ -181,7 +176,6 @@ namespace ICVR.Settings {
                     }
                 }
             }
-
             EditorGUILayout.EndVertical();
         }
 
@@ -215,11 +209,10 @@ namespace ICVR.Settings {
             EditorGUILayout.EndHorizontal();
         }
 
-        private bool CheckPackagePresence(string packageName)
+        private void CheckPackagePresence(string packageName)
         {
             bool isPresent = ICVRProjectSettings.QueryPackageStatus(packageName);
             packageStatus.Add(packageName, isPresent);
-            return isPresent;
         }
 
         private string IdentifyManager(string presetName)
@@ -240,6 +233,9 @@ namespace ICVR.Settings {
                     return EDTR_MNGR_ASSET;
                 case "ICVR_LightingSettings":
                     UpdateLighting();
+                    return string.Empty;
+                case "ICVR_WebXR":
+                    TryUpdateWebXrSettings();
                     return string.Empty;
                 default:
                     return string.Empty;
@@ -267,6 +263,17 @@ namespace ICVR.Settings {
             lightManager.ApplyModifiedProperties();
             lightManager.UpdateIfRequiredOrScript();
         }
+
+        public static void TryUpdateWebXrSettings()
+        {
+            if (EditorBuildSettings.TryGetConfigObject("WebXR.Settings", out WebXRSettings))
+            {
+                WebXRSettings = EditorUtility.InstanceIDToObject(WebXRSettings.GetInstanceID()) as WebXRSettings;
+                WebXRSettings.VRRequiredReferenceSpace = ReferenceSpaceTypes.local;
+                WebXRSettings.VROptionalFeatures = 0;
+            }
+        }
+
         private static void UpdateSettings(string preset, string manager)
         {
             Preset settingsPreset = AssetDatabase.LoadMainAssetAtPath(preset) as Preset;

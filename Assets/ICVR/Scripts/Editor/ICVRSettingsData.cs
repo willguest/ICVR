@@ -32,7 +32,7 @@ namespace ICVR.Settings
 
         public bool Initialise()
         {
-            if (instance == null || checkAsset(instance) < 1)
+            if (instance == null)
             {
                 MakeEmptyDataAsset();
                 return false;
@@ -69,7 +69,7 @@ namespace ICVR.Settings
             Save(true);
         }
 
-        private void MakeEmptyDataAsset()
+        private void MakeEmptyDataAsset() 
         {
             ICVRSettings = new List<ICVRSettingsObject>();
 

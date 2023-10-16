@@ -5,8 +5,6 @@ using UnityEditor;
 using UnityEditor.PackageManager;
 using UnityEditor.PackageManager.Requests;
 using UnityEngine;
-using WebXR;
-using static WebXR.WebXRSettings;
 
 
 namespace ICVR.Settings
@@ -15,12 +13,8 @@ namespace ICVR.Settings
     public class ICVRProjectSettings : Editor
     {
         static AddRequest Request;
-        static ListRequest ListRequest;
-
-        static WebXRSettings WebXRSettings;
+        static ListRequest ListRequest;  
         static List<string> projectPackages;
-
-        
 
         public void GetProjectPackages()
         {
@@ -65,25 +59,9 @@ namespace ICVR.Settings
             }
             else
             {
-                Debug.Log(assetId + " already installed");
-                if (assetId == "com.de-panther.webxr")
-                {
-                    TryUpdateWebXrSettings();
-                }
+                Debug.Log(assetId + " is already installed");
             }
         }
-
-
-        public static void TryUpdateWebXrSettings()
-        {
-            if (EditorBuildSettings.TryGetConfigObject("WebXR.Settings", out WebXRSettings))
-            {
-                WebXRSettings = EditorUtility.InstanceIDToObject(WebXRSettings.GetInstanceID()) as WebXRSettings;
-                WebXRSettings.VRRequiredReferenceSpace = ReferenceSpaceTypes.local;
-                WebXRSettings.VROptionalFeatures = 0;
-            }
-        }
-
 
         private static void Progress()
         {
