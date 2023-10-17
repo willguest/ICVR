@@ -6,7 +6,6 @@ using UnityEditor.PackageManager;
 using UnityEditor.PackageManager.Requests;
 using UnityEngine;
 
-
 namespace ICVR.Settings
 {
     [InitializeOnLoad]
@@ -90,7 +89,6 @@ namespace ICVR.Settings
                     {
                         projectPackages.Add(package.name);
                     }
-                    //Debug.Log("Found " + projectPackages.Count + " project packages"); 
                 }
                 else if (Request.Status >= StatusCode.Failure)
                 {

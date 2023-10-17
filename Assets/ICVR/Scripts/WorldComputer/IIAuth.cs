@@ -15,6 +15,12 @@ namespace ICVR
     {
         public UserProfile iiUserProfile { get; private set; }
 
+        [SerializeField] private UnityEngine.UI.Text connectionResult;
+        [SerializeField] private UnityEngine.UI.Image promptImage;
+
+        private bool screenUpdateReady = false;
+        private string connectionResultString = string.Empty;
+
         private float authTick;
         private bool isIIConnected = false;
 
@@ -25,19 +31,36 @@ namespace ICVR
 
         void Update()
         {
-            if (Input.GetKeyUp(KeyCode.Pause))
+            if (screenUpdateReady)
             {
-                BeginAuth();
+                screenUpdateReady = false;
+                connectionResult.text = connectionResultString;
             }
         }
+
+        #region Public Interface
+
+
+        public void OnGetFocus()
+        {
+            if (!isIIConnected)
+            {
+                promptImage.gameObject.SetActive(true);
+            }
+        }
+
+        public void OnLoseFocus()
+        {
+            promptImage.gameObject.SetActive(false);
+        }
+
 
         /// <summary>
         /// Begin Internet Identity authentication
         /// </summary>
         public void BeginAuth()
         {
-            Debug.Log("II authentication started");
-            if (!isIIConnected && Application.platform != RuntimePlatform.WindowsEditor)
+            if (!isIIConnected)
             {
                 if (Time.time - authTick > 1.0f)
                 {
@@ -45,39 +68,53 @@ namespace ICVR
                     ChainAPI.Instance.ICLogin(onAuth);
                 }
             }
+            else
+            {
+                ChainAPI.Instance.currentProfile = GetUserProfile();
+            }
         }
 
-        /// <summary>
-        /// Check current II user values
-        /// </summary>
-        /// <returns></returns>
-        public UserProfile GetUserProfile()
+        public void EndAuth()
+        {
+            ChainAPI.Instance.ICLogout(OnConfirmExit);
+        }
+
+        #endregion Public Interface
+
+
+        #region Private Functions
+
+        private UserProfile GetUserProfile()
         {
             return new UserProfile
             {
-                status = iiUserProfile.status,
-                principal = iiUserProfile.principal,
-                accountId = iiUserProfile.accountId
+                status = iiUserProfile?.status ?? "",
+                principal = iiUserProfile?.principal ?? "",
+                accountId = iiUserProfile?.accountId ?? ""
             };
         }
 
         private void onAuth(string jsonData)
         {
-            iiUserProfile = UserAuth(jsonData);
-            isIIConnected = (iiUserProfile.status == "Connected");
-
-            Debug.Log("II authentication completed." +
-                "\nStatus: " + iiUserProfile.status);
-
-            // Request Screen Update
-            // ... update relevant object with 'connected' status
-
+            iiUserProfile = ProcessAuthResponse(jsonData);
+            
+            string bkPrincipal = iiUserProfile.principal.BookEnd(9, "...");
+            connectionResultString = "Status: " + iiUserProfile.status +
+                                        "\nPrincipal: " + bkPrincipal;
+            
+            screenUpdateReady = true;
         }
-        private UserProfile UserAuth(string jsonData)
+
+        private void OnConfirmExit(string jsonData)
+        {
+            Debug.Log("Logout confirmed:\n" + jsonData);
+            iiUserProfile = null;
+            isIIConnected = false;
+        }
+
+        private UserProfile ProcessAuthResponse(string jsonData)
         {
             AuthResponse response;
-            UserProfile user = new UserProfile();
-
             try
             {
                 response = JsonConvert.DeserializeObject<AuthResponse>(jsonData);
@@ -87,18 +124,31 @@ namespace ICVR
                 Debug.LogError("Unable to parse AuthResponse:\n" + err);
                 return null;
             }
+            
+            // create new user profile
+            UserProfile newProfile = new UserProfile()
+            {
+                principal = response?.principal ?? "",
+                accountId = response?.accountId ?? "",
+                status = response?.result == true ? "Authenticated" : "Not Authenticated" ?? "Bugged"
+            };
 
-            user.principal = response?.principal ?? "";
-            user.accountId = response?.accountId ?? "";
-            user.status = response?.result == true ? "Connected" : "Not Connected" ?? "Bugged";
+            // keep local state
+            isIIConnected = response?.result ?? false;
 
-            ChainAPI.Instance.FinaliseCallback(response.cbIndex);
-            return user;
+            // Store principal for later use
+            ChainAPI.Instance.currentProfile = newProfile;
+            ChainAPI.Instance.FinaliseCallback(response?.cbIndex ?? 0);
+
+            return newProfile;
         }
+
         private void OnDisconnect()
         {
             isIIConnected = false;
         }
 
+
+        #endregion Private Functions
     }
 }

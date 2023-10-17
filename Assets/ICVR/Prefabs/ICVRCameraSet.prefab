@@ -709,6 +709,7 @@ MonoBehaviour:
   cursorForObjects: {fileID: 2800000, guid: fcd990195bbd10c44bb92a1f6c5737ac, type: 3}
   cursorForInteractables: {fileID: 2800000, guid: be50afd8a5bb98b44875ddfce132c2e8, type: 3}
   crosshair: {fileID: 6475686401155345275}
+  DebugMouseInteraction: 1
 --- !u!114 &894967123683597141
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1388,7 +1389,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 40
   m_IsActive: 1
 --- !u!224 &5578809350880544655
 RectTransform:
@@ -2301,7 +2302,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 40
   m_IsActive: 1
 --- !u!224 &5646096591160295401
 RectTransform:
@@ -2374,7 +2375,7 @@ GameObject:
   - component: {fileID: 6475686401155345275}
   m_Layer: 5
   m_Name: crosshair
-  m_TagString: crosshair
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2655,7 +2656,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 40
   m_IsActive: 1
 --- !u!224 &6064615173599736394
 RectTransform:
@@ -4432,7 +4433,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 40
   m_IsActive: 1
 --- !u!4 &8190434126882787527
 Transform:
@@ -4531,11 +4532,11 @@ GameObject:
   - component: {fileID: 8190434127449728990}
   - component: {fileID: 8190434127449728991}
   m_Layer: 12
-  m_Name: Button
+  m_Name: renderer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 40
   m_IsActive: 1
 --- !u!4 &8190434127449728960
 Transform:
@@ -4617,7 +4618,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 40
   m_IsActive: 1
 --- !u!224 &8190434127701518634
 RectTransform:
@@ -4694,7 +4695,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 40
   m_IsActive: 1
 --- !u!224 &8190434128086257530
 RectTransform:
@@ -4810,7 +4811,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 40
   m_IsActive: 1
 --- !u!4 &8190434128174369438
 Transform:
@@ -4892,7 +4893,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 40
   m_IsActive: 1
 --- !u!4 &8190434128175470338
 Transform:
@@ -4995,7 +4996,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 40
   m_IsActive: 1
 --- !u!224 &8190434128215788870
 RectTransform:
@@ -5071,7 +5072,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 40
   m_IsActive: 1
 --- !u!224 &8190434128558054913
 RectTransform:
@@ -5121,7 +5122,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 12800000, guid: 8716a4362853fe6499ae676d104ad9b6, type: 3}
+    m_Font: {fileID: 12800000, guid: 927bf0adf4541694aaf5f1ef699c9e4e, type: 3}
     m_FontSize: 40
     m_FontStyle: 1
     m_BestFit: 0
@@ -5180,7 +5181,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 40
   m_IsActive: 1
 --- !u!4 &712214553466695102
 Transform:
@@ -5478,6 +5479,10 @@ PrefabInstance:
       propertyPath: characterRoot
       value: 
       objectReference: {fileID: 7676236854016821913}
+    - target: {fileID: 8086661436629834215, guid: 9bb0c41878dd2394c844c730b16cf325, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 104
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 9bb0c41878dd2394c844c730b16cf325, type: 3}
 --- !u!4 &6430324694730800898 stripped

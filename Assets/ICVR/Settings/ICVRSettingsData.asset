@@ -40,7 +40,7 @@ MonoBehaviour:
   - Id: 114cbc21b1e0c0a469661bf0d6448b53
     FileName: ICVR_Tags
     FilePath: Assets/ICVR/Settings/Presets\ICVR_Tags.preset
-    PresetState: 1
+    PresetState: 0
   - Id: 85b1e943d5898a545a10d7a2cf6b91f8
     FileName: ICVR_WebXR
     FilePath: Assets/ICVR/Settings/Presets\ICVR_WebXR.preset

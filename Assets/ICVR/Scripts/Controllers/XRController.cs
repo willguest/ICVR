@@ -38,7 +38,6 @@ namespace ICVR
 
         #region Public Variables, Functions and Attributes
 
-
         public enum ButtonTypes
         {
             Trigger = 0,
@@ -66,7 +65,6 @@ namespace ICVR
 
         // flag used by ObjectInterface - used when the hand is bound to an object
         public bool IsUsingInterface;
-        private ObjectInterface objectInterface;
 
         // flag set by ControlDynamics - used when the controller is articulating equipment
         public bool IsControllingObject { get; set; }
@@ -153,7 +151,6 @@ namespace ICVR
 
         // Object Handling
         private bool distanceManip = false;
-        private bool nearManip = false;
 
         private string gripPose = "";
 
@@ -799,7 +796,6 @@ namespace ICVR
 
                 // set default grip pose
                 SetGripPose(string.IsNullOrEmpty(gripPose) ? "holdIt" : gripPose);
-                nearManip = true;
             }
 
             // determine if controlling a fixed object
@@ -841,7 +837,6 @@ namespace ICVR
 
             ThrowData newThrow;
             attachJoint[0].connectedBody = null;
-            nearManip = false;
 
             // local throw
             if (currentNearRigidBody.gameObject.TryGetComponent(out RigidDynamics rd))

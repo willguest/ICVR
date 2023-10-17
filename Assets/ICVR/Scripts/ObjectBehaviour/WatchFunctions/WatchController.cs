@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class WatchController : MonoBehaviour
@@ -8,7 +7,6 @@ public class WatchController : MonoBehaviour
     [SerializeField] private GameObject[] modeCanvases;
 
     [SerializeField] private GameObject characterRoot;
-    //[SerializeField] private UnityEngine.UI.Button faceButton;
 
     private int currentMode = 0;
     
@@ -17,11 +15,6 @@ public class WatchController : MonoBehaviour
 
     private Vector3 invOrigin = Vector3.zero;
     private float distanceMoved = 0.0f;
-
-    private void Start()
-    {
-        
-    }
 
     void Update()
     {
@@ -46,7 +39,7 @@ public class WatchController : MonoBehaviour
 
     public void OnWake()
     {
-        SetMode(0);
+        SetMode(currentMode);
     }
 
     public void OnSleep()
@@ -94,7 +87,6 @@ public class WatchController : MonoBehaviour
     {
         Destroy(myStuff);
     }
-
 
 
     private IEnumerator LerpToTarget(GameObject objToLerp, Vector3 endPosition, Quaternion endRotation, float duration)

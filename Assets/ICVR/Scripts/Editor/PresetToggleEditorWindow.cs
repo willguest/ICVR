@@ -54,14 +54,14 @@ namespace ICVR.Settings {
             CheckPackagePresence("com.de-panther.webxr");
             CheckPackagePresence("com.unity.nuget.newtonsoft-json");
 
-            // Start the settings scriptable object
-            ICVRSettingsData = ICVRSettingsData.instance;
-            hasDataAsset = ICVRSettingsData.Initialise();
-
             // Get the properties of the .preset files
             presetFiles = Directory.GetFiles(PRESET_PATH, "*.preset");
             presetStates = new bool[presetFiles.Length];
             presets = new KeyValuePair<string, bool>[presetFiles.Length];
+
+            // Start the settings scriptable object
+            ICVRSettingsData = ICVRSettingsData.instance;
+            hasDataAsset = ICVRSettingsData.Initialise(presetFiles.Length);
 
             if (hasDataAsset) 
             {
@@ -70,12 +70,10 @@ namespace ICVR.Settings {
                     var assetData = ICVRSettingsData.ICVRSettings[f];
                     if (assetData.FilePath == presetFiles[f])
                     {
-                        //Debug.Log("adding item from data asset");
                         presets[f] = new KeyValuePair<string, bool>(assetData.FileName, assetData.PresetState);
                     }
                     else
                     {
-                        //Debug.Log("adding new item");
                         presets[f] = new KeyValuePair<string, bool>(presetFiles[f], false);
                     }
                 }   
@@ -127,10 +125,11 @@ namespace ICVR.Settings {
                 if (EditorGUI.EndChangeCheck())
                 {
                     presets.SetValue(new KeyValuePair<string, bool>(filename, presetStates[i]), i);
-                    ICVRSettingsData.ModifyDataAsset(filename, presetStates[i]);
+                    ICVRSettingsData.ModifyDataAsset(presets.Length, filename, presetStates[i]);
 
                     if (presetStates[i]) // turn on
                     {
+                        // Update settings
                         string filepath = presetFiles[i];
                         string manager = IdentifyManager(filename);
                         if (!string.IsNullOrEmpty(manager))
@@ -138,10 +137,7 @@ namespace ICVR.Settings {
                             UpdateSettings(filepath, manager);
                         }
                     }
-                    else // turn off
-                    {
 
-                    }
                 }
                 GUILayout.EndHorizontal();
             }
@@ -158,15 +154,12 @@ namespace ICVR.Settings {
                         if (!presetStates[i])
                         {
                             string filename = Path.GetFileNameWithoutExtension(presetFiles[i]);
-
                             presetStates[i] = true;
+
                             presets.SetValue(new KeyValuePair<string, bool>(filename, true), i);
+                            ICVRSettingsData.ModifyDataAsset(presets.Length, filename, presetStates[i]);
 
-                            //Debug.Log(filename + " is now " + presetStates[i]);
-
-                            ICVRSettingsData.ModifyDataAsset(filename, presetStates[i]);
                             string filepath = presetFiles[i];
-
                             string manager = IdentifyManager(filename);
                             if (!string.IsNullOrEmpty(manager))
                             {
@@ -217,7 +210,7 @@ namespace ICVR.Settings {
 
         private string IdentifyManager(string presetName)
         {
-            switch (presetName)
+            switch (presetName) 
             {
                 case "ICVR_Tags":
                     return TAG_MNGR_ASSET;         
@@ -264,7 +257,7 @@ namespace ICVR.Settings {
             lightManager.UpdateIfRequiredOrScript();
         }
 
-        public static void TryUpdateWebXrSettings()
+        private static void TryUpdateWebXrSettings()
         {
             if (EditorBuildSettings.TryGetConfigObject("WebXR.Settings", out WebXRSettings))
             {
@@ -282,6 +275,7 @@ namespace ICVR.Settings {
             settingsManager.ApplyModifiedProperties();
             settingsManager.Update();
         }
+
     }
 }
 #endif

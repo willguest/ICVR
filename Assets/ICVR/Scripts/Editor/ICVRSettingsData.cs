@@ -23,27 +23,29 @@ namespace ICVR.Settings
         [SerializeField]
         public List<ICVRSettingsObject> ICVRSettings;
 
-
-        int checkAsset(ICVRSettingsData asset)
+        private bool checkAsset(int chkLen)
         {
-            var list = asset.ICVRSettings;
-            return list.Count;
+            if (chkLen != instance.ICVRSettings.Count)
+            {
+                Debug.Log("Settings asset missing or changed, rebuilding...");
+                MakeNewDataAsset();
+            }
+            return (chkLen == instance.ICVRSettings.Count);
         }
 
-        public bool Initialise()
+        public bool Initialise(int presetFilesLength)
         {
             if (instance == null)
             {
-                MakeEmptyDataAsset();
                 return false;
             }
             else
             {
-                return true;
+                return checkAsset(presetFilesLength);
             }
         }
 
-        public void ModifyDataAsset(string fn, bool pstate)
+        public void ModifyDataAsset(int chkLen, string fn, bool pstate)
         {
             List<ICVRSettingsObject> buffer = ICVRSettings.GetRange(0, ICVRSettings.Count);
             ICVRSettings.Clear();
@@ -66,10 +68,12 @@ namespace ICVR.Settings
                 ICVRSettings.Add(icvrso);
             }
 
-            Save(true);
+            EditorUtility.SetDirty(instance);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
         }
 
-        private void MakeEmptyDataAsset() 
+        private void MakeNewDataAsset() 
         {
             ICVRSettings = new List<ICVRSettingsObject>();
 
@@ -99,9 +103,6 @@ namespace ICVR.Settings
             EditorUtility.SetDirty(instance);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-
-            Save(true);
-            Debug.Log("Created " + ICVRSettings.Count + " presets in: " + GetFilePath());
         }
 
     }
