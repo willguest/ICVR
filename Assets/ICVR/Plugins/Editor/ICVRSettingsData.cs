@@ -34,6 +34,8 @@ namespace ICVR.Settings
     [System.Serializable, FilePath("Assets/ICVR/Settings/ICVRSettingsData.asset", FilePathAttribute.Location.ProjectFolder)]
     public class ICVRSettingsData : ScriptableSingleton<ICVRSettingsData>
     {
+        public string FilePath { get { return GetFilePath(); } }
+
         [SerializeField]
         public List<ICVRSettingsObject> ICVRSettings;
 
@@ -78,8 +80,9 @@ namespace ICVR.Settings
             }
 
             EditorUtility.SetDirty(instance);
-            //AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
+            Save(true);
+            AssetDatabase.SaveAssetIfDirty(instance);
+            //AssetDatabase.Refresh();
         }
 
         private void MakeNewDataAsset() 
@@ -110,7 +113,8 @@ namespace ICVR.Settings
             }
 
             EditorUtility.SetDirty(instance);
-            //AssetDatabase.SaveAssets();
+            Save(true);
+            AssetDatabase.SaveAssetIfDirty(instance);
             AssetDatabase.Refresh();
         }
 

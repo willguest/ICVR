@@ -11,6 +11,7 @@ public static class SDSUtility
     public static void SetSymbols(BuildTargetGroup group, string[] symbols)
     {
         PlayerSettings.SetScriptingDefineSymbolsForGroup(group, string.Join(";", symbols));
+        AssetDatabase.RefreshSettings();
     }
 
     public static void AddSymbol(BuildTargetGroup group, string symbol)

@@ -56,8 +56,9 @@ namespace ICVR.Settings
                 }
             }
             else if (ListRequest.Status >= StatusCode.Failure)
-            {   Debug.Log(ListRequest.Error.message);   }
-
+            {   
+                Debug.Log(ListRequest.Error.message);   
+            }
             return false;
         }
 
@@ -66,7 +67,7 @@ namespace ICVR.Settings
             bool foundPackage = CheckForPackage(assetId);
             if (assetId.Contains("com.de-panther"))
             {
-                Debug.Log("Adding scoped registry for " + assetId);
+                //Debug.Log("Adding scoped registry for " + assetId);
                 AddScopedRegistry("com.de-panther");
             }
 
@@ -74,16 +75,16 @@ namespace ICVR.Settings
             {
                 Request = Client.Add(assetId);
                 EditorApplication.update += AddProgress;
-            }
-            else
-            {
-                Debug.Log(assetId + " is already installed");
 
                 if (assetId.Contains("newtonsoft-json"))
                 {
-                    SDSUtility.RemoveSymbol(BuildTargetGroup.WebGL, "EARLY_JSON");
+                    SDSUtility.AddSymbol(BuildTargetGroup.WebGL, "EARLY_JSON");
                 }
-                else if (assetId.Contains("com.de-panther"))
+            }
+            else
+            {
+                //Debug.Log(assetId + " is already installed");
+                if (assetId.Contains("com.de-panther"))
                 {
                     SDSUtility.RemoveSymbol(BuildTargetGroup.WebGL, "EARLY_JSON");
                 }
@@ -100,19 +101,27 @@ namespace ICVR.Settings
             var manifest = JsonConvert.DeserializeObject<ManifestJson>(manifestJson);
             ScopedRegistry pScopeRegistry = OpenUpmReg(packageId);
 
-            if (!manifest.scopedRegistries.Contains(pScopeRegistry))
+            if (manifest.scopedRegistries.Count == 0)
             {
                 manifest.scopedRegistries.Add(pScopeRegistry);
                 File.WriteAllText(manifestPath, JsonConvert.SerializeObject(manifest, Formatting.Indented));
+                AssetDatabase.RefreshSettings();
             }
-            else
+            else foreach (var pScope in manifest.scopedRegistries)
             {
-                Debug.Log("Manifest already contains package: " + packageId);
+                Debug.Log("index value: " + (System.Array.IndexOf(pScope.scopes, packageId)));
+                if (System.Array.IndexOf(pScope.scopes, packageId) == -1)
+                {
+                    manifest.scopedRegistries.Add(pScopeRegistry);
+                    File.WriteAllText(manifestPath, JsonConvert.SerializeObject(manifest, Formatting.Indented));
+                }
+                else
+                {
+                    Debug.Log("Manifest '" + pScope.name + "' " + " already contains scope: " + packageId);
+                }
             }
 #else
-
-
-            Debug.Log("Newtonsoft Json not available, please install it and remove this file's 'EARLY_JSON' directives");
+            Debug.Log("Newtonsoft Json not available, please install it and try again");
 #endif
         }
 
@@ -134,8 +143,7 @@ namespace ICVR.Settings
                 {
                     Debug.Log("Installed " + Request.Result.packageId);
 
-                    // a hack to allow newtonsoft json to be installed immediately, 
-                    // so that it can then be used to install webxr, via openupm.
+                    // a hack to allow newtonsoft json to be used after load, but only once
                     if (Request.Result.packageId.Contains("newtonsoft-json"))
                     {
                         SDSUtility.AddSymbol(BuildTargetGroup.WebGL, "EARLY_JSON");
