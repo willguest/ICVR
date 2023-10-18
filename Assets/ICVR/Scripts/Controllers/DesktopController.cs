@@ -181,7 +181,6 @@ namespace ICVR
                     else
                     {
                         CurrentObject = null;
-                        //prevMeshName = "";
                     }
                 }
             }
@@ -206,11 +205,12 @@ namespace ICVR
 
 
         #region ----- Input Handling -----
+        [SerializeField] private bool DebugMouseInteraction;
 
         void OnGUI()
         {
             if (xrState != WebXRState.NORMAL) { return; }
-            if (!isEditor)
+            if (!isEditor || DebugMouseInteraction)
             {
                 SetCursorImage();
             }

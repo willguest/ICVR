@@ -5,15 +5,14 @@ using System.IO;
 using UnityEditor;
 using UnityEditor.Presets;
 using UnityEngine;
-using WebXR;
-using static WebXR.WebXRSettings;
 
-namespace ICVR.Settings {
+namespace ICVR.Settings
+{
 
-    public class PresetToggleEditorWindow : EditorWindow
+    public class ICVRSettingsWindow : EditorWindow
     {
-        private ICVRSettingsData ICVRSettingsData;
-        private ICVRProjectSettings ICVRProjectSettings;
+        private ICVRSettingsData settingsData;
+        private ICVRProjectSettings projectSettings;
 
         private static string PRESET_PATH = "Assets/ICVR/Settings/Presets";
 
@@ -28,98 +27,138 @@ namespace ICVR.Settings {
         private static string EDTR_MNGR_ASSET = "ProjectSettings/EditorSettings.asset";
 
 
-        [MenuItem("Window/WebXR/ICVR Settings")]
+        [MenuItem("Window/WebXR/ICVR Setup")]
         public static void ShowWindow()
         {
-            GetWindow<PresetToggleEditorWindow>("ICVR Settings");
+            GetWindow<ICVRSettingsWindow>("ICVR Setup");
         }
 
-        static WebXRSettings WebXRSettings;
         private Dictionary<string, bool> packageStatus;
-        KeyValuePair<string, bool>[] presets;
-        bool hasDataAsset = false;
+        private KeyValuePair<string, bool>[] presets;
 
-        string[] presetFiles;
-        bool[] presetStates;
+        private bool isWebGL;
+        private bool hasDataAsset = false;
+        private bool hasDependencies = false;
 
+        private string[] presetFiles;
+        private bool[] presetStates;
 
         private void CreateGUI()
         {
-            // Create settings objects
-            ICVRProjectSettings = CreateInstance<ICVRProjectSettings>();
-            ICVRProjectSettings.GetProjectPackages();
+            isWebGL = EditorUserBuildSettings.activeBuildTarget == BuildTarget.WebGL;
             packageStatus = new Dictionary<string, bool>();
 
-            // Get dependencies
-            CheckPackagePresence("com.de-panther.webxr");
-            CheckPackagePresence("com.unity.nuget.newtonsoft-json");
+            // Create settings objects
+            projectSettings = CreateInstance<ICVRProjectSettings>();
+            projectSettings.GetProjectPackages();
 
-            // Start the settings scriptable object
-            ICVRSettingsData = ICVRSettingsData.instance;
-            hasDataAsset = ICVRSettingsData.Initialise();
+            // Check dependency status
+            hasDependencies = HasDependencies(false);
 
             // Get the properties of the .preset files
             presetFiles = Directory.GetFiles(PRESET_PATH, "*.preset");
             presetStates = new bool[presetFiles.Length];
             presets = new KeyValuePair<string, bool>[presetFiles.Length];
 
-            if (hasDataAsset) 
+            // Start the settings data object
+            settingsData = ICVRSettingsData.instance;
+            hasDataAsset = settingsData.Initialise(presetFiles.Length);
+
+            if (hasDataAsset)
             {
                 for (int f = 0; f < presetFiles.Length; f++)
                 {
-                    var assetData = ICVRSettingsData.ICVRSettings[f];
+                    var assetData = settingsData.ICVRSettings[f];
                     if (assetData.FilePath == presetFiles[f])
                     {
-                        //Debug.Log("adding item from data asset");
                         presets[f] = new KeyValuePair<string, bool>(assetData.FileName, assetData.PresetState);
                     }
                     else
                     {
-                        //Debug.Log("adding new item");
                         presets[f] = new KeyValuePair<string, bool>(presetFiles[f], false);
                     }
-                }   
+                }
             }
         }
 
-
+        private bool HasDependencies(bool useAsync = true)
+        {
+            bool one = CheckPackagePresence("com.unity.nuget.newtonsoft-json", useAsync);
+            bool two = CheckPackagePresence("com.de-panther.webxr", useAsync);
+            return (one && two);
+        }
         private void OnGUI()
         {
             var titleStyle = new GUIStyle(GUI.skin.label);
             titleStyle.normal.textColor = Color.white;
             titleStyle.fontStyle = FontStyle.Bold;
 
-            EditorGUILayout.BeginVertical();
-            EditorGUILayout.LabelField("Packages", titleStyle);
+            var refStyle = new GUIStyle(GUI.skin.label);
+            refStyle.normal.textColor = Color.white;
+            refStyle.fontStyle = FontStyle.Bold;
 
-            // Display the packages and their install buttons
+            EditorGUILayout.BeginVertical();
+
+            EditorGUILayout.LabelField("Build Target", titleStyle);
+            EditorGUI.BeginDisabledGroup(isWebGL);
+            if (GUILayout.Button("Set WebGL"))
+            {
+                EnsureWebGLBuildTarget();
+            }
+            EditorGUI.EndDisabledGroup();
+
+            EditorGUILayout.Space(15, true);
+
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("Packages", titleStyle, GUILayout.Width(80));
+            GUILayout.FlexibleSpace();
+            EditorGUI.BeginDisabledGroup(hasDependencies);
+            if (GUILayout.Button("↻", refStyle, GUILayout.Width(20)))
+            {
+                hasDependencies = HasDependencies();
+            }
+            EditorGUILayout.EndHorizontal();
+            EditorGUI.EndDisabledGroup();
+
+            DisplayPackage("Newtonsoft Json", "com.unity.nuget.newtonsoft-json");
             DisplayPackage("WebXR Export", "com.de-panther.webxr");
-            DisplayPackage("Newtonsoft Json","com.unity.nuget.newtonsoft-json");
-            
-            EditorGUILayout.EndVertical(); 
+
+            EditorGUILayout.EndVertical();
+
             EditorGUILayout.Space(15, true);
 
             GUILayout.TextArea("IMPORTANT: Changes to settings are irreversible. " +
-                    "When checked, use preset files to change project settings. \n" +
-                    "-> " + PRESET_PATH);
+                        "When checked, preset files control relevant project settings. \n" +
+                        "-> " + PRESET_PATH);
 
-            EditorGUILayout.Separator();
+            EditorGUI.BeginDisabledGroup(!hasDependencies || SDSUtility.ContainsSymbol(BuildTargetGroup.WebGL, "ICVR"));
+            if (GUILayout.Button("Enable ICVR Settings"))
+            {
+                SDSUtility.AddSymbol(BuildTargetGroup.WebGL, "ICVR");
+            }
+            EditorGUI.EndDisabledGroup();
+
+            // disable settings until deps are in
+            EditorGUI.BeginDisabledGroup(!SDSUtility.ContainsSymbol(BuildTargetGroup.WebGL, "ICVR"));
+
+            EditorGUILayout.Space(15, true);
             EditorGUILayout.BeginVertical();
             EditorGUILayout.LabelField("Settings", titleStyle);
 
             if (presets == null) return;
 
             // Set the default state of each preset to false (off)
-            for (int i = 0; i < presets.Length; i++) 
+            for (int i = 0; i < presets.Length; i++)
             {
                 string filename = Path.GetFileNameWithoutExtension(presetFiles[i]);
                 string shortName = filename.Substring(5, filename.Length - 5);
                 presetStates[i] = presets[i].Value;
 
                 GUILayout.BeginHorizontal();
+
                 GUILayout.Label(shortName);
                 GUILayout.FlexibleSpace();
-                 
+
                 EditorGUI.BeginChangeCheck();
 
                 presetStates[i] = EditorGUILayout.Toggle(presets[i].Value, GUILayout.Width(20));
@@ -127,28 +166,26 @@ namespace ICVR.Settings {
                 if (EditorGUI.EndChangeCheck())
                 {
                     presets.SetValue(new KeyValuePair<string, bool>(filename, presetStates[i]), i);
-                    ICVRSettingsData.ModifyDataAsset(filename, presetStates[i]);
+                    settingsData.ModifyDataAsset(presets.Length, filename, presetStates[i]);
 
                     if (presetStates[i]) // turn on
                     {
-                        string filepath = presetFiles[i];
+                        // Update settings
+                        string filepath = presetFiles[i]; 
                         string manager = IdentifyManager(filename);
                         if (!string.IsNullOrEmpty(manager))
                         {
                             UpdateSettings(filepath, manager);
                         }
                     }
-                    else // turn off
-                    {
-
-                    }
                 }
+
                 GUILayout.EndHorizontal();
             }
-     
+
             if (GUILayout.Button("Apply All"))
             {
-                bool isConfirmed = EditorUtility.DisplayDialog("Confirmation", 
+                bool isConfirmed = EditorUtility.DisplayDialog("Confirmation",
                     "Are you sure you want to apply all presets?", "OK", "Cancel");
 
                 if (isConfirmed)
@@ -158,15 +195,12 @@ namespace ICVR.Settings {
                         if (!presetStates[i])
                         {
                             string filename = Path.GetFileNameWithoutExtension(presetFiles[i]);
-
                             presetStates[i] = true;
+
                             presets.SetValue(new KeyValuePair<string, bool>(filename, true), i);
+                            settingsData.ModifyDataAsset(presets.Length, filename, presetStates[i]);
 
-                            //Debug.Log(filename + " is now " + presetStates[i]);
-
-                            ICVRSettingsData.ModifyDataAsset(filename, presetStates[i]);
                             string filepath = presetFiles[i];
-
                             string manager = IdentifyManager(filename);
                             if (!string.IsNullOrEmpty(manager))
                             {
@@ -177,6 +211,8 @@ namespace ICVR.Settings {
                 }
             }
             EditorGUILayout.EndVertical();
+
+            EditorGUI.EndDisabledGroup();
         }
 
         void DisplayPackage(string label, string packageName)
@@ -189,7 +225,7 @@ namespace ICVR.Settings {
             {
                 packageStatus = new Dictionary<string, bool>();
             }
-            
+
             if (packageStatus.TryGetValue(packageName, out bool isPresent))
             {
                 if (packageStatus[packageName])
@@ -203,16 +239,37 @@ namespace ICVR.Settings {
             EditorGUI.BeginDisabledGroup(isPresent);
             if (GUILayout.Button("Install", GUILayout.Width(50)))
             {
-                ICVRProjectSettings.IncludePackage(packageName);
+                projectSettings.TryIncludePackage(packageName);
+                hasDependencies = HasDependencies(false);
+
             }
             EditorGUI.EndDisabledGroup();
             EditorGUILayout.EndHorizontal();
         }
 
-        private void CheckPackagePresence(string packageName)
+        private bool CheckPackagePresence(string packageName, bool useAsync = true)
         {
-            bool isPresent = ICVRProjectSettings.QueryPackageStatus(packageName);
-            packageStatus.Add(packageName, isPresent);
+            bool isPresent = useAsync ?
+                projectSettings.CheckForPackage(packageName) :
+                projectSettings.CheckPackSync(packageName);
+
+            if (packageStatus.ContainsKey(packageName))
+            {
+                packageStatus[packageName] = isPresent;
+            }
+            else
+            {
+                packageStatus.Add(packageName, isPresent);
+            }
+            return isPresent;
+        }
+
+        public static void EnsureWebGLBuildTarget()
+        {
+            if (EditorUserBuildSettings.activeBuildTarget != BuildTarget.WebGL)
+            {
+                EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.WebGL, BuildTarget.WebGL);
+            }
         }
 
         private string IdentifyManager(string presetName)
@@ -220,7 +277,7 @@ namespace ICVR.Settings {
             switch (presetName)
             {
                 case "ICVR_Tags":
-                    return TAG_MNGR_ASSET;         
+                    return TAG_MNGR_ASSET;
                 case "ICVR_Physics":
                     return PHYS_MNGR_ASSET;
                 case "ICVR_Graphics":
@@ -248,30 +305,24 @@ namespace ICVR.Settings {
             LightingSettings lightingSettings = AssetDatabase.LoadMainAssetAtPath(LIGHT_SETTINGS) as LightingSettings;
             SerializedObject lightManager = new SerializedObject(lightingSettings);
 
-            try 
-            { 
+            try
+            {
                 lightingDataAsset.ApplyTo(lightManager.targetObject);
 
                 Lightmapping.SetLightingSettingsForScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene(), lightingSettings);
-            } 
-            catch (Exception e) 
-
-            { 
-                Debug.Log("Lighting Error:\n" + e.ToString()); 
+            }
+            catch (Exception e)
+            {
+                Debug.Log("Lighting Error:\n" + e.ToString());
             };
 
             lightManager.ApplyModifiedProperties();
             lightManager.UpdateIfRequiredOrScript();
         }
 
-        public static void TryUpdateWebXrSettings()
+        private void TryUpdateWebXrSettings()
         {
-            if (EditorBuildSettings.TryGetConfigObject("WebXR.Settings", out WebXRSettings))
-            {
-                WebXRSettings = EditorUtility.InstanceIDToObject(WebXRSettings.GetInstanceID()) as WebXRSettings;
-                WebXRSettings.VRRequiredReferenceSpace = ReferenceSpaceTypes.local;
-                WebXRSettings.VROptionalFeatures = 0;
-            }
+
         }
 
         private static void UpdateSettings(string preset, string manager)
@@ -282,6 +333,7 @@ namespace ICVR.Settings {
             settingsManager.ApplyModifiedProperties();
             settingsManager.Update();
         }
+
     }
 }
 #endif

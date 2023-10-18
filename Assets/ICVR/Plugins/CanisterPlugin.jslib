@@ -7,10 +7,18 @@ var WebGLFunctions = {
 			console.error("Test version detected; React not present");
 		}
     },
-    
-    GetCoin: function(cbIndex) {
+	
+	ICLogout: function(cbIndex) {
 		try {
-			dispatchReactUnityEvent("GetCoin", cbIndex);
+			dispatchReactUnityEvent("ICLogout", cbIndex);
+		} catch (e) {
+			console.error("Test version detected; React not present");
+		}
+    },
+    
+    GetToken: function(cbIndex) {
+		try {
+			dispatchReactUnityEvent("GetToken", cbIndex);
 		} catch (e) {
 			console.error("Test version detected; React not present");
 		}

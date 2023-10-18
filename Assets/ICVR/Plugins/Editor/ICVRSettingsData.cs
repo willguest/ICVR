@@ -7,6 +7,20 @@ using UnityEngine;
 
 namespace ICVR.Settings
 {
+    [System.Serializable]
+    public class ScopedRegistry
+    {
+        public string name;
+        public string url;
+        public string[] scopes;
+    }
+
+    [System.Serializable]
+    public class ManifestJson
+    {
+        public Dictionary<string, string> dependencies = new Dictionary<string, string>();
+        public List<ScopedRegistry> scopedRegistries = new List<ScopedRegistry>();
+    }
 
     [System.Serializable]
     public class ICVRSettingsObject
@@ -20,30 +34,29 @@ namespace ICVR.Settings
     [System.Serializable, FilePath("Assets/ICVR/Settings/ICVRSettingsData.asset", FilePathAttribute.Location.ProjectFolder)]
     public class ICVRSettingsData : ScriptableSingleton<ICVRSettingsData>
     {
+        public string FilePath { get { return GetFilePath(); } }
+
         [SerializeField]
         public List<ICVRSettingsObject> ICVRSettings;
 
-
-        int checkAsset(ICVRSettingsData asset)
-        {
-            var list = asset.ICVRSettings;
-            return list.Count;
-        }
-
-        public bool Initialise()
+        public bool Initialise(int chkLen)
         {
             if (instance == null)
             {
-                MakeEmptyDataAsset();
                 return false;
             }
             else
             {
-                return true;
+                if (ICVRSettings == null || chkLen != ICVRSettings.Count)
+                {
+                    Debug.Log("Settings asset missing or changed, rebuilding...");
+                    MakeNewDataAsset();
+                }
+                return (chkLen == instance.ICVRSettings.Count);
             }
         }
 
-        public void ModifyDataAsset(string fn, bool pstate)
+        public void ModifyDataAsset(int chkLen, string fn, bool pstate)
         {
             List<ICVRSettingsObject> buffer = ICVRSettings.GetRange(0, ICVRSettings.Count);
             ICVRSettings.Clear();
@@ -66,10 +79,13 @@ namespace ICVR.Settings
                 ICVRSettings.Add(icvrso);
             }
 
+            EditorUtility.SetDirty(instance);
             Save(true);
+            AssetDatabase.SaveAssetIfDirty(instance);
+            //AssetDatabase.Refresh();
         }
 
-        private void MakeEmptyDataAsset() 
+        private void MakeNewDataAsset() 
         {
             ICVRSettings = new List<ICVRSettingsObject>();
 
@@ -97,11 +113,9 @@ namespace ICVR.Settings
             }
 
             EditorUtility.SetDirty(instance);
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
-
             Save(true);
-            Debug.Log("Created " + ICVRSettings.Count + " presets in: " + GetFilePath());
+            AssetDatabase.SaveAssetIfDirty(instance);
+            AssetDatabase.Refresh();
         }
 
     }

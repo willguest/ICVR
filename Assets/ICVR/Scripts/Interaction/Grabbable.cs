@@ -37,7 +37,7 @@ namespace ICVR
         private Transform HandTracePrimary;
         private Transform HandTraceSecondary;
 
-        // layer management
+        // layer management 
         private string myLayer;
 
         private void OnEnable()

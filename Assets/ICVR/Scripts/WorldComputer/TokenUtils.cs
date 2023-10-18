@@ -3,15 +3,15 @@ using System.Runtime.InteropServices;
 public static class TokenUtilsInternal
 {
     [DllImport("__Internal")]
-    public static extern void GetCoin(int cbIndex);
+    public static extern void GetToken(int cbIndex);
 }
 
 public static class TokenUtils
 {
-    public static void GetSomeIslandCoin(int cbIndex)
+    public static void RequestTokenFromFund(int cbIndex)
     {
 #if UNITY_WEBGL && !UNITY_EDITOR
-        TokenUtilsInternal.GetCoin(cbIndex);
+        TokenUtilsInternal.GetToken(cbIndex);
 #endif
     }
 }
