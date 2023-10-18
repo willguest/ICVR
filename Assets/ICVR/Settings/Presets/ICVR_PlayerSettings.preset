@@ -642,7 +642,15 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: applicationIdentifier.Array.size
-    value: 0
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: applicationIdentifier.Array.data[0].first
+    value: Standalone
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: applicationIdentifier.Array.data[0].second
+    value: com.DefaultCompany.ICVR
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: buildNumber.Array.size
@@ -2466,7 +2474,15 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: scriptingDefineSymbols.Array.size
-    value: 0
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: scriptingDefineSymbols.Array.data[0].first
+    value: 13
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: scriptingDefineSymbols.Array.data[0].second
+    value: ICVR
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: additionalCompilerArguments.Array.size

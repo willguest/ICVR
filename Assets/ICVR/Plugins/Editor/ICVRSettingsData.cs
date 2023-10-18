@@ -7,6 +7,20 @@ using UnityEngine;
 
 namespace ICVR.Settings
 {
+    [System.Serializable]
+    public class ScopedRegistry
+    {
+        public string name;
+        public string url;
+        public string[] scopes;
+    }
+
+    [System.Serializable]
+    public class ManifestJson
+    {
+        public Dictionary<string, string> dependencies = new Dictionary<string, string>();
+        public List<ScopedRegistry> scopedRegistries = new List<ScopedRegistry>();
+    }
 
     [System.Serializable]
     public class ICVRSettingsObject
@@ -23,17 +37,7 @@ namespace ICVR.Settings
         [SerializeField]
         public List<ICVRSettingsObject> ICVRSettings;
 
-        private bool checkAsset(int chkLen)
-        {
-            if (chkLen != instance.ICVRSettings.Count)
-            {
-                Debug.Log("Settings asset missing or changed, rebuilding...");
-                MakeNewDataAsset();
-            }
-            return (chkLen == instance.ICVRSettings.Count);
-        }
-
-        public bool Initialise(int presetFilesLength)
+        public bool Initialise(int chkLen)
         {
             if (instance == null)
             {
@@ -41,7 +45,12 @@ namespace ICVR.Settings
             }
             else
             {
-                return checkAsset(presetFilesLength);
+                if (ICVRSettings == null || chkLen != ICVRSettings.Count)
+                {
+                    Debug.Log("Settings asset missing or changed, rebuilding...");
+                    MakeNewDataAsset();
+                }
+                return (chkLen == instance.ICVRSettings.Count);
             }
         }
 
@@ -69,7 +78,7 @@ namespace ICVR.Settings
             }
 
             EditorUtility.SetDirty(instance);
-            AssetDatabase.SaveAssets();
+            //AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
         }
 
@@ -101,7 +110,7 @@ namespace ICVR.Settings
             }
 
             EditorUtility.SetDirty(instance);
-            AssetDatabase.SaveAssets();
+            //AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
         }
 
