@@ -80,9 +80,8 @@ namespace ICVR.Settings
             }
 
             EditorUtility.SetDirty(instance);
-            Save(true);
             AssetDatabase.SaveAssetIfDirty(instance);
-            //AssetDatabase.Refresh();
+            Save(true);
         }
 
         private void MakeNewDataAsset() 
@@ -113,8 +112,8 @@ namespace ICVR.Settings
             }
 
             EditorUtility.SetDirty(instance);
-            Save(true);
             AssetDatabase.SaveAssetIfDirty(instance);
+            Save(true);
             AssetDatabase.Refresh();
         }
 

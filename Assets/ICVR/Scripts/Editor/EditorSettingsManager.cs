@@ -38,8 +38,19 @@ namespace ICVR
                 // set 'Initialize XR on Startup' to true
                 XRGeneralSettingsPerBuildTarget buildTargetSettings = null;
                 EditorBuildSettings.TryGetConfigObject(XRGeneralSettings.k_SettingsKey, out buildTargetSettings);
-                XRGeneralSettings settings = buildTargetSettings.SettingsForBuildTarget(BuildTargetGroup.WebGL);
-                settings.InitManagerOnStart = true;
+
+                if (buildTargetSettings)
+                {
+                    XRGeneralSettings settings = buildTargetSettings.SettingsForBuildTarget(BuildTargetGroup.WebGL);
+                    settings.InitManagerOnStart = true;
+                }
+                else
+                {
+                    SessionState.SetBool("hasUpdatedSettings", false);
+                }
+
+                // TODO: assign loader and enable WebXR from here.
+                // See https://forum.unity.com/threads/editor-programmatically-set-the-vr-system-in-xr-plugin-management.972285/
 
                 // set WebXR plugin settings
                 try
