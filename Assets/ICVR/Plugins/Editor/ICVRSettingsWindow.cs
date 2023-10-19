@@ -8,7 +8,6 @@ using UnityEngine;
 
 namespace ICVR.Settings
 {
-
     public class ICVRSettingsWindow : EditorWindow
     {
         private ICVRSettingsData settingsData;
@@ -291,9 +290,6 @@ namespace ICVR.Settings
                 case "ICVR_LightingSettings":
                     UpdateLighting();
                     return string.Empty;
-                case "ICVR_WebXR":
-                    TryUpdateWebXrSettings();
-                    return string.Empty;
                 default:
                     return string.Empty;
             }
@@ -313,16 +309,12 @@ namespace ICVR.Settings
             }
             catch (Exception e)
             {
-                Debug.Log("Lighting Error:\n" + e.ToString());
+                Debug.Log("Lighting Error: " + e.ToString());
             };
 
             lightManager.ApplyModifiedProperties();
             lightManager.UpdateIfRequiredOrScript();
-        }
-
-        private void TryUpdateWebXrSettings()
-        {
-
+            Lightmapping.BakeAsync();
         }
 
         private static void UpdateSettings(string preset, string manager)
