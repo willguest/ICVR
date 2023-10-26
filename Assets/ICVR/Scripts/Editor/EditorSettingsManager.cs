@@ -1,3 +1,5 @@
+#if UNITY_EDITOR
+
 using UnityEditor;
 using UnityEngine;
 using WebXR;
@@ -72,3 +74,4 @@ namespace ICVR
         }
     }
 }
+#endif
