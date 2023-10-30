@@ -1,3 +1,17 @@
+# A Guide to Designing Interactions Using the ICVR Framework
+
+
+## Overview
+
+Both near (within reach) and far (line of sight) interactions are considered, as well as the transition from far to near. 
+
+*Grip* button is used for near pickup and throwing. 
+
+*Trigger* is used for distant manipulation and flinging objects. 
+
+Pressing *Grip* while holding an object with *Trigger* will first cause it to rotate then, after a short delay, with attract it to the hand, into a particular grip. Releasing *Grip* during the rotation phase will cancel the interaction.
+
+
 ## Interaction Design 
 
 ### Collisions and Layers
