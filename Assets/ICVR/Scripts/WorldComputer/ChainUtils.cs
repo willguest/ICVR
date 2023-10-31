@@ -8,29 +8,29 @@ namespace ICVR {
         {
             try
             {
-                var response = JsonConvert.DeserializeObject<CanisterResponse>(jsonData);
+                var response = JsonConvert.DeserializeObject<CanisterResponseError>(jsonData);
                 if (response == null)
                 {
-                    Debug.LogError("Unable to parse as CanisterResponse. Result was null");
+                    Debug.LogError("Unable to parse CanisterResponse. Result was null");
                     return;
                 }
 
-                if (!string.IsNullOrEmpty(response.ErrorDetails.Canister))
+                if (!string.IsNullOrEmpty(response.ErrorCode))
                 {
-                    Debug.Log("Canister '" + response.ErrorDetails.Canister +
-                        " was calling '" + response.ErrorDetails.Method + "'");
+                    Debug.Log("Error code: " + response.ErrorCode);
+                    return;
                 }
 
-                if (!string.IsNullOrEmpty(response.ErrorDetails.RejectMessage))
+                if (!string.IsNullOrEmpty(response.RejectMessage))
                 {
-                    Debug.Log("There is an error in the Canister Response:\n" +
-                        response.ErrorDetails.RejectCode.ToString() + ": " + response.ErrorDetails.RejectMessage);
+                    Debug.Log("Reject Info :\n" + response.RejectCode.ToString() + 
+                        ": " + response.RejectMessage);
                     return;
                 }
             }
             catch (System.Exception ex)
             {
-                Debug.LogError("Interrogation failed:\n" + ex.Message);
+                Debug.LogError("Interrogation result:\n" + ex.Message);
             }
         }
 

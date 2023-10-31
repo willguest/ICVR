@@ -23,23 +23,28 @@ public class CallbackResponse
 public class CanisterResponse
 {
     [JsonProperty("Error")]
-    public CallFailedResponse ErrorDetails;
+    public CanisterResponseError ErrorDetails;
 }
 
 [Preserve]
-public partial class CallFailedResponse
+public partial class CanisterResponseError
 {
+    /*
     [JsonProperty("Canister")]
     public string Canister;
 
     [JsonProperty("Method")]
     public string Method;
+    */
 
     [JsonProperty("Request ID")]
     public string RequestId;
 
+    [JsonProperty("Error code")]
+    public string ErrorCode;
+
     [JsonProperty("Reject code")]
-    public int RejectCode;
+    public string RejectCode;
 
     [JsonProperty("Reject message")]
     public string RejectMessage;
