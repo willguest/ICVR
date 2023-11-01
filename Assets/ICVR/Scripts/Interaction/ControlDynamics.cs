@@ -121,7 +121,7 @@ namespace ICVR
         {
             if (gameObject.TryGetComponent(out ObjectInterface objectInterface))
             {
-                objectInterface.ToggleActivation();
+                objectInterface.ToggleActivation(null, false);
             }
 
             ResetPose();

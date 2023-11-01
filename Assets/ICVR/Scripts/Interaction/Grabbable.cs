@@ -16,9 +16,9 @@ namespace ICVR
     /// </summary>
     public class Grabbable : MonoBehaviour
     {
-        [Tooltip("The pose (position and rotation) of the left hand, when held.")]
+        [Tooltip("The pose (position and rotation) of the object, when held.")]
         [SerializeField] private Transform controlPoseLeft;
-        [Tooltip("The pose (position and rotation) of the right hand, when held.")]
+        [Tooltip("The pose (position and rotation) of the object, when held.")]
         [SerializeField] private Transform controlPoseRight;
 
         [Tooltip("Name of the condition (in the animator) that identifies the hand transition")]
@@ -37,14 +37,14 @@ namespace ICVR
         private Transform HandTracePrimary;
         private Transform HandTraceSecondary;
 
-        // layer management
+        // layer management 
         private string myLayer;
 
         private void OnEnable()
         {
             myLayer = LayerMask.LayerToName(gameObject.layer);
         }
-        public bool BeGrabbed(ControllerHand hand, Transform handTransform)
+        public bool CanBeGrabbed(ControllerHand hand, Transform handTransform)
         {
             switch (WieldState)
             {
@@ -54,7 +54,7 @@ namespace ICVR
                         HandTracePrimary = handTransform;
                         SetLayerRecursively(handTransform.gameObject, LayerMask.NameToLayer("Body"));
                         SetLayerRecursively(gameObject, LayerMask.NameToLayer("Tools"));
-                        return false;
+                        return true;
                     }
                 case ControllerHand.LEFT:
                 case ControllerHand.RIGHT:
@@ -68,15 +68,15 @@ namespace ICVR
                             OnSecondHand?.Invoke(hand, handTransform, HandTracePrimary);
                             SetLayerRecursively(handTransform.gameObject, LayerMask.NameToLayer("Body"));
                             HandTracePrimary.GetComponent<XRController>().ModifyJoint(0);
-                            return true;
+                            return false;
                         }
                         else
                         {
-                            return false;
+                            return true;
                         }
                     }
                 default:
-                    return false;
+                    return true;
             }
         }
 
@@ -127,7 +127,7 @@ namespace ICVR
             }
         }
 
-        public void BeginAttraction(ControllerHand hand, Transform handTransform, System.Action<Grabbable> callback)
+        public void BeginAttraction(ControllerHand hand, Transform handTransform, System.Action<Grabbable, string> callback)
         {
             Transform cPose = (hand == ControllerHand.RIGHT) ? controlPoseRight : controlPoseLeft;
             Quaternion targetRot = handTransform.rotation * cPose.localRotation;
@@ -141,7 +141,7 @@ namespace ICVR
             return primaryHandPose;
         }
 
-        private IEnumerator OrientToHand(Quaternion targetRotation, float duration, System.Action<Grabbable> callback)
+        private IEnumerator OrientToHand(Quaternion targetRotation, float duration, System.Action<Grabbable, string> callback)
         {
             yield return new WaitForEndOfFrame();
 
@@ -159,7 +159,7 @@ namespace ICVR
             }
 
             transform.rotation = targetRotation;
-            callback(this);
+            callback(this, primaryHandPose);
         }
 
         private IEnumerator SetLayerAfterDelay(float delay, GameObject obj, int newLayer)

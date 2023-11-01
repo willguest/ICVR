@@ -492,7 +492,7 @@ GameObject:
   - component: {fileID: 2250353065935961608}
   - component: {fileID: 2250353065935961609}
   - component: {fileID: 2250353065935961610}
-  m_Layer: 16
+  m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -598,7 +598,7 @@ GameObject:
   - component: {fileID: 2250353065954608359}
   m_Layer: 10
   m_Name: Switch
-  m_TagString: Interactable
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967170
@@ -749,6 +749,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   controlPoseLeft: {fileID: 2250353066569041560}
   controlPoseRight: {fileID: 2250353065580433694}
+  gripPose: holdIt
+  OnGetFocusEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  OnLoseFocusEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  OnTriggerEvent:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &2250353065954608359
 MonoBehaviour:
   m_ObjectHideFlags: 0

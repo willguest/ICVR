@@ -168,7 +168,7 @@ Material:
     - _IridescenceAngle: -0.78
     - _IridescenceIntensity: 0.5
     - _IridescenceThreshold: 0.05
-    - _Metallic: 0.786
+    - _Metallic: 1
     - _MipmapBias: -2
     - _Mode: 0
     - _NearLightFade: 0
@@ -194,7 +194,7 @@ Material:
     - _SampleGI: 0
     - _Shade4: 0
     - _Shininess: 0
-    - _Smoothness: 1
+    - _Smoothness: 0
     - _SmoothnessSource: 0
     - _SmoothnessTextureChannel: 1
     - _SpecSource: 0

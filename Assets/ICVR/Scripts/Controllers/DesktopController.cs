@@ -18,6 +18,11 @@ namespace ICVR
 
     public class DesktopController : MonoBehaviour
     {
+        // Singleton pattern
+        private static DesktopController _instance;
+        public static DesktopController Instance { get { return _instance; } }
+
+
         // Inspector Variables
         [Tooltip("Enable/disable rotation control. For use in Unity editor only.")]
         [SerializeField] private bool rotationEnabled = true;
@@ -52,12 +57,15 @@ namespace ICVR
 
         public GameObject CurrentObject { get; set; }
 
-        public  float currentDistance { get; private set; }
+        public  float CurrentDistance { get; private set; }
 
-        public Vector3 currentHitPoint { get; private set; }
+        public Vector3 CurrentHitPoint { get; private set; }
 
 
         // Cursor event handling
+        public delegate void CursorFocus(GameObject manipulator, bool state);
+        public event CursorFocus OnObjectFocus;
+
         public delegate void CursorInteraction(AvatarHandlingData interactionData);
         public event CursorInteraction OnNetworkInteraction;
 
@@ -99,10 +107,8 @@ namespace ICVR
         private float currentElevation;
 
         private GameObject activeMesh;
-        private string prevMeshName = "";
-
-        private Vector3 screenPoint;
-        private Vector3 offset;
+        private GameObject focusedObject;
+        private int pLayer = 0;
 
         private float jumpTick;
         private float triggerTick = 0;
@@ -129,6 +135,8 @@ namespace ICVR
 
         private void Awake()
         {
+            _instance = this;
+
             if (Application.platform == RuntimePlatform.WindowsEditor)
             {
                 isEditor = true;
@@ -173,7 +181,6 @@ namespace ICVR
                     else
                     {
                         CurrentObject = null;
-                        prevMeshName = "";
                     }
                 }
             }
@@ -198,14 +205,16 @@ namespace ICVR
 
 
         #region ----- Input Handling -----
+        [SerializeField] private bool DebugMouseInteraction;
 
         void OnGUI()
         {
             if (xrState != WebXRState.NORMAL) { return; }
-            if (!isEditor)
+            if (!isEditor || DebugMouseInteraction)
             {
                 SetCursorImage();
             }
+
             Event e = Event.current;
 
             // mouse events
@@ -233,7 +242,7 @@ namespace ICVR
                 {
                     if (CurrentObject.layer == 9)
                     {
-                        //start interation mode for furniture...
+                        //set interation options for furniture...
                     }
                     else if (CurrentObject.layer == 10 || CurrentObject.layer == 15)
                     {
@@ -249,16 +258,16 @@ namespace ICVR
                             }
                             else
                             {
-                                // asset is being used, do nothing
-                                Debug.Log("This object is being used by someone else. Please pester them until they let you play with it.");
+                                Debug.Log("This object is being used by someone else. \n" +
+                                    "Please pester them until they let you play with it.");
                             }
                         }
-                        else
+                        else if (!CurrentObject.GetComponent<XRController>())
                         {
                             PickUpObject(CurrentObject);
                         }
                     }
-                    else if (CurrentObject.layer == 12)
+                    else if (CurrentObject.layer == 12) // buttons
                     {
                         ActivateObjectTrigger(CurrentObject);
                     }
@@ -473,31 +482,61 @@ namespace ICVR
             }
         }
 
+        private void SetDefaultCursor()
+        {
+            if (focusedObject)
+            {
+                InvokeFocusEvent(focusedObject, false);
+                focusedObject = null;
+            }
+            pLayer = 0;
+            Cursor.SetCursor(cursorForScene, hotspot, cMode);
+            if (isGameMode) crosshair.SetGap(6, true);
+        }
+
         private void SetCursorImage()
         {
+            if (CurrentObject == null)
+            {
+                SetDefaultCursor();
+                return;
+            }
+
+            if (CurrentObject.layer == pLayer)
+            {
+                return;
+            }
+
+            pLayer = CurrentObject.layer;
+
             // ui buttons
-            if (CurrentObject != null && CurrentObject.layer == 12)
+            if (CurrentObject.layer == 12)
             {
                 Cursor.SetCursor(cursorForInteractables, hotspot, cMode);
             }
             // interactale objects
-            else if (CurrentObject != null && (CurrentObject.layer == 10 || CurrentObject.layer == 15))
+            else if (CurrentObject.layer == 10 || CurrentObject.layer == 15)
             {
+                focusedObject = CurrentObject;
+                InvokeFocusEvent(CurrentObject, true);
                 Cursor.SetCursor(cursorForObjects, hotspot, cMode);
                 if (isGameMode) crosshair.SetGap(18, true);
             }
             // furniture cursor
-            else if (CurrentObject != null && CurrentObject.layer == 9)
+            else if (CurrentObject.layer == 9)
             {
+                focusedObject = CurrentObject;
+                InvokeFocusEvent(CurrentObject, true);
                 Cursor.SetCursor(cursorForInteractables, hotspot, cMode);
             }
             // default (scene) cursor
             else
             {
-                Cursor.SetCursor(cursorForScene, hotspot, cMode);
-                if (isGameMode) crosshair.SetGap(6, true);
+                SetDefaultCursor();
             }
         }
+
+        bool wasKinematic = false;
 
         private GameObject PickUpObject(GameObject ooi)
         {
@@ -506,7 +545,7 @@ namespace ICVR
                 activeMesh = GetActiveMesh(ooi);
                 if (activeMesh == null) return null;
 
-                ViewObject(activeMesh);
+
 
                 Rigidbody actRB = activeMesh.GetComponent<Rigidbody>();
                 actRB.isKinematic = false;
@@ -521,7 +560,6 @@ namespace ICVR
 
                 // flag caught by the fixed update
                 isDragging = true;
-
                 return activeMesh;
             }
             else
@@ -544,7 +582,7 @@ namespace ICVR
 
                 ThrowData td = dynamics.Throw;
 
-                activeRB.isKinematic = false;
+                activeRB.isKinematic = wasKinematic;
                 activeRB.AddForce(td.LinearForce, ForceMode.Impulse);
                 activeRB.AddTorque(td.AngularForce, ForceMode.Impulse);
 
@@ -563,6 +601,11 @@ namespace ICVR
             }
 
             activeMesh = null;
+        }
+
+        private void InvokeFocusEvent(GameObject focalObject, bool state)
+        {
+            OnObjectFocus?.Invoke(focalObject, state);
         }
 
         private void InvokeAcquisitionEvent(string target, Transform interactionTransform)
@@ -648,33 +691,14 @@ namespace ICVR
             }
         }
 
-        private string ViewObject(GameObject viewObject)
-        {
-            if (viewObject != null)
-            {
-                string meshName = viewObject.name;
-
-                if (prevMeshName != meshName && (viewObject.layer == 10 || viewObject.layer == 15))
-                {
-                    prevMeshName = meshName;
-                }
-                else if (prevMeshName != meshName && viewObject.layer == 9)
-                {
-                    prevMeshName = meshName;
-                }
-                return meshName;
-            }
-            else
-            {
-                return "";
-            }
-        }
-
         private void DoubleClick()
         {
             if (CurrentObject != null)
             {
-                CurrentObject.SendMessage("OnDoubleClick");
+                if (CurrentObject.TryGetComponent(out ObjectInterface objInt))
+                {
+                    objInt.OnTrigger();
+                }
             }
         }
 
@@ -695,8 +719,8 @@ namespace ICVR
 
             if (Physics.Raycast(ray, out RaycastHit pointerHit, 15.0f, Physics.DefaultRaycastLayers))
             {
-                currentHitPoint = pointerHit.point;
-                currentDistance = pointerHit.distance;
+                CurrentHitPoint = pointerHit.point;
+                CurrentDistance = pointerHit.distance;
                 return pointerHit.transform.gameObject;
             }
             else

@@ -15,4 +15,7 @@ MonoBehaviour:
   VRRequiredReferenceSpace: 1
   VROptionalFeatures: 0
   ARRequiredReferenceSpace: 1
-  AROptionalFeatures: 0
+  AROptionalFeatures: -1
+  UseFramebufferScaleFactor: 0
+  UseNativeResolution: 0
+  FramebufferScaleFactor: 1

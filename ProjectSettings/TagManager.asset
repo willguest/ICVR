@@ -3,10 +3,7 @@
 --- !u!78 &1
 TagManager:
   serializedVersion: 2
-  tags:
-  - Interactable
-  - crosshair
-  - UI
+  tags: []
   layers:
   - Default
   - TransparentFX
@@ -22,7 +19,7 @@ TagManager:
   - Scene
   - Buttons
   - Body
-  - People
+  - Wearables
   - Tools
   - 
   - 

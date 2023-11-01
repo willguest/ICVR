@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 7107289677926428148}
   - component: {fileID: 7311273660911652090}
   - component: {fileID: 7156324835300993452}
-  m_Layer: 15
+  m_Layer: 14
   m_Name: rightPointer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -92,7 +92,7 @@ GameObject:
   - component: {fileID: 3387550614145745790}
   - component: {fileID: 1778117837632523483}
   - component: {fileID: 4560408684308445201}
-  m_Layer: 15
+  m_Layer: 14
   m_Name: right_lowpolyhand
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -261,7 +261,7 @@ GameObject:
   - component: {fileID: 5466390935481278898}
   - component: {fileID: 8967614648908639767}
   - component: {fileID: 6599929919945906909}
-  m_Layer: 15
+  m_Layer: 14
   m_Name: left_lowpolyhand
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -490,7 +490,7 @@ GameObject:
   - component: {fileID: 6323386357834784473}
   - component: {fileID: 4425854889642967208}
   - component: {fileID: 1166936854481495664}
-  m_Layer: 15
+  m_Layer: 14
   m_Name: LeftHand
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -606,7 +606,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e7af1183e392b664381a0b1fc32aee16, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hand: 1
 --- !u!1 &6275288005576222000
 GameObject:
   m_ObjectHideFlags: 0
@@ -622,7 +621,7 @@ GameObject:
   - component: {fileID: 1304155753219737920}
   - component: {fileID: 5496577871605793334}
   - component: {fileID: 2574806729054380411}
-  m_Layer: 15
+  m_Layer: 14
   m_Name: RightHand
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -738,7 +737,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e7af1183e392b664381a0b1fc32aee16, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hand: 2
 --- !u!1 &6721536501860455585
 GameObject:
   m_ObjectHideFlags: 0
@@ -859,7 +857,7 @@ GameObject:
   - component: {fileID: 1847208831375506547}
   - component: {fileID: 6871697626308623858}
   - component: {fileID: 5359218812570267551}
-  m_Layer: 15
+  m_Layer: 14
   m_Name: leftPointer
   m_TagString: Untagged
   m_Icon: {fileID: 0}

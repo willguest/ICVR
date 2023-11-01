@@ -38,7 +38,6 @@ namespace ICVR
 
         #region Public Variables, Functions and Attributes
 
-
         public enum ButtonTypes
         {
             Trigger = 0,
@@ -63,17 +62,17 @@ namespace ICVR
         public Action<bool> OnHandActive;
         public Action<WebXRHandData> OnHandUpdate;
 
-        
+
         // flag used by ObjectInterface - used when the hand is bound to an object
-        public bool IsUsingInterface { private get; set; }
+        public bool IsUsingInterface;
 
         // flag set by ControlDynamics - used when the controller is articulating equipment
         public bool IsControllingObject { get; set; }
 
-        public void SetGripPose(string gripPose)
+        public void SetGripPose(string newGripPose)
         {
-            animTrigger = gripPose;
-            anim.SetTrigger(animTrigger);
+            gripPose = newGripPose;
+            anim.SetTrigger(gripPose);
         }
 
         public void ModifyJoint(int jointIndex, Rigidbody connectedBody = null)
@@ -117,6 +116,7 @@ namespace ICVR
 
         private Rigidbody currentNearRigidBody = null;
         private Rigidbody currentFarRigidBody = null;
+        private List<ObjectInterface> nearInterfaces = new List<ObjectInterface>();
         private List<Rigidbody> nearcontactRigidBodies = new List<Rigidbody>();
         private List<Rigidbody> farcontactRigidBodies = new List<Rigidbody>();
 
@@ -151,9 +151,8 @@ namespace ICVR
 
         // Object Handling
         private bool distanceManip = false;
-        private bool nearManip = false;
 
-        private string animTrigger = "";
+        private string gripPose = "";
 
         private float actionTick = 0f;
         private float triggerEnterTick = 0f;
@@ -210,6 +209,32 @@ namespace ICVR
             jumpTick = Time.time;
         }
 
+        private void Update()
+        {
+            if (Input.GetKey(KeyCode.K))
+            {
+                StartCoroutine(trigStep());
+            }
+            else if (Input.GetKey(KeyCode.L))
+            {
+                StartCoroutine(gripStep());
+            }
+        }
+
+        private System.Collections.IEnumerator trigStep()
+        {
+            trigger = 0.95f;
+            yield return new WaitForSeconds(0.25f);
+            trigger = 0.0f;
+        }
+
+        private System.Collections.IEnumerator gripStep()
+        {
+            squeeze = 0.95f;
+            yield return new WaitForSeconds(0.25f);
+            squeeze = 0.0f;
+        }
+
         void FixedUpdate()
         {
             // only do this in a webxr session
@@ -240,13 +265,20 @@ namespace ICVR
                 }
             }
 
-            // trigger for distance manipulation
+            // trigger effects; distance interaction and events, via the ObjectInterface
             float trigVal = GetAxis(AxisTypes.Trigger);
+
             if (trigVal > trigThresUp && prevTrig <= trigThresUp)
             {
+                foreach (ObjectInterface oi in nearInterfaces)
+                {
+                    oi.OnTrigger();
+                }
+
                 PickupFar();
             }
             else if (trigVal < trigThresDn && prevTrig >= trigThresDn)
+
             {
                 if (distanceManip)
                 {
@@ -274,7 +306,6 @@ namespace ICVR
                 JumpSwim();
             }
 
-            // isusinginterface interface..
             if (IsUsingInterface)
             {
                 if (GetButtonDown(ButtonTypes.ButtonA))
@@ -633,10 +664,8 @@ namespace ICVR
                 }
             }
 
-            anim.SetTrigger("pointAtIt");
+            SetGripPose("pointAtIt");
         }
-
-
 
         public void DropFar()
         {
@@ -674,7 +703,7 @@ namespace ICVR
             currentFarRigidBody.AddForce(newThrow.LinearForce, ForceMode.Impulse);
             currentFarRigidBody.AddTorque(newThrow.AngularForce, ForceMode.Impulse);
 
-            anim.SetTrigger("relax");
+            SetGripPose("relax");
 
             // network release
             if (currentFarSharedAsset != null)
@@ -693,17 +722,15 @@ namespace ICVR
             {
                 currentFarRigidBody.useGravity = false;
                 attachJoint[1].connectedBody = null;
-
                 grabber.BeginAttraction(hand, transform, AttractFar);
-
             }
         }
 
-        public void AttractFar(Grabbable sender)
+        public void AttractFar(Grabbable sender, string pose)
         {
             if (currentFarRigidBody && prevGrip > 0.8f)
             {
-                gameObject.GetComponentInChildren<MeshCollider>().enabled = false;
+                currentFarRigidBody.isKinematic = true;
 
                 // local release far
                 farcontactRigidBodies.Clear();
@@ -718,14 +745,14 @@ namespace ICVR
                 }
 
                 // use the force
-                animTrigger = sender.AttractObject(hand, transform, PickupNear);
+                gripPose = sender.AttractObject(hand, transform, PickupNear);
+                SetGripPose(gripPose);
             }
             else
             {
                 DropFar();
             }
         }
-
 
         public void PickupNear()
         {
@@ -748,15 +775,28 @@ namespace ICVR
 
             if (currentNearObject.TryGetComponent(out Grabbable g))
             {
-                if (g.BeGrabbed(hand, transform))
+                if (!g.CanBeGrabbed(hand, transform))
                 {
                     return;
                 }
             }
 
-            currentNearRigidBody.MovePosition(transform.position);
-            attachJoint[0].connectedBody = currentNearRigidBody;
-            currentNearRigidBody.isKinematic = false;
+            // keep hands kinematic
+            if (currentNearObject.TryGetComponent(out XRController otherHand))
+            {
+                // space for two-handed gestures, actions or spells
+                return;
+            }
+            else
+            {
+                // pick up object
+                currentNearRigidBody.MovePosition(transform.position);
+                attachJoint[0].connectedBody = currentNearRigidBody;
+                currentNearRigidBody.isKinematic = false;
+
+                // set default grip pose
+                SetGripPose(string.IsNullOrEmpty(gripPose) ? "holdIt" : gripPose);
+            }
 
             // determine if controlling a fixed object
             if (currentNearObject.GetComponent<ControlDynamics>())
@@ -764,6 +804,7 @@ namespace ICVR
                 IsControllingObject = true;
             }
 
+            // finally, share activity on the network
             if (currentNearObject.TryGetComponent(out SharedAsset sharedAsset))
             {
                 if (!sharedAsset.IsBeingHandled)
@@ -778,19 +819,6 @@ namespace ICVR
                     Debug.Log("This object is being used by someone else");
                 }
             }
-
-            nearManip = true;
-
-            if (!string.IsNullOrEmpty(animTrigger))
-            {
-                anim.SetTrigger(animTrigger);
-            }
-            else
-            {
-                anim.SetTrigger("holdIt");
-            }
-
-            nearManip = true;
         }
 
         public void DropNear()
@@ -809,7 +837,6 @@ namespace ICVR
 
             ThrowData newThrow;
             attachJoint[0].connectedBody = null;
-            nearManip = false;
 
             // local throw
             if (currentNearRigidBody.gameObject.TryGetComponent(out RigidDynamics rd))
@@ -832,12 +859,11 @@ namespace ICVR
             {
                 currentNearRigidBody.gameObject.GetComponent<ControlDynamics>().FinishInteraction();
                 IsControllingObject = false;
-                IsUsingInterface = false;
             }
 
             // reset and forget
-            animTrigger = "";
-            anim.SetTrigger("relax");
+            gripPose = "";
+            SetGripPose("relax");
 
             // network throw
             if (currentNearSharedAsset != null)
@@ -849,7 +875,6 @@ namespace ICVR
 
             currentNearRigidBody = null;
         }
-
 
 
         private bool InvokeAcquisitionEvent(string target, Transform interactionTransform, ManipulationDistance distance)
@@ -932,7 +957,7 @@ namespace ICVR
                 int layer = currentObject.layer;
 
                 // layer-dependent actions
-                if (layer == 10 || layer == 15)         //  interactable objects or tools
+                if (layer == 10 || layer == 15)         //  interactabl objects or tools
                 {
                     pointingAtButton = false;
                     currentButton = null;
@@ -986,11 +1011,6 @@ namespace ICVR
 
         void OnTriggerEnter(Collider other)
         {
-            if (other.gameObject.tag != "Interactable" || nearManip)
-            {
-                return;
-            }
-
             int objectLayer = other.gameObject.layer;
 
             if (objectLayer == 12) // buttons
@@ -1006,9 +1026,23 @@ namespace ICVR
                 }
 
             }
-            else if (objectLayer == 10 || objectLayer == 15) // interactable objects or tools
+            else if (objectLayer == 9 || objectLayer == 14) // furniture or wearables
+            {
+                if (!IsUsingInterface &&
+                    other.gameObject.TryGetComponent(out ObjectInterface oi) &&
+                    (Time.time - triggerEnterTick) > 0.2f)
+                {
+                    triggerEnterTick = Time.time;
+                    if (!oi.IsBeingUsed && !nearInterfaces.Contains(oi))
+                    {
+                        nearInterfaces.Add(oi);
+                    }
+                }
+            }
+            else if (objectLayer == 10 || objectLayer == 15) // objects or tools
             {
                 if (other.gameObject.TryGetComponent(out Rigidbody rb) &&
+
                     (Time.time - triggerEnterTick) > 0.2f)
                 {
                     triggerEnterTick = Time.time;
@@ -1022,9 +1056,6 @@ namespace ICVR
 
         void OnTriggerExit(Collider other)
         {
-            if (other.gameObject.tag != "Interactable")
-                return;
-
             int objectLayer = other.gameObject.layer;
 
             if (objectLayer == 12) // buttons
@@ -1040,13 +1071,24 @@ namespace ICVR
                 }
 
             }
-            else if (objectLayer == 10 || objectLayer == 15) // interactable objects or tools
+            else if (objectLayer == 9 || objectLayer == 14) // furniture or wearables
+            {
+                if (other.gameObject.TryGetComponent(out ObjectInterface oi)
+                    && (Time.time - triggerExitTick) > 0.2f)
+                {
+                    triggerExitTick = Time.time;
+                    if (nearInterfaces.Contains(oi))
+                    {
+                        nearInterfaces.Remove(oi);
+                    }
+                }
+            }
+            else if (objectLayer == 10 || objectLayer == 15) // objects or tools
             {
                 if (other.gameObject.TryGetComponent(out Rigidbody rb)
                     && (Time.time - triggerExitTick) > 0.2f)
                 {
                     triggerExitTick = Time.time;
-
                     if (nearcontactRigidBodies.Contains(rb))
                     {
                         nearcontactRigidBodies.Remove(rb);
@@ -1076,19 +1118,15 @@ namespace ICVR
             return nearestRigidBody;
         }
 
-
         private Rigidbody GetNearRigidBody()
         {
             Rigidbody nearestRigidBody = null;
-
             foreach (Rigidbody contactBody in nearcontactRigidBodies)
             {
                 nearestRigidBody = contactBody;
             }
-
             return nearestRigidBody;
         }
-
 
         private void PlacePointer()
         {

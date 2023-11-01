@@ -6,6 +6,7 @@
 
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace ICVR
 {
@@ -15,38 +16,63 @@ namespace ICVR
     /// </summary>
     public class ObjectInterface : MonoBehaviour
     {
+        public bool IsBeingUsed { get; set; }
+
         [SerializeField] private Transform controlPoseLeft;
         [SerializeField] private Transform controlPoseRight;
+        [SerializeField] private string gripPose;
+
+        [SerializeField] private UnityEvent OnGetFocusEvent;
+        [SerializeField] private UnityEvent OnLoseFocusEvent;
+        [SerializeField] private UnityEvent OnTriggerEvent;
 
         private Transform previousParent;
         private GameObject currentManipulator;
 
-        private bool IsBeingUsed;
-
-        public void ToggleActivation()
+        public void ToggleActivation(GameObject manipulator, bool state)
         {
-            IsBeingUsed = !IsBeingUsed;
-
-            if (currentManipulator != null && !IsBeingUsed)
+            if (manipulator == this.gameObject)
             {
-                LoseControl();
+                manipulator = DesktopController.Instance.gameObject;
+            }
+
+            if (state)
+            {
+                if (ReceiveControl(manipulator))
+                {
+                    IsBeingUsed = state;
+                    OnGetFocusEvent?.Invoke(); 
+                }
+            }
+            else
+            {
+                if (LoseControl())
+                {
+                    OnLoseFocusEvent?.Invoke();
+                    IsBeingUsed = state;
+                }
+            }
+            
+            //IsBeingUsed = state;
+        }
+
+        public void OnTrigger()
+        {
+            if (IsBeingUsed)
+            {
+                OnTriggerEvent?.Invoke();
             }
         }
+
+
 
         private void OnTriggerEnter(Collider other)
         {
             if (IsBeingUsed) { return; }
 
-            if (other.gameObject.layer == 15)
+            if (other.gameObject.layer == 15) // tools
             {
-                if (other.gameObject.TryGetComponent(out XRController xrctrl))
-                {
-                    if (!xrctrl.IsControllingObject)
-                    {
-                        previousParent = other.gameObject.transform;
-                        ReceiveControl(other.gameObject);
-                    }
-                }
+                ToggleActivation(other.gameObject, true);
             }
         }
 
@@ -56,57 +82,89 @@ namespace ICVR
 
             if (other.gameObject.layer == 15)
             {
-                if (!other.gameObject.GetComponent<XRController>().IsControllingObject)
+                ToggleActivation(null, false);
+            }
+        }
+
+        private bool ReceiveControl(GameObject manipulator)
+        {
+            previousParent = manipulator.transform;
+
+            // hand-based control
+            if (manipulator.TryGetComponent(out XRController xrctrl))
+            {
+                // compatibility checks
+                if (xrctrl.IsUsingInterface) return false;
+                
+                if (xrctrl.IsControllingObject) return false;
+
+                Transform activeControlPose = controlPoseRight;
+                if (manipulator.name.ToLower().Contains("left") || controlPoseRight == null)
                 {
-                    LoseControl();
+                    activeControlPose = (controlPoseLeft ? controlPoseLeft : null);
+                }
+
+                if (activeControlPose == null) return false; 
+
+                // send grip update, if it exists
+                if (!string.IsNullOrEmpty(gripPose))
+                {
+                    xrctrl.SetGripPose(gripPose);
+                }
+
+                xrctrl.IsUsingInterface = true;
+                currentManipulator = manipulator.transform.Find("model")?.gameObject;
+                
+                // disable hand colliders, to prevent interference with object colliders and rigidbodies
+                foreach (CapsuleCollider cc in currentManipulator.GetComponentsInChildren<CapsuleCollider>())
+                {
+                    cc.enabled = false;
+                }
+
+                currentManipulator.transform.parent = gameObject.transform;
+                StartCoroutine(LerpToControlPose(currentManipulator, activeControlPose.localPosition, activeControlPose.localRotation, 0.4f));
+            }
+            else
+            {
+                currentManipulator = manipulator;
+            }
+            return true;
+        }
+
+
+        private bool LoseControl()
+        {
+            if (currentManipulator == null) return false;
+
+            if (gameObject.TryGetComponent(out ControlDynamics cd))
+            {
+                cd.ResetPose();
+            }
+
+            if (previousParent.TryGetComponent(out XRController xrc))
+            {
+                if (!xrc.IsUsingInterface) return false;
+
+                currentManipulator.transform.parent = previousParent.transform;
+                xrc.SetGripPose("relax");
+                xrc.IsUsingInterface = false;
+
+                StartCoroutine(LerpToControlPose(currentManipulator, Vector3.zero, Quaternion.identity, 0.4f));
+
+                // re-enable hand colliders
+                foreach (CapsuleCollider cc in currentManipulator.GetComponentsInChildren<CapsuleCollider>())
+                {
+                    cc.enabled = true;
                 }
             }
-        }
 
-        private void ReceiveControl(GameObject manipulator)
-        {
-            currentManipulator = manipulator.transform.Find("model").gameObject;
-
-            // disable hand colliders, to prevent interference with object colliders and rigidbodies
-            foreach (CapsuleCollider cc in currentManipulator.GetComponentsInChildren<CapsuleCollider>())
+            if (currentManipulator.TryGetComponent(out DesktopController dtc))
             {
-                cc.enabled = false;
+                // desktop-specific, object-agnostic 'lose focus' actions
             }
-
-            currentManipulator.transform.parent = gameObject.transform;
-            Transform activeControlPose = controlPoseRight;
-
-            if (manipulator.name.ToLower().Contains("left"))
-            {
-                activeControlPose = controlPoseLeft;
-            }
-
-            StartCoroutine(LerpToControlPose(currentManipulator, activeControlPose.localPosition, activeControlPose.localRotation, 0.4f));
-            IsBeingUsed = true;
-        }
-
-
-        private void LoseControl()
-        {
-            if (currentManipulator == null) return;
-
-            currentManipulator.transform.parent = previousParent.transform;
-
-            if (gameObject.GetComponent<ControlDynamics>())
-            {
-                gameObject.GetComponent<ControlDynamics>().ResetPose();
-            }
-
-            StartCoroutine(LerpToControlPose(currentManipulator, Vector3.zero, Quaternion.identity, 0.4f));
-
-            // re-enable hand colliders
-            foreach (CapsuleCollider cc in currentManipulator.GetComponentsInChildren<CapsuleCollider>())
-            {
-                cc.enabled = true;
-            }
-
+            
             currentManipulator = null;
-            IsBeingUsed = false;
+            return true;
         }
 
 

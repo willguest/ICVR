@@ -52,7 +52,6 @@ namespace ICVR.SharedAssets
     {
         [JsonProperty("acqTime")]
         public long AcqTime = 0;
-
         [JsonProperty("objectPosition")]
         public SVector3 ObjectPosition = new SVector3(0f, 0f, 0f);
         [JsonProperty("objectRotation")]
@@ -64,12 +63,10 @@ namespace ICVR.SharedAssets
     {
         [JsonProperty("releaseTime")]
         public long ReleaseTime = 0;
-
         [JsonProperty("releasePosition")]
         public SVector3 ReleasePosition = new SVector3(0f, 0f, 0f);
         [JsonProperty("releaseRotation")]
         public SQuaternion ReleaseRotation = new SQuaternion(0f, 0f, 0f, 1f);
-
         [JsonProperty("forceData")]
         public ThrowData ForceData;
     }
