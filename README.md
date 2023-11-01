@@ -1,6 +1,6 @@
 # Island Collective Virtual Reality 
 
-Welcome to the ICVR repository, an Unity-based toolkit for designing cutting-edge immersive experiences on the Internet Computer.
+Welcome to the ICVR repository, a Unity-based toolkit for designing cutting-edge immersive experiences on the Internet Computer.
 
 ## 📦 Create a New Project
 
