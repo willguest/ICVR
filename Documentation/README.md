@@ -2,14 +2,8 @@
 
 > This is the entry point for the AI-supported documentation. The files and folders should reflect the code structure, to aid automatic updates and change monitoring, until an autonomous system is in place.
 
-## Getting Started
-
-For setup instructions, see the README file in the root folder of the codebase. The following instructions assume you have Unity 2020 LTS, running a Universal Render Pipeline (URP) project.
-
 
 ## Writing Documentation
-
->[Current Documentation](https://github.com/willguest/ICVR/tree/develop/Documentation)
 
 The current strategy aims to be extremely easy to implement and not interfere with the reading of code.  Every significant class should have a corresponding markdown file in the documentation.
 
@@ -24,7 +18,7 @@ The current strategy aims to be extremely easy to implement and not interfere wi
 ```
 write documentation for this code. be concise, use Markdown language and include a 'how it works' section at the end. begin the answer with a single inverted comma.
 ```
-> Note: This is somewhat stochastic, but does tend to converge on a decent structure.
+> Note: This is somewhat stochastic, but does tend to converge on a decent structure. For better results, provide one of the existing documents as a style example.
 
 
 3. Once a satisfactory output has been generated, put the reponse into a text file and name it according to the class it documents. Save it using the same folder structure as `Assets/ICVR/Scripts`.
