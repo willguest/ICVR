@@ -1,6 +1,6 @@
 #  ICVR Documentation
 
-> This is the entry point for the AI-supported documentation. The files and folders should reflect the code structure, to aid automatic updates and change monitoring, until an autonomous system is in place.
+This is the entry point for the AI-supported documentation. The files and folders should reflect the code structure, to aid automatic updates and change monitoring, until an autonomous system is in place.
 
 
 ## Writing Documentation
