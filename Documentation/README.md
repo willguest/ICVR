@@ -11,7 +11,7 @@ The current strategy aims to be extremely easy to implement and not interfere wi
 ### Procedure for Creating AI-Assisted Documentation 
 
 1. Add a summary section to the top of the class definition. Write a short (1-2 sentence) summary. This should be carefully considered because it will also tell the AI what it is about. 
-> Note: Using an AI to do with can lead to errors.
+> Note: Using an AI to do this can lead to errors.
 
 
 2. Give the LLM the following prompt:
