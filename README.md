@@ -4,7 +4,7 @@ Welcome to the ICVR repository, a Unity-based toolkit for designing cutting-edge
 
 ## 📦 Create a New Project
 
-Make sure that [Unity 2020 LTS](https://unity.com/releases/programmer-features/2020-lts-tier2-features) is installed on your system.
+Make sure that [Unity 2020 LTS](unityhub://2020.3.48f1/b805b124c6b7) is installed on your system.
 
 Start a new URP project using [Unity Hub](https://unity.com/download).
 
