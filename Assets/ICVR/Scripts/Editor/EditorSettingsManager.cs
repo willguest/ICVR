@@ -28,8 +28,8 @@ namespace ICVR
 
         /// <summary>
         /// Used to override the WebXR Project Settings for compatibility with ICVRCameraSet. 
-        /// The use of 'SessionState' means that the value survives assembly reloads, and is 
-        /// cleared when Unity exists.
+        /// The use of 'SessionState' allows the value to survive assembly reloads, but is 
+        /// cleared when Unity exits.
         /// </summary> 
         public static void TryUpdateWebXRSettings(bool forceUpdate = false)
         {

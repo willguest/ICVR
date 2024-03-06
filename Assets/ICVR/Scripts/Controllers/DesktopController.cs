@@ -22,6 +22,7 @@ namespace ICVR
         private static DesktopController _instance;
         public static DesktopController Instance { get { return _instance; } }
 
+        private Camera _camera;
 
         // Inspector Variables
         [Tooltip("Enable/disable rotation control. For use in Unity editor only.")]
@@ -39,11 +40,10 @@ namespace ICVR
         [SerializeField] private float seaLevel = -4.5f;
 
         [Tooltip("object to move around with mouse and keyboard")]
-        [SerializeField] private GameObject currentVehicle;
+        [SerializeField] public GameObject currentVehicle;
 
         [Tooltip("head object that moves around with camera")]
         [SerializeField] private GameObject headObject;
-
 
         // Cursor Objects
         [SerializeField] private Texture2D cursorForScene;
@@ -53,18 +53,16 @@ namespace ICVR
 
 
         // Public Attributes
-        public bool IsSwimming { get; set; }
-
         public GameObject CurrentObject { get; set; }
 
-        public  float CurrentDistance { get; private set; }
+        public float CurrentDistance { get; private set; }
 
         public Vector3 CurrentHitPoint { get; private set; }
 
 
-        // Cursor event handling
-        public delegate void CursorFocus(GameObject manipulator, bool state);
-        public event CursorFocus OnObjectFocus;
+        // Cursor event handling   
+        public event BodyController.CursorFocus OnObjectFocus;
+        public event BodyController.ObjectTrigger OnObjectTrigger;
 
         public delegate void CursorInteraction(AvatarHandlingData interactionData);
         public event CursorInteraction OnNetworkInteraction;
@@ -104,8 +102,6 @@ namespace ICVR
 
         private SharedAsset currentSharedAsset;
 
-        private float currentElevation;
-
         private GameObject activeMesh;
         private GameObject focusedObject;
         private int pLayer = 0;
@@ -123,16 +119,6 @@ namespace ICVR
 
         #region ----- Unity Functions ------
 
-        private void OnEnable()
-        {
-            WebXRManager.OnXRChange += OnXRChange;
-        }
-
-        private void OnDisable()
-        {
-            WebXRManager.OnXRChange -= OnXRChange;
-        }
-
         private void Awake()
         {
             _instance = this;
@@ -141,6 +127,8 @@ namespace ICVR
             {
                 isEditor = true;
             }
+
+            _camera = GetComponent<Camera>();
         }
 
         void Start()
@@ -152,64 +140,58 @@ namespace ICVR
 
             startRotation = headObject.transform.rotation;
             currentHeading = startRotation;
-            transform.rotation = Quaternion.Euler(0.0f, 0.0f, 0.0f);
             attachJoint = GetComponent<FixedJoint>();
         }
 
-        void Update()
+        void FixedUpdate()
         {
             if (xrState != WebXRState.NORMAL) { return; }
 
             // lateral movement
             if (translationEnabled)
             {
-                MoveBodyWithKeyboard(headObject, straffeSpeed);
+                MoveBodyWithKeyboard(straffeSpeed);
             }
 
             if (rotationEnabled)
             {
                 SetCameraRotation();
-
-                // make observation, update current object and cursor
-                if (Camera.main.enabled)
-                {
-                    GameObject viewedObject = ScreenRaycast();
-                    if (viewedObject != null)
-                    {
-                        CurrentObject = viewedObject;
-                    }
-                    else
-                    {
-                        CurrentObject = null;
-                    }
-                }
             }
 
-            // Detect swimming, adjust weight accordingly
-            float elevation = currentVehicle.transform.position.y;
-            if (elevation < seaLevel && currentElevation >= seaLevel)
+            // make observation, update current object and cursor
+            GameObject viewedObject = ScreenRaycast();
+            if (viewedObject != null)
             {
-                IsSwimming = true;
-                currentVehicle.GetComponent<Rigidbody>().mass = 2.0f;
+                CurrentObject = viewedObject;
             }
-            else if (elevation > seaLevel && currentElevation <= seaLevel)
+            else
             {
-                IsSwimming = false;
-                currentVehicle.GetComponent<Rigidbody>().mass = 70.0f;
+                CurrentObject = null;
             }
-            currentElevation = elevation;
 
+        }
+
+        private void OnEnable()
+        {
+            WebXRManager.OnXRChange += OnXRChange;
+        }
+
+        private void OnDisable()
+        {
+            WebXRManager.OnXRChange -= OnXRChange;
         }
 
         #endregion ----- Unity Functions ------
 
 
         #region ----- Input Handling -----
+
         [SerializeField] private bool DebugMouseInteraction;
 
         void OnGUI()
         {
             if (xrState != WebXRState.NORMAL) { return; }
+
             if (!isEditor || DebugMouseInteraction)
             {
                 SetCursorImage();
@@ -240,9 +222,9 @@ namespace ICVR
 
                 if (e.type == EventType.MouseDown && e.button == 0 && CurrentObject != null)
                 {
-                    if (CurrentObject.layer == 9)
+                    if (CurrentObject.layer == 9 || CurrentObject.layer == 14)
                     {
-                        //set interation options for furniture...
+                        //set interation options for controllables...
                     }
                     else if (CurrentObject.layer == 10 || CurrentObject.layer == 15)
                     {
@@ -285,6 +267,7 @@ namespace ICVR
                 }
             }
 
+
             // keyboard events
             else if (e.type == EventType.KeyDown)
             {
@@ -307,8 +290,16 @@ namespace ICVR
                 {
                     runFactor = 2.0f;
                 }
-            }
 
+                if (e.keyCode == KeyCode.CapsLock)
+                {
+                    if (runFactor == 1.0f)
+                        runFactor = 2.0f;
+                    else
+                        runFactor = 1.0f;
+                }
+
+            }
             else if (e.type == EventType.KeyUp)
             {
                 if (e.keyCode == KeyCode.LeftShift)
@@ -317,7 +308,6 @@ namespace ICVR
                 }
             }
         }
-
 
         #endregion ----- Input Handling -----
 
@@ -358,32 +348,22 @@ namespace ICVR
         }
 
 
-        private void MoveBodyWithKeyboard(GameObject referenceObject, float multiplier = 1.0f)
+        private void MoveBodyWithKeyboard(float multiplier)
         {
-            float x = Input.GetAxis("Horizontal") * Time.deltaTime * straffeSpeed * runFactor;
-            float z = Input.GetAxis("Vertical") * Time.deltaTime * straffeSpeed * runFactor;
+            float x = Input.GetAxis("Horizontal") * Time.smoothDeltaTime * runFactor;
+            float z = Input.GetAxis("Vertical") * Time.smoothDeltaTime * runFactor;
 
             // conditions for no action
-            if (referenceObject == null) return;
+            if (currentVehicle == null) return;
             if (x == 0 && z == 0) return;
 
-            //camera forward and right vectors
-            Vector3 forward = referenceObject.transform.forward;
-            Vector3 right = referenceObject.transform.right;
-
-
+            //project forward and right vectors on the horizontal plane (y = 0)
             Vector3 personForward = currentVehicle.transform.InverseTransformDirection(headObject.transform.forward);
             Vector3 personRight = currentVehicle.transform.InverseTransformDirection(headObject.transform.right);
             personForward.y = 0;
             personRight.y = 0;
             personForward.Normalize();
             personRight.Normalize();
-
-            //project forward and right vectors on the horizontal plane (y = 0)
-            forward.y = 0f;
-            right.y = 0f;
-            forward.Normalize();
-            right.Normalize();
 
             //this is the direction in the world space we want to move:
             var desiredMoveDirection = personForward * z + personRight * x;
@@ -412,16 +392,20 @@ namespace ICVR
 
         private void JumpSwim()
         {
-            if (IsSwimming && Time.time - jumpTick > (jumpCool / 10.0f))
+            if (currentVehicle == null) { return; }
+
+            bool isSwimming = currentVehicle.transform.position.y < -10f;
+
+            if (isSwimming && Time.time - jumpTick > (jumpCool / 10.0f))
             {
                 jumpTick = Time.time;
-                Vector3 swimForce = new Vector3(0f, 150f, 0f) + (Camera.main.transform.forward * 50f);
-                currentVehicle.GetComponent<Rigidbody>().AddForce(swimForce, ForceMode.Acceleration);
+                Vector3 swimForce = new Vector3(0f, 150f, 0f) + (transform.forward * 10f);
+                currentVehicle.GetComponent<Rigidbody>().AddForce(swimForce, ForceMode.Impulse);
             }
             else if (Time.time - jumpTick > jumpCool)
             {
                 jumpTick = Time.time;
-                Vector3 jumpForce = new Vector3(0f, 350f, 0f) + Camera.main.transform.forward * 50f;
+                Vector3 jumpForce = new Vector3(0f, 350f, 0f) + transform.forward * 50f;
                 currentVehicle.GetComponent<Rigidbody>().AddForce(jumpForce, ForceMode.Impulse);
             }
         }
@@ -437,6 +421,7 @@ namespace ICVR
 
         private System.Collections.IEnumerator RotateCamera(Quaternion targetRot, float speed)
         {
+
             float rotationTimer = 0.0f;
 
             while (rotationTimer < 0.8)
@@ -514,7 +499,7 @@ namespace ICVR
             {
                 Cursor.SetCursor(cursorForInteractables, hotspot, cMode);
             }
-            // interactale objects
+            // interactable objects
             else if (CurrentObject.layer == 10 || CurrentObject.layer == 15)
             {
                 focusedObject = CurrentObject;
@@ -522,8 +507,8 @@ namespace ICVR
                 Cursor.SetCursor(cursorForObjects, hotspot, cMode);
                 if (isGameMode) crosshair.SetGap(18, true);
             }
-            // furniture cursor
-            else if (CurrentObject.layer == 9)
+            // controllable cursor
+            else if (CurrentObject.layer == 9 || CurrentObject.layer == 14)
             {
                 focusedObject = CurrentObject;
                 InvokeFocusEvent(CurrentObject, true);
@@ -532,6 +517,7 @@ namespace ICVR
             // default (scene) cursor
             else
             {
+                InvokeFocusEvent(null, false);
                 SetDefaultCursor();
             }
         }
@@ -544,8 +530,6 @@ namespace ICVR
             {
                 activeMesh = GetActiveMesh(ooi);
                 if (activeMesh == null) return null;
-
-
 
                 Rigidbody actRB = activeMesh.GetComponent<Rigidbody>();
                 actRB.isKinematic = false;
@@ -651,7 +635,7 @@ namespace ICVR
 
         private GameObject GetActiveMesh(GameObject ooi)
         {
-            // priority: self, parent, child rigidbody
+            // priority: self, parent, child
             if (ooi.GetComponent<Rigidbody>())
             {
                 return ooi;
@@ -697,27 +681,29 @@ namespace ICVR
             {
                 if (CurrentObject.TryGetComponent(out ObjectInterface objInt))
                 {
-                    objInt.OnTrigger();
+                    OnObjectTrigger?.Invoke(objInt.gameObject, 0.75f);
                 }
             }
         }
 
         private GameObject ScreenRaycast(bool fromTouch = false)
         {
+            if (!_camera.isActiveAndEnabled) return null;
+
             if (isDragging) return CurrentObject;
 
             Ray ray;
 
             if (isGameMode)
             {
-                ray = Camera.main.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+                ray = _camera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
             }
             else
             {
-                ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+                ray = _camera.ScreenPointToRay(Input.mousePosition, Camera.MonoOrStereoscopicEye.Mono);
             }
 
-            if (Physics.Raycast(ray, out RaycastHit pointerHit, 15.0f, Physics.DefaultRaycastLayers))
+            if (Physics.Raycast(ray, out RaycastHit pointerHit, 60.0f, Physics.DefaultRaycastLayers))
             {
                 CurrentHitPoint = pointerHit.point;
                 CurrentDistance = pointerHit.distance;

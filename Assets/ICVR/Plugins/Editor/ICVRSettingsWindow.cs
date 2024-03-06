@@ -8,6 +8,10 @@ using UnityEngine;
 
 namespace ICVR.Settings
 {
+    /// <summary>
+    /// The main class responsible for the ICVR Setup Window.
+    /// 
+    /// </summary>
     public class ICVRSettingsWindow : EditorWindow
     {
         private ICVRSettingsData settingsData;
@@ -127,8 +131,8 @@ namespace ICVR.Settings
             EditorGUILayout.Space(15, true);
 
             GUILayout.TextArea("IMPORTANT: Changes to settings are irreversible. " +
-                        "When checked, preset files control relevant project settings. \n" +
-                        "-> " + PRESET_PATH);
+                        "When applied, modify preset files to control associated settings. \n" +
+                        "➤ " + PRESET_PATH);
 
             EditorGUI.BeginDisabledGroup(!hasDependencies || SDSUtility.ContainsSymbol(BuildTargetGroup.WebGL, "ICVR"));
             if (GUILayout.Button("Enable ICVR Settings"))
@@ -138,7 +142,8 @@ namespace ICVR.Settings
             EditorGUI.EndDisabledGroup();
 
             // disable settings until deps are in
-            EditorGUI.BeginDisabledGroup(!SDSUtility.ContainsSymbol(BuildTargetGroup.WebGL, "ICVR"));
+            bool depsAreIn = SDSUtility.ContainsSymbol(BuildTargetGroup.WebGL, "ICVR");
+            EditorGUI.BeginDisabledGroup(!depsAreIn);
 
             EditorGUILayout.Space(15, true);
             EditorGUILayout.BeginVertical();
@@ -158,24 +163,30 @@ namespace ICVR.Settings
                 GUILayout.Label(shortName);
                 GUILayout.FlexibleSpace();
 
-                EditorGUI.BeginChangeCheck();
-
-                presetStates[i] = EditorGUILayout.Toggle(presets[i].Value, GUILayout.Width(20));
-
-                if (EditorGUI.EndChangeCheck())
+                if (!presets[i].Value)
                 {
-                    presets.SetValue(new KeyValuePair<string, bool>(filename, presetStates[i]), i);
-                    settingsData.ModifyDataAsset(presets.Length, filename, presetStates[i]);
-
-                    if (presetStates[i]) // turn on
+                    if (GUILayout.Button("Apply", GUILayout.Width(50)))
                     {
+                        presets.SetValue(new KeyValuePair<string, bool>(filename, true), i);
+
                         // Update settings
-                        string filepath = presetFiles[i]; 
+                        string filepath = presetFiles[i];
                         string manager = IdentifyManager(filename);
                         if (!string.IsNullOrEmpty(manager))
                         {
                             UpdateSettings(filepath, manager);
                         }
+                    }
+                }
+                else
+                {
+                    var greenStyle = new GUIStyle(GUI.skin.label);
+                    greenStyle.normal.textColor = Color.green;
+                    EditorGUILayout.LabelField("✔", greenStyle, GUILayout.MaxWidth(20));
+
+                    if (GUILayout.Button("Cancel", GUILayout.Width(60)))
+                    {
+                        presets.SetValue(new KeyValuePair<string, bool>(filename, false), i);
                     }
                 }
 

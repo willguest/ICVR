@@ -10,13 +10,20 @@ using UnityEngine.Events;
 
 namespace ICVR
 {
+    [System.Serializable]
+    public class GameObjectFloatEvent : UnityEvent<float> { }
+
+    [System.Serializable]
+    public class GameObjectBoolEvent : UnityEvent<bool> { }
+
     /// <summary>
     /// A simplified version of 'Grabbable', for single handed interaction only. For more information 
     /// <see href="https://github.com/willguest/ICVR/tree/develop/Documentation/Interaction/ObjectInterface.md"/>
     /// </summary>
     public class ObjectInterface : MonoBehaviour
     {
-        public bool IsBeingUsed { get; set; }
+        public bool IsBeingUsed;
+        public bool IsBeingHeld;
 
         [SerializeField] private Transform controlPoseLeft;
         [SerializeField] private Transform controlPoseRight;
@@ -24,16 +31,21 @@ namespace ICVR
 
         [SerializeField] private UnityEvent OnGetFocusEvent;
         [SerializeField] private UnityEvent OnLoseFocusEvent;
-        [SerializeField] private UnityEvent OnTriggerEvent;
+
+        [SerializeField] private UnityEvent<bool> OnGripEvent;
+        [SerializeField] private UnityEvent<float> OnTriggerEvent;
 
         private Transform previousParent;
         private GameObject currentManipulator;
 
+        private float triggerEnterTick = 0f;
+        private float triggerExitTick = 0f;
+
         public void ToggleActivation(GameObject manipulator, bool state)
         {
-            if (manipulator == this.gameObject)
+            if (manipulator == gameObject)
             {
-                manipulator = DesktopController.Instance.gameObject;
+                manipulator = null;
             }
 
             if (state)
@@ -41,7 +53,7 @@ namespace ICVR
                 if (ReceiveControl(manipulator))
                 {
                     IsBeingUsed = state;
-                    OnGetFocusEvent?.Invoke(); 
+                    OnGetFocusEvent?.Invoke();
                 }
             }
             else
@@ -52,59 +64,68 @@ namespace ICVR
                     IsBeingUsed = state;
                 }
             }
-            
-            //IsBeingUsed = state;
         }
 
-        public void OnTrigger()
+        public void SetTrigger(float triggerValue)
         {
-            if (IsBeingUsed)
+            if (IsBeingUsed || IsBeingHeld)
             {
-                OnTriggerEvent?.Invoke();
+                OnTriggerEvent?.Invoke(triggerValue);
             }
         }
 
-
+        public void SetGrip(XRController xrc, bool state)
+        {
+            IsBeingHeld = state;
+            OnGripEvent?.Invoke(state);
+        }
 
         private void OnTriggerEnter(Collider other)
         {
-            if (IsBeingUsed) { return; }
-
-            if (other.gameObject.layer == 15) // tools
+            if (Time.realtimeSinceStartup - triggerEnterTick < 0.1f) return;
+            if (!IsBeingUsed && other.gameObject.TryGetComponent(out XRController xrctrl))
             {
+                triggerEnterTick = Time.realtimeSinceStartup;
                 ToggleActivation(other.gameObject, true);
             }
         }
 
         private void OnTriggerExit(Collider other)
         {
-            if (!IsBeingUsed) { return; }
-
-            if (other.gameObject.layer == 15)
+            if (Time.realtimeSinceStartup - triggerExitTick < 0.1f) return;
+            if (!IsBeingUsed && other.gameObject.TryGetComponent(out XRController xrctrl))
             {
+                triggerExitTick = Time.realtimeSinceStartup;
                 ToggleActivation(null, false);
             }
         }
 
         private bool ReceiveControl(GameObject manipulator)
         {
-            previousParent = manipulator.transform;
+            if (manipulator == null) return false;
 
             // hand-based control
-            if (manipulator.TryGetComponent(out XRController xrctrl))
+            if (manipulator && manipulator.TryGetComponent(out XRController xrctrl))
             {
                 // compatibility checks
                 if (xrctrl.IsUsingInterface) return false;
-                
                 if (xrctrl.IsControllingObject) return false;
 
-                Transform activeControlPose = controlPoseRight;
-                if (manipulator.name.ToLower().Contains("left") || controlPoseRight == null)
+                Transform activeControlPose;
+                if (xrctrl.hand == ControllerHand.LEFT && controlPoseLeft != null)
                 {
-                    activeControlPose = (controlPoseLeft ? controlPoseLeft : null);
+                    activeControlPose = controlPoseLeft;
+                }
+                else if (xrctrl.hand == ControllerHand.RIGHT && controlPoseRight != null)
+                {
+                    activeControlPose = controlPoseRight;
+                }
+                else
+                {
+                    return false;
                 }
 
-                if (activeControlPose == null) return false; 
+                previousParent = manipulator.transform;
 
                 // send grip update, if it exists
                 if (!string.IsNullOrEmpty(gripPose))
@@ -114,15 +135,15 @@ namespace ICVR
 
                 xrctrl.IsUsingInterface = true;
                 currentManipulator = manipulator.transform.Find("model")?.gameObject;
-                
-                // disable hand colliders, to prevent interference with object colliders and rigidbodies
+
+                // disable hand colliders
                 foreach (CapsuleCollider cc in currentManipulator.GetComponentsInChildren<CapsuleCollider>())
                 {
                     cc.enabled = false;
                 }
 
-                currentManipulator.transform.parent = gameObject.transform;
-                StartCoroutine(LerpToControlPose(currentManipulator, activeControlPose.localPosition, activeControlPose.localRotation, 0.4f));
+                StartCoroutine(LerpToControlPose(currentManipulator, transform,
+                    activeControlPose.localPosition, activeControlPose.localRotation, 0.2f));
             }
             else
             {
@@ -131,10 +152,11 @@ namespace ICVR
             return true;
         }
 
-
         private bool LoseControl()
         {
             if (currentManipulator == null) return false;
+
+            if (IsBeingHeld) return false;
 
             if (gameObject.TryGetComponent(out ControlDynamics cd))
             {
@@ -143,13 +165,11 @@ namespace ICVR
 
             if (previousParent.TryGetComponent(out XRController xrc))
             {
-                if (!xrc.IsUsingInterface) return false;
-
-                currentManipulator.transform.parent = previousParent.transform;
                 xrc.SetGripPose("relax");
                 xrc.IsUsingInterface = false;
 
-                StartCoroutine(LerpToControlPose(currentManipulator, Vector3.zero, Quaternion.identity, 0.4f));
+                StartCoroutine(LerpToControlPose(currentManipulator, previousParent,
+                    Vector3.zero, Quaternion.identity, 0.2f));
 
                 // re-enable hand colliders
                 foreach (CapsuleCollider cc in currentManipulator.GetComponentsInChildren<CapsuleCollider>())
@@ -157,19 +177,19 @@ namespace ICVR
                     cc.enabled = true;
                 }
             }
-
-            if (currentManipulator.TryGetComponent(out DesktopController dtc))
-            {
-                // desktop-specific, object-agnostic 'lose focus' actions
-            }
-            
             currentManipulator = null;
             return true;
         }
 
-
-        private IEnumerator LerpToControlPose(GameObject objToLerp, Vector3 endPosition, Quaternion endRotation, float duration)
+        private IEnumerator LerpToControlPose(GameObject objToLerp, Transform newParent, Vector3 endPosition, Quaternion endRotation, float duration)
         {
+            // switch parent and wait a frame
+            currentManipulator.transform.parent = newParent;
+            if (endPosition == Vector3.zero)
+            {
+                objToLerp.transform.localScale = Vector3.one;
+            }
+
             yield return new WaitForEndOfFrame();
 
             Transform t = objToLerp.transform;
@@ -179,7 +199,7 @@ namespace ICVR
                 objToLerp.transform.localPosition = Vector3.Lerp(t.localPosition, endPosition, time / duration);
                 objToLerp.transform.localRotation = Quaternion.Slerp(t.localRotation, endRotation, time / duration);
 
-                time += Time.deltaTime;
+                time += Time.smoothDeltaTime;
                 yield return null;
             }
 

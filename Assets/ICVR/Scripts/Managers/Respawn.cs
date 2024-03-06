@@ -17,14 +17,12 @@ namespace ICVR
     public class Respawn : MonoBehaviour
     {
         [SerializeField] private Transform DefaultRespawnPose;
-        [SerializeField] private GameObject characterCollider;
         [SerializeField] private GameObject characterRoot;
-
-        private List<string> specialCases = new List<string>();
+        [SerializeField] private List<GameObject> characterColliders;
 
         void Start()
         {
-            specialCases.Add(characterCollider.name);
+
         }
 
         void OnTriggerEnter(Collider col)
@@ -35,9 +33,9 @@ namespace ICVR
 
         private void ManageRespawn(GameObject respawnObject)
         {
-            if (specialCases.Contains(respawnObject.name))
+            if (characterColliders.Contains(respawnObject))
             {
-                ReplaceSpecial(respawnObject);
+                ReplaceCharacter(respawnObject);
             }
             else
             {
@@ -74,17 +72,12 @@ namespace ICVR
             }
         }
 
-        private void ReplaceSpecial(GameObject specialObject)
+        private void ReplaceCharacter(GameObject specialObject)
         {
-            // character special case
-            if (specialObject.name == characterCollider.name)
-            {
-                characterRoot.transform.position = Vector3.zero + Vector3.up * 1.0f;
-                characterRoot.transform.rotation = Quaternion.identity;
-                characterRoot.GetComponent<Rigidbody>().velocity = Vector3.zero;
-                characterRoot.GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
-            }
-
+            characterRoot.transform.position = Vector3.zero + Vector3.up * 1.0f;
+            characterRoot.transform.rotation = Quaternion.identity;
+            characterRoot.GetComponent<Rigidbody>().velocity = Vector3.zero;
+            characterRoot.GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
         }
     }
 }
