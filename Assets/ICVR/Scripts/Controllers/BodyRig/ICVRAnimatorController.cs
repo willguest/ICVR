@@ -33,7 +33,7 @@ namespace ICVR
             rightWrist.localScale = new Vector3(0f, 0f, 1f);
             leftWrist.localScale = new Vector3(0f, 0f, 1f);
 
-            // give focus to "Legs" layer - with controllers
+            // give focus to "Legs" layer - IK at controllers
             bodyAnimator.SetLayerWeight(0, 1f);
             bodyAnimator.SetLayerWeight(1, 0f);
         }
@@ -44,7 +44,7 @@ namespace ICVR
             rightWrist.localScale = new Vector3(1f, 1f, 1f);
             leftWrist.localScale = new Vector3(1f, 1f, 1f);
 
-            // give focus to "WholeBody" layer - without controllers
+            // give focus to "WholeBody" layer - no hand IK
             bodyAnimator.SetLayerWeight(0, 0f);
             bodyAnimator.SetLayerWeight(1, 1f);
         }
