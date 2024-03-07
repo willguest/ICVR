@@ -18,7 +18,6 @@ namespace ICVR
         [Tooltip("(Optional) The root level component on either Pamaman or Powoman. \nSee ICVR ➥ Avatar ➥ Prefabs.")]
         [SerializeField] private ICVRAnimatorController animatorController;
 
-
         private Vector3 BodyOffset;
         private Vector3 UiOffset;
         private Quaternion UiStartRot;
