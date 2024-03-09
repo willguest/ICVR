@@ -4,18 +4,10 @@ public class VRFootIK : MonoBehaviour
 {
     private Animator animator;
 
-    [Range(0, 1)]
-    public float rightFootPosWeight = 1.0f;
-
-    [Range(0, 1)]
-    public float rightFootRotWeight = 1.0f;
-
-
-    [Range(0, 1)]
-    public float leftFootPosWeight = 1.0f;
-
-    [Range(0, 1)]
-    public float leftFootRotWeight = 1.0f;
+    private float rightFootPosWeight = 1.0f;
+    private float rightFootRotWeight = 1.0f;
+    private float leftFootPosWeight = 1.0f;
+    private float leftFootRotWeight = 1.0f;
 
     // Start is called before the first frame update
     void Start()
@@ -64,10 +56,5 @@ public class VRFootIK : MonoBehaviour
             animator.SetIKPositionWeight(AvatarIKGoal.LeftFoot, 0);
             animator.SetIKRotation(AvatarIKGoal.LeftFoot, Quaternion.identity);
         }
-
-
-
     }
-
-
 }

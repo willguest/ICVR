@@ -7,7 +7,7 @@ namespace ICVR
     /// The RigController acts as an adjustable pivot between the head and hands.
     /// This is useful for body-oriented events and functions. Currently it serves three functions:
     /// - It aligns the HUD to the body, allowing them to switch to at any time.
-    /// - It communicates with the body avatar controller (if present), to manage switching between VR & NORMAL WebXRStates.
+    /// - It communicates with the body avatar controller (if present) to switch arm rigging.
     /// - It contains a 'footplate', which gives stability to the body's main RigidBody, `CharacterRoot`.
     /// </summary>
     public class RigController : MonoBehaviour

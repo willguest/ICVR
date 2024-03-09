@@ -31,7 +31,7 @@ namespace ICVR
         [SerializeField] private GameObject CharacterRoot;
 
         [SerializeField] private float MaxInteractionDistance = 15.0f;
-        [SerializeField] private Renderer[] GameObjectRenderers;
+        [SerializeField] private Renderer[] HandRenderers;
 
         [SerializeField] private LayerMask PointerLayerMask;
 
@@ -63,10 +63,16 @@ namespace ICVR
 
 
         // flag used by ObjectInterface - used when the hand is bound to an object
-        public bool IsUsingInterface;
+        public bool IsUsingInterface { get; set; }
 
         // flag set by ControlDynamics - used when the controller is articulating equipment
         public bool IsControllingObject { get; set; }
+
+        public GameObject HandAnchor
+        {
+            get { return handIKAnchor; }
+            set { handIKAnchor = value; }
+        } 
 
         public void SetGripPose(string newGripPose)
         {
@@ -128,6 +134,7 @@ namespace ICVR
         private List<RigidDynamics> farcontactRigidBodies = new List<RigidDynamics>();
 
         [SerializeField] private Animator anim;
+        [SerializeField] private GameObject handIKAnchor;
 
         private SharedAsset currentNearSharedAsset;
         private SharedAsset currentFarSharedAsset;
@@ -248,7 +255,7 @@ namespace ICVR
             {
                 if (Math.Abs(thumbstickX) > thAT || Math.Abs(thumbstickY) > thAT)
                 {
-                    MoveBodyWithJoystick(thumbstickX, thumbstickY, 2.0f);
+                    MoveVehicleWithJoystick(thumbstickX, thumbstickY, 2.0f);
                 }
             }
             // right stick turns in 60 degree steps and forwards-backwards
@@ -256,13 +263,13 @@ namespace ICVR
             {
                 if (Mathf.Abs(thumbstickX) > rightThumbstickThreshold && prevRightThX <= rightThumbstickThreshold)
                 {
-                    RotateWithJoystick(thumbstickX);
+                    RotateVehicleWithJoystick(thumbstickX);
                 }
                 prevRightThX = Mathf.Abs(thumbstickX);
 
                 if (Math.Abs(thumbstickY) > thAT)
                 {
-                    MoveBodyWithJoystick(0.0f, thumbstickY, 2.0f);
+                    MoveVehicleWithJoystick(0.0f, thumbstickY, 2.0f);
                 }
             }
 
@@ -400,7 +407,7 @@ namespace ICVR
 
         private void ToggleRenderers(bool onOrOff)
         {
-            foreach (Renderer r in GameObjectRenderers)
+            foreach (Renderer r in HandRenderers)
             {
                 r.enabled = onOrOff;
             }
@@ -580,7 +587,7 @@ namespace ICVR
 
         #region >   Character Movement
 
-        private void MoveBodyWithJoystick(float xax, float yax, float multiplier = 1.0f)
+        private void MoveVehicleWithJoystick(float xax, float yax, float multiplier = 1.0f)
         {
             float x = xax * Time.deltaTime;
             float z = yax * Time.deltaTime;
@@ -601,7 +608,7 @@ namespace ICVR
             CharacterRoot.transform.Translate(desiredMoveDirection * multiplier);
         }
 
-        private void RotateWithJoystick(float value)
+        private void RotateVehicleWithJoystick(float value)
         {
             if (value == 0) { return; }
 

@@ -23,18 +23,22 @@ namespace ICVR
         private static BodyController _instance;
         public static BodyController Instance { get { return _instance; } }
 
+        // Network Info
         public static string CurrentUserId { get; private set; }
         public static int CurrentNoPeers { get; set; }
-        public float BodyMass { get; private set; }
 
+        // Network hook
+        [DllImport("__Internal")]
+        private static extern void SendData(string msg);
+
+        // Event delegates
         public delegate void CursorFocus(GameObject focalObject, bool state);
         public delegate void ObjectTrigger(GameObject focalObject, float value);
         public delegate void ObjectGrip(ControllerHand hand, GameObject focalObject, bool state);
 
-        [DllImport("__Internal")]
-        private static extern void SendData(string msg);
-
+        // Body layout
         [SerializeField] private GameObject headObject;
+        [SerializeField] private GameObject bodyObject;
 
         [SerializeField] private XRController leftController;
         [SerializeField] private XRController rightController;
@@ -43,7 +47,6 @@ namespace ICVR
         [SerializeField] private Transform rightPointer;
 
         private bool IsVR;
-
         private bool IsConnectionReady = false;
         private bool hasInteractionEvent = false;
 
@@ -75,6 +78,25 @@ namespace ICVR
             // link controller events in VR
             MapControllerEvents(IsVR);
         }
+
+        public Transform GetBodyReference(string bodyPart)
+        {
+            switch (bodyPart)
+            {
+                case "head":
+                    return headObject.transform;
+                case "body":
+                    return bodyObject.transform;
+                case "leftHand":
+                    return leftController.HandAnchor.transform;
+                case "rightHand":
+                    return rightController.HandAnchor.transform;
+
+                default:
+                    return null;
+            }
+        }
+
 
         private void MapControllerEvents(bool isOn)
         {
@@ -218,7 +240,7 @@ namespace ICVR
                 (hand == ControllerHand.LEFT) ? leftController : null;
         }
 
-        public void InitialiseDataChannel(string userid = "")
+        private void InitialiseDataChannel(string userid = "")
         {
             if (!notifyingNetwork)
             {

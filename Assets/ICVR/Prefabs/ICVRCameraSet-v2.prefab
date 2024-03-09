@@ -1587,7 +1587,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2930316230656608386}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.3, y: -0.6, z: 0.3}
+  m_LocalPosition: {x: 0.2, y: -0.6, z: 0.3}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 5178020212297064848}
@@ -1668,18 +1668,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   hand: 2
-  debugHand: 0
+  debugHand: 1
   CharacterRoot: {fileID: 3223792863846863461}
   MaxInteractionDistance: 15
-  GameObjectRenderers:
+  HandRenderers:
   - {fileID: 4209970535097657774}
-  - {fileID: 5509509361499488147}
-  - {fileID: 5633198257634365867}
+  - {fileID: 5429808488199954230}
+  - {fileID: 5260794148687442190}
   PointerLayerMask:
     serializedVersion: 2
     m_Bits: 48673
-  IsUsingInterface: 0
   anim: {fileID: 1962962763140252932}
+  handIKAnchor: {fileID: 5060443137856599677}
 --- !u!114 &3651092918900396536
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3974,7 +3974,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5060443137467902352}
   m_Layer: 13
-  m_Name: leftWrist
+  m_Name: leftWristAnchor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4004,7 +4004,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5060443137856599678}
   m_Layer: 13
-  m_Name: rightWrist
+  m_Name: rightWristAnchor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4736,7 +4736,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5617518835721355182}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.3, y: -0.6, z: 0.3}
+  m_LocalPosition: {x: -0.2, y: -0.6, z: 0.3}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 4680153075683475765}
@@ -4818,10 +4818,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   hand: 1
-  debugHand: 0
+  debugHand: 1
   CharacterRoot: {fileID: 3223792863846863461}
   MaxInteractionDistance: 15
-  GameObjectRenderers:
+  HandRenderers:
   - {fileID: 4798394913601809656}
   - {fileID: 5429808488199954230}
   - {fileID: 5260794148687442190}
@@ -4831,8 +4831,8 @@ MonoBehaviour:
   PointerLayerMask:
     serializedVersion: 2
     m_Bits: 48673
-  IsUsingInterface: 0
   anim: {fileID: 6260684345411838336}
+  handIKAnchor: {fileID: 5060443137467902359}
 --- !u!114 &6337889733467006676
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6492,6 +6492,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   headObject: {fileID: 5356846156163789886}
+  bodyObject: {fileID: 5060443136596753292}
   leftController: {fileID: 8610305942837760772}
   rightController: {fileID: 2638988452866623228}
   leftPointer: {fileID: 4839214435845304061}
