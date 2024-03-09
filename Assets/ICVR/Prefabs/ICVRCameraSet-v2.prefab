@@ -3902,9 +3902,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7d29ac84520eeae4c8388e1f18a4ebfc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cameraFollowerPose: {fileID: 5350669045317019144}
-  HUDAssetRoot: {fileID: 4003711378064283527}
-  animatorController: {fileID: 0}
+  cameraReference: {fileID: 5350669045317019144}
+  HUDObjectRoot: {fileID: 4003711378064283527}
 --- !u!1 &5060443136688561048
 GameObject:
   m_ObjectHideFlags: 0

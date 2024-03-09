@@ -33,11 +33,12 @@ public class ICVRRig : MonoBehaviour
 
     private void Start()
     {
+        bodyController.avatar = GetComponent<ICVRAvatarController>();
+
         headRef = bodyController.GetBodyReference("head");
         bodyRef = bodyController.GetBodyReference("body");
         leftHandRef = bodyController.GetBodyReference("leftHand");
         rightHandRef = bodyController.GetBodyReference("rightHand");
-
     }
 
     void Update()

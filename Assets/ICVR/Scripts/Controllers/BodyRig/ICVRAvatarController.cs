@@ -3,7 +3,7 @@ using UnityEngine.Animations.Rigging;
 
 namespace ICVR
 {
-    public class ICVRAnimatorController : MonoBehaviour
+    public class ICVRAvatarController : MonoBehaviour
     {
         public float speedThreshold = 0.2f;
         

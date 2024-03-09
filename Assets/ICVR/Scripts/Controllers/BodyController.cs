@@ -27,6 +27,8 @@ namespace ICVR
         public static string CurrentUserId { get; private set; }
         public static int CurrentNoPeers { get; set; }
 
+        public ICVRAvatarController avatar { get; set; }
+
         // Network hook
         [DllImport("__Internal")]
         private static extern void SendData(string msg);
@@ -47,6 +49,7 @@ namespace ICVR
         [SerializeField] private Transform rightPointer;
 
         private bool IsVR;
+        private bool hasBodyRig = false;
         private bool IsConnectionReady = false;
         private bool hasInteractionEvent = false;
 
@@ -77,6 +80,19 @@ namespace ICVR
 
             // link controller events in VR
             MapControllerEvents(IsVR);
+
+            // toggle hand IK
+            if (avatar != null)
+            {
+                if (state == WebXRState.NORMAL)
+                {
+                    avatar.RelaxArmRig();
+                }
+                else
+                {
+                    avatar.PrepareArmRig();
+                }
+            }
         }
 
         public Transform GetBodyReference(string bodyPart)
