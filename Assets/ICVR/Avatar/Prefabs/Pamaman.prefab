@@ -1730,7 +1730,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5392661466833950810}
   m_LocalRotation: {x: 0.5, y: 0.4999999, z: -0.5000001, w: 0.49999994}
-  m_LocalPosition: {x: 0.4615029, y: 1.446, z: -0.165}
+  m_LocalPosition: {x: 0.5, y: 1.1, z: -0.22}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 5392661466784537019}
@@ -1760,7 +1760,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5392661467459142614}
   m_LocalRotation: {x: -0.5000003, y: 0.50000006, z: -0.49999976, w: -0.49999982}
-  m_LocalPosition: {x: -0.462, y: 1.446, z: -0.262}
+  m_LocalPosition: {x: -0.5, y: 1.1, z: -0.22}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 5392661466708326781}
@@ -2815,23 +2815,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 83bc3ad32bc58e847af5be78c3c957fc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  bodyController: {fileID: 0}
   Body:
-    vrTarget: {fileID: 0}
     rigTarget: {fileID: 8544856290302962031}
     trackingPositionOffset: {x: 0, y: -1.1, z: -0.1}
     trackingRotationOffset: {x: 0, y: 0, z: 0}
   Head:
-    vrTarget: {fileID: 0}
     rigTarget: {fileID: 5392661465499036261}
     trackingPositionOffset: {x: 0, y: 0, z: 0}
     trackingRotationOffset: {x: 0, y: 0, z: 0}
   LeftHand:
-    vrTarget: {fileID: 0}
     rigTarget: {fileID: 5392661466665728873}
     trackingPositionOffset: {x: 0, y: 0, z: 0}
     trackingRotationOffset: {x: 0, y: 90, z: 90}
   RightHand:
-    vrTarget: {fileID: 0}
     rigTarget: {fileID: 5392661466500296253}
     trackingPositionOffset: {x: 0, y: 0, z: 0}
     trackingRotationOffset: {x: 0, y: -90, z: -90}
@@ -2847,10 +2844,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 77d129d1c9d12be47a209b061aa17623, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rightFootPosWeight: 1
-  rightFootRotWeight: 1
-  leftFootPosWeight: 1
-  leftFootRotWeight: 1
 --- !u!114 &3965463601833783290
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2864,11 +2857,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   speedThreshold: 0.2
-  bodyColliders: []
   ArmRig: {fileID: 5392661466763763610}
   rightWrist: {fileID: 7541972678766473548}
   leftWrist: {fileID: 3108521874244164423}
-  characterRoot: {fileID: 0}
 --- !u!1 &9086808740351742094
 GameObject:
   m_ObjectHideFlags: 0

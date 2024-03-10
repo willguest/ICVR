@@ -33,11 +33,11 @@ namespace ICVR
 
         private void ManageRespawn(GameObject respawnObject)
         {
-            if (characterColliders.Contains(respawnObject))
+            if (respawnObject.layer == LayerMask.NameToLayer("Body"))
             {
                 ReplaceCharacter(respawnObject);
             }
-            else
+            else if (respawnObject.layer != 15) // skip tools for now, because of hand glitch
             {
                 ReplaceObject(respawnObject);
             }

@@ -80,7 +80,10 @@ public class WatchController : MonoBehaviour
 
     private void OpenInventory()
     {
-        myStuff = Instantiate(InventoryContainer, invOrigin + (Vector3.up * 0.2f), Quaternion.identity);
+        if (InventoryContainer != null)
+        {
+            myStuff = Instantiate(InventoryContainer, invOrigin + (Vector3.up * 0.2f), Quaternion.identity);
+        }
     }
 
     private void CloseInventory()

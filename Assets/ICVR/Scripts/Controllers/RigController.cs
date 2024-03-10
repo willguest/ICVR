@@ -12,6 +12,9 @@ namespace ICVR
         [SerializeField] private Transform cameraReference;
         [SerializeField] private GameObject HUDObjectRoot;
 
+        [Range(1f, 10f)]
+        [SerializeField] private float HUDSnappiness = 3;
+
         private Vector3 BodyOffset;
         private Vector3 UiOffset;
         private Quaternion UiStartRot;
@@ -45,7 +48,8 @@ namespace ICVR
                 // set position of following UI
                 if (HUDObjectRoot.activeInHierarchy)
                 {
-                    HUDObjectRoot.transform.position = transform.position + (transform.forward * UiOffset.z) + (transform.up * UiOffset.y) + transform.right * UiOffset.x;
+                    Vector3 hudTarget = transform.position + (transform.forward * UiOffset.z) + (transform.up * UiOffset.y) + transform.right * UiOffset.x;
+                    HUDObjectRoot.transform.position = Vector3.Lerp(HUDObjectRoot.transform.position, hudTarget, Time.deltaTime * HUDSnappiness);
 
                     HUDObjectRoot.transform.rotation = Quaternion.LookRotation(transform.forward) * UiStartRot;
                 }
