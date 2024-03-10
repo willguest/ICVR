@@ -25,30 +25,26 @@ namespace ICVR
         private Camera _camera;
 
         // Inspector Variables
-        [Tooltip("Enable/disable rotation control. For use in Unity editor only.")]
-        [SerializeField] private bool rotationEnabled = true;
-
-        [Tooltip("Enable/disable translation control. For use in Unity editor only.")]
-        [SerializeField] private bool translationEnabled = true;
+        [Tooltip("Character physics container")]
+        [SerializeField] private GameObject CharacterVehicle;
 
         [Tooltip("Mouse sensitivity")]
-        [SerializeField] private float mouseSensitivity = 1f;
+        [SerializeField] private float mouseSensitivity = 2f;
 
         [Tooltip("Straffe Speed")]
-        [SerializeField] private float straffeSpeed = 5f;
+        [SerializeField] private float straffeSpeed = 1f;
 
-        [SerializeField] private float seaLevel = -4.5f;
+        [Tooltip("(Optional) Joysick for character movement on mobile devices")]
+        [SerializeField] private Canvas JoystickCanvas;
 
-        [Tooltip("object to move around with mouse and keyboard")]
-        [SerializeField] public GameObject currentVehicle;
+        [Tooltip("Joystick sensitivity")]
+        [SerializeField] private float joystickMultiplier;
 
-        [Tooltip("head object that moves around with camera")]
-        [SerializeField] private GameObject headObject;
 
         // Cursor Objects
         [SerializeField] private Texture2D cursorForScene;
         [SerializeField] private Texture2D cursorForObjects;
-        [SerializeField] private Texture2D cursorForInteractables;
+        [SerializeField] private Texture2D cursorForControls;
         [SerializeField] private SimpleCrosshair crosshair;
 
 
@@ -71,6 +67,7 @@ namespace ICVR
         #region ----- Private Variables ------
 
         private WebXRState xrState = WebXRState.NORMAL;
+        private VariableJoystickB variableJoystick;
 
         private bool isGameMode = false;
 
@@ -138,25 +135,25 @@ namespace ICVR
 
             SetCrosshairVisibility();
 
-            startRotation = headObject.transform.rotation;
+            startRotation = transform.rotation;
             currentHeading = startRotation;
+
             attachJoint = GetComponent<FixedJoint>();
+
+            if (JoystickCanvas != null)
+            {
+                variableJoystick = JoystickCanvas.GetComponentInChildren<VariableJoystickB>();
+            }
         }
 
         void FixedUpdate()
         {
             if (xrState != WebXRState.NORMAL) { return; }
 
-            // lateral movement
-            if (translationEnabled)
-            {
-                MoveBodyWithKeyboard(straffeSpeed);
-            }
-
-            if (rotationEnabled)
-            {
-                SetCameraRotation();
-            }
+            // set character pose
+            MoveBodyWithKeyboard(straffeSpeed);
+            MoveBodyWithJoystick();            
+            SetCameraRotation();        
 
             // make observation, update current object and cursor
             GameObject viewedObject = ScreenRaycast();
@@ -317,6 +314,7 @@ namespace ICVR
         private void OnXRChange(WebXRState state, int viewsCount, Rect leftRect, Rect rightRect)
         {
             xrState = state;
+            JoystickCanvas.gameObject.SetActive(xrState == WebXRState.NORMAL);
             SetCursorParameters();
         }
 
@@ -347,6 +345,30 @@ namespace ICVR
             return currentHeading;
         }
 
+        private void MoveBodyWithJoystick()
+        {
+            if (variableJoystick == null) { return; }
+
+            float x = variableJoystick.Horizontal * 0.5f * Time.deltaTime * joystickMultiplier;
+            float z = variableJoystick.Vertical * 0.5f * Time.deltaTime * joystickMultiplier;
+
+            // conditions for no action
+            if (x == 0 && z == 0) return;
+
+            //camera forward and right vectors
+            Vector3 forward = transform.forward;
+            Vector3 right = transform.right;
+
+            //project forward and right vectors on the horizontal plane (y = 0)
+            forward.y = 0f;
+            right.y = 0f;
+            forward.Normalize();
+            right.Normalize();
+
+            //this is the direction in the world space we want to move:
+            var desiredMoveDirection = forward * z + right * x;
+            CharacterVehicle.transform.Translate(desiredMoveDirection);
+        }
 
         private void MoveBodyWithKeyboard(float multiplier)
         {
@@ -354,12 +376,12 @@ namespace ICVR
             float z = Input.GetAxis("Vertical") * Time.smoothDeltaTime * runFactor;
 
             // conditions for no action
-            if (currentVehicle == null) return;
+            if (CharacterVehicle == null) return;
             if (x == 0 && z == 0) return;
 
             //project forward and right vectors on the horizontal plane (y = 0)
-            Vector3 personForward = currentVehicle.transform.InverseTransformDirection(headObject.transform.forward);
-            Vector3 personRight = currentVehicle.transform.InverseTransformDirection(headObject.transform.right);
+            Vector3 personForward = CharacterVehicle.transform.InverseTransformDirection(transform.forward);
+            Vector3 personRight = CharacterVehicle.transform.InverseTransformDirection(transform.right);
             personForward.y = 0;
             personRight.y = 0;
             personForward.Normalize();
@@ -367,7 +389,7 @@ namespace ICVR
 
             //this is the direction in the world space we want to move:
             var desiredMoveDirection = personForward * z + personRight * x;
-            currentVehicle.transform.Translate(desiredMoveDirection * multiplier);
+            CharacterVehicle.transform.Translate(desiredMoveDirection * multiplier);
         }
 
         private void SetCameraRotation()
@@ -392,21 +414,21 @@ namespace ICVR
 
         private void JumpSwim()
         {
-            if (currentVehicle == null) { return; }
+            if (CharacterVehicle == null) { return; }
 
-            bool isSwimming = currentVehicle.transform.position.y < -10f;
+            bool isSwimming = CharacterVehicle.transform.position.y < -10f;
 
             if (isSwimming && Time.time - jumpTick > (jumpCool / 10.0f))
             {
                 jumpTick = Time.time;
                 Vector3 swimForce = new Vector3(0f, 150f, 0f) + (transform.forward * 10f);
-                currentVehicle.GetComponent<Rigidbody>().AddForce(swimForce, ForceMode.Impulse);
+                CharacterVehicle.GetComponent<Rigidbody>().AddForce(swimForce, ForceMode.Impulse);
             }
             else if (Time.time - jumpTick > jumpCool)
             {
                 jumpTick = Time.time;
                 Vector3 jumpForce = new Vector3(0f, 350f, 0f) + transform.forward * 50f;
-                currentVehicle.GetComponent<Rigidbody>().AddForce(jumpForce, ForceMode.Impulse);
+                CharacterVehicle.GetComponent<Rigidbody>().AddForce(jumpForce, ForceMode.Impulse);
             }
         }
 
@@ -497,7 +519,7 @@ namespace ICVR
             // ui buttons
             if (CurrentObject.layer == 12)
             {
-                Cursor.SetCursor(cursorForInteractables, hotspot, cMode);
+                Cursor.SetCursor(cursorForControls, hotspot, cMode);
             }
             // interactable objects
             else if (CurrentObject.layer == 10 || CurrentObject.layer == 15)
@@ -512,7 +534,7 @@ namespace ICVR
             {
                 focusedObject = CurrentObject;
                 InvokeFocusEvent(CurrentObject, true);
-                Cursor.SetCursor(cursorForInteractables, hotspot, cMode);
+                Cursor.SetCursor(cursorForControls, hotspot, cMode);
             }
             // default (scene) cursor
             else
