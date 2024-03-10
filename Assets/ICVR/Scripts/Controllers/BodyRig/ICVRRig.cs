@@ -47,5 +47,14 @@ public class ICVRRig : MonoBehaviour
         Body.Map(bodyRef);
         RightHand.Map(rightHandRef);
         LeftHand.Map(leftHandRef);
+
+        if (Input.GetKeyDown(KeyCode.J)) 
+        {
+            GetComponent<ICVRAvatarController>().PrepareArmRig();
+        }
+        else if (Input.GetKeyDown(KeyCode.K))
+        {
+            GetComponent<ICVRAvatarController>().RelaxArmRig();
+        }
     }
 }

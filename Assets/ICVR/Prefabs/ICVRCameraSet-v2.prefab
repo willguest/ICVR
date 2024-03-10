@@ -1668,7 +1668,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   hand: 2
-  debugHand: 1
+  debugHand: 0
   CharacterRoot: {fileID: 3223792863846863461}
   MaxInteractionDistance: 15
   HandRenderers:
@@ -4817,7 +4817,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   hand: 1
-  debugHand: 1
+  debugHand: 0
   CharacterRoot: {fileID: 3223792863846863461}
   MaxInteractionDistance: 15
   HandRenderers:
