@@ -51,12 +51,12 @@ For compatibility with the [ICVR-React](https://github.com/willguest/icvr-react)
 
 Each class is documented in a corresponding markdown file, and linked in the class definition summary. The top level can be found [here](https://github.com/willguest/ICVR/tree/develop/Documentation), along with instructions on how to contribute.
 
-##   Hosting
+## 🌐 Self-Hosting
 
-This repository is intended to be used with [icvr-canister](https://github.com/willguest/icvr-canister), which allows the Unity WebGL builds to be self-hosted on the Internet Computer blockchain. See that repository's README for more information, or contact me directly to learn more.
+This repository is intended to be used with [icvr-canister](https://github.com/willguest/icvr-canister), which allows the Unity WebGL builds to be self-hosted on the Internet Computer blockchain. See that repository's README for more information.
 
 
-##   Sponsors
+## 💛 Sponsorship
 
 The framework is open-source and was initially funded by non-dilutive grants from the Internet Computer. I welcome sponsorship in all forms and look forward to scaling this project as more resources become available. Please visit my [sponsorship page](https://github.com/sponsors/willguest) for more information.
 
