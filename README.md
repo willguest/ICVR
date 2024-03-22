@@ -49,7 +49,7 @@ For compatibility with the [ICVR-React](https://github.com/willguest/icvr-react)
 
 ## 📄 Documentation
 
-Each class is documented in a corresponding markdown file, and linked in the class definition summary. The [top level](https://github.com/willguest/ICVR/tree/develop/Documentation) constains instructions on how to add docuementation to any contributions.
+Each class is documented in a corresponding markdown file, and linked in the class definition summary. The [top level](https://github.com/willguest/ICVR/tree/develop/Documentation) contains instructions on how to add documentation to any contributions.
 
 ## 🌐 Self-Hosting
 
