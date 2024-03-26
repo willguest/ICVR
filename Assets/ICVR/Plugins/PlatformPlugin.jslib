@@ -36,16 +36,16 @@ mergeInto(LibraryManager.library, {
 		navigator.mediaDevices.enumerateDevices()
 			.then(function(devices) {
 				devices.forEach(function(device) {
-					if (device.kind === 'audioinput' && 
-					device.label.toLowerCase().includes('headset')) {
-						formFactor = 'HMD';
+					if (device.kind === 'audioinput'){
+						console.log("audio input: " + device.name);
+						if (device.label.toLowerCase().includes('headset')) {
+							formFactor = 'HMD';
+						}
 					}
 				});
-				// Assuming if not mobile and not headset, it's a PC
 				if (formFactor === 'Unknown') {
 					formFactor = 'PC';
 				}
-				// Send the result back to Unity
 				SendMessage(jGoName, 'FormFactorResult', formFactor);
 			})
 			.catch(function(err) {
@@ -53,6 +53,6 @@ mergeInto(LibraryManager.library, {
 				// Assuming if there's an error, it's a PC
 				formFactor = 'PC';
 				SendMessage(jGoName, 'FormFactorResult', formFactor);
-		});
+			});
     }
 });

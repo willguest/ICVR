@@ -16,9 +16,6 @@ namespace ICVR
         private Vector3 headsetLocalSpeed;
         private Vector3 prevPos;
 
-        public delegate void DiveEvent(int newRecord);
-        public event DiveEvent OnNewSpeedRecord;
-
         void Start()
         {
             bodyAnimator = GetComponent<Animator>();

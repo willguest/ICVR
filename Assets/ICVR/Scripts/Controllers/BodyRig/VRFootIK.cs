@@ -13,10 +13,9 @@ public class VRFootIK : MonoBehaviour
     private float leftFootPosWeight = 1.0f;
     private float leftFootRotWeight = 1.0f;
 
-    private float stepDelay = 0.2f;
+    private float stepDelay = 0.3f;
     private float stepTick;
     
-    // Start is called before the first frame update
     void Start()
     {
         animator = GetComponent<Animator>();
@@ -36,7 +35,7 @@ public class VRFootIK : MonoBehaviour
         }
         footAudio.clip = defaultStepSound;
         footAudio.playOnAwake = false;
-        footAudio.volume = 0.2f;
+        footAudio.volume = 0.1f;
         footAudio.pitch = 0.8f;
         footAudio.loop = false;
         footAudio.maxDistance = 2f;
@@ -95,7 +94,7 @@ public class VRFootIK : MonoBehaviour
         if (enableFootSounds && (Time.time - stepTick > stepDelay))
         {
             stepTick = Time.time;
-            footAudio.Play();
+            //footAudio.Play();
         }
     }
 }

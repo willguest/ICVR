@@ -33,6 +33,9 @@ namespace ICVR
         [Tooltip("(Optional) Joysick for character movement on mobile devices")]
         [SerializeField] private Canvas JoystickRoot;
 
+        [Tooltip("Joystick sensitivity, when present")]
+        [SerializeField] private float joystickMultiplier = 3f;
+
 
         // Public Attributes
         public GameObject CurrentObject { get; set; }
@@ -57,7 +60,7 @@ namespace ICVR
         private Camera _camera;
 
         private WebXRState xrState = WebXRState.NORMAL;
-        private ICVRJoystick variableJoystick;
+        private VariableJoystick variableJoystick;
 
         private bool wasKinematic = false;
         private FixedJoint attachJoint;
@@ -116,7 +119,7 @@ namespace ICVR
             
             if (JoystickRoot != null)
             {
-                variableJoystick = JoystickRoot.GetComponentInChildren<ICVRJoystick>();
+                variableJoystick = JoystickRoot.GetComponentInChildren<VariableJoystick>();
             }
         }
 
@@ -156,6 +159,7 @@ namespace ICVR
         {
             xrState = state;
             CursorManager.Instance.SetCursorParameters(xrState);
+            variableJoystick.UpdateJoystickVisibility();
         }
 
 
@@ -315,8 +319,8 @@ namespace ICVR
         {
             if (variableJoystick == null) { return; }
 
-            float x = variableJoystick.Horizontal * 0.5f * Time.deltaTime * 3.0f;
-            float z = variableJoystick.Vertical * 0.5f * Time.deltaTime * 3.0f;
+            float x = variableJoystick.Horizontal * 0.5f * Time.deltaTime * joystickMultiplier;
+            float z = variableJoystick.Vertical * 0.5f * Time.deltaTime * joystickMultiplier;
 
             // conditions for no action
             if (x == 0 && z == 0) return;

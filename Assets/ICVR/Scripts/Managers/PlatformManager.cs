@@ -6,7 +6,6 @@
 
 using System.Runtime.InteropServices;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using WebXR;
 
 namespace ICVR
@@ -36,8 +35,6 @@ namespace ICVR
 
         private bool discoveredVR = false;
         private bool isMobile;
-
-        private bool platformUpdateReady = false;
         private string formFactor = "";
 
         public void StartVR()
@@ -59,23 +56,20 @@ namespace ICVR
 
         void Start()
         {
-            // don't try to check in the Editor
-            if (Application.platform != RuntimePlatform.WindowsEditor)
+            if (Application.platform == RuntimePlatform.WebGLPlayer &&
+                WebXRManager.Instance.isSupportedVR)
             {
-                Debug.Log("IsVRSupported: " + IsVRSupported + '\n' + 
-                          "Mobile check: " + Application.isMobilePlatform + '\n' +
-                          "installerName: " + Application.installerName);
-
-                DetectFormFactor(gameObject.name);
+                IsVRSupported = true;
             }
+            //DetectFormFactor(gameObject.name);
         }
 
         private void Update()
         {
             if (discoveredVR)
             {
-                WebXRManager.Instance.ToggleVR();
                 discoveredVR = false;
+                WebXRManager.Instance.ToggleVR();
             }
         }
 
@@ -99,7 +93,7 @@ namespace ICVR
         private void OnXRChange(WebXRState state, int viewsCount, Rect leftRect, Rect rightRect)
         {
             XrState = state;
-            DetectFormFactor(gameObject.name);
+            //DetectFormFactor(gameObject.name);
         }
 
         public void FormFactorResult(string formFactorResult)

@@ -393,7 +393,7 @@ Transform:
   m_GameObject: {fileID: 1610192341794491872}
   m_LocalRotation: {x: -0.10821866, y: 3.2893954e-28, z: 3.214387e-27, w: 0.9941271}
   m_LocalPosition: {x: -1.9285147e-10, y: 0.044378724, z: -6.7723606e-17}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0, y: 0, z: 0}
   m_Children:
   - {fileID: 693748233102114562}
   m_Father: {fileID: 3131023516350059158}
@@ -2754,8 +2754,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 9069894690256810965}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -1.7, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: 0, y: -1.85, z: 0}
+  m_LocalScale: {x: 1.1, y: 1.1, z: 1.1}
   m_Children:
   - {fileID: 4750033637056556161}
   - {fileID: 4234860614818417147}
@@ -2818,7 +2818,7 @@ MonoBehaviour:
   bodyController: {fileID: 0}
   Body:
     rigTarget: {fileID: 8544856290302962031}
-    trackingPositionOffset: {x: 0, y: -1.1, z: -0.2}
+    trackingPositionOffset: {x: 0, y: -1.3, z: -0.2}
     trackingRotationOffset: {x: 0, y: 0, z: 0}
   Head:
     rigTarget: {fileID: 5392661465499036261}

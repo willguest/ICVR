@@ -67,7 +67,6 @@ MonoBehaviour:
   handle: {fileID: 6052763661961000504}
   moveThreshold: 0.1
   joystickType: 0
-  joystickMultiplier: 0
 --- !u!1 &1493425791202611477
 GameObject:
   m_ObjectHideFlags: 0

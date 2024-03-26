@@ -40,6 +40,15 @@ namespace ICVR
             StartCoroutine(MoveAndScaleTab(targetPos, targetScale, 2.0f));
         }
 
+        private void Update()
+        {
+            if (Input.GetKeyDown(KeyCode.V))
+            {
+                Debug.Log("toggly");
+                ToggleVR();
+            }
+        }
+
         public void ToggleVR()
         {
             PlatformManager.Instance.StartVR();

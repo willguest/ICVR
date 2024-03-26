@@ -48,8 +48,6 @@ namespace ICVR
         [SerializeField] private Transform leftPointer;
         [SerializeField] private Transform rightPointer;
 
-        private bool IsVR;
-        private bool hasBodyRig = false;
         private bool IsConnectionReady = false;
         private bool hasInteractionEvent = false;
 
@@ -61,7 +59,6 @@ namespace ICVR
 
         private void OnEnable()
         {
-            IsVR = (WebXRManager.Instance.XRState != WebXRState.NORMAL);
             WebXRManager.OnXRChange += OnXRChange;
         }
 
@@ -75,11 +72,8 @@ namespace ICVR
         {
             //headObject.transform.localRotation = Quaternion.identity;
 
-            // Turn off the following UI when in VR
-            IsVR = (state == WebXRState.VR);
-
             // link controller events in VR
-            MapControllerEvents(IsVR);
+            MapControllerEvents(state == WebXRState.VR);
 
             // toggle hand IK
             if (avatar != null)

@@ -86,7 +86,7 @@ namespace ICVR
             }
             catch (System.Exception e)
             {
-                Debug.Log("Error reading chain callback, interrogating..");
+                Debug.Log("Error reading chain callback: " + e.ToString());
                 ChainUtils.InterrogateCanisterResponse(jsonData);
             }
         }
