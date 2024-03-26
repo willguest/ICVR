@@ -45,7 +45,7 @@ namespace ICVR
         [SerializeField] private Texture2D cursorForScene;
         [SerializeField] private Texture2D cursorForObjects;
         [SerializeField] private Texture2D cursorForControls;
-        [SerializeField] private SimpleCrosshair crosshair;
+        [SerializeField] private ICVRCrosshair crosshair;
 
 
         // Public Attributes
@@ -109,7 +109,6 @@ namespace ICVR
         public bool buttonDown { get; set; }
         private GameObject currentButton;
 
-        private bool isEditor;
 
         #endregion ----- Private Variables ------
 
@@ -119,12 +118,6 @@ namespace ICVR
         private void Awake()
         {
             _instance = this;
-
-            if (Application.platform == RuntimePlatform.WindowsEditor)
-            {
-                isEditor = true;
-            }
-
             _camera = GetComponent<Camera>();
         }
 
@@ -142,7 +135,8 @@ namespace ICVR
 
             if (JoystickCanvas != null)
             {
-                variableJoystick = JoystickCanvas.GetComponentInChildren<VariableJoystickB>();
+                variableJoystick = JoystickCanvas.gameObject.GetComponentInChildren<VariableJoystickB>();
+                UpdateJoystickVisibility();
             }
         }
 
@@ -178,6 +172,15 @@ namespace ICVR
             WebXRManager.OnXRChange -= OnXRChange;
         }
 
+        private void OnXRChange(WebXRState state, int viewsCount, Rect leftRect, Rect rightRect)
+        {
+            xrState = state;
+            JoystickCanvas.gameObject.SetActive(PlatformManager.Instance.IsMobile);
+            SetCursorParameters();
+            UpdateJoystickVisibility();
+        }
+
+
         #endregion ----- Unity Functions ------
 
 
@@ -189,7 +192,7 @@ namespace ICVR
         {
             if (xrState != WebXRState.NORMAL) { return; }
 
-            if (!isEditor || DebugMouseInteraction)
+            if (!Application.isEditor || DebugMouseInteraction)
             {
                 SetCursorImage();
             }
@@ -311,12 +314,7 @@ namespace ICVR
 
         #region ----- Character Movement ------
 
-        private void OnXRChange(WebXRState state, int viewsCount, Rect leftRect, Rect rightRect)
-        {
-            xrState = state;
-            JoystickCanvas.gameObject.SetActive(xrState == WebXRState.NORMAL);
-            SetCursorParameters();
-        }
+
 
         private Quaternion GetCameraRotationFromMouse(float sensitivity, float invertMouse)
         {
@@ -458,9 +456,6 @@ namespace ICVR
         #endregion ----- Character Movement ------
 
 
-        #region ----- Object Interaction ------
-
-
         private void ToggleGameMode()
         {
             isGameMode = !isGameMode;
@@ -543,6 +538,14 @@ namespace ICVR
                 SetDefaultCursor();
             }
         }
+
+        private void UpdateJoystickVisibility()
+        {
+            JoystickCanvas.gameObject.SetActive(PlatformManager.Instance.IsMobile);
+        }
+
+
+        #region ----- Object Interaction ------
 
         bool wasKinematic = false;
 

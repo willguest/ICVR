@@ -35,7 +35,7 @@ public class Crosshair
     }
 }
 
-public class SimpleCrosshair : MonoBehaviour
+public class ICVRCrosshair : MonoBehaviour
 {
     [SerializeField, Tooltip("Contains properties that Specify how the crosshair looks.")]
     private Crosshair m_crosshair = null;
