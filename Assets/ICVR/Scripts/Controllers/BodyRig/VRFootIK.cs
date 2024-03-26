@@ -2,6 +2,10 @@ using UnityEngine;
 
 public class VRFootIK : MonoBehaviour
 {
+    [SerializeField] private bool enableFootSounds = true;
+    [SerializeField] private AudioClip defaultStepSound;
+
+    private AudioSource footAudio;
     private Animator animator;
 
     private float rightFootPosWeight = 1.0f;
@@ -9,10 +13,35 @@ public class VRFootIK : MonoBehaviour
     private float leftFootPosWeight = 1.0f;
     private float leftFootRotWeight = 1.0f;
 
+    private float stepDelay = 0.2f;
+    private float stepTick;
+    
     // Start is called before the first frame update
     void Start()
     {
         animator = GetComponent<Animator>();
+        stepTick = Time.time;
+
+        if (enableFootSounds)
+        {
+            ConfigureFootAudioSource();
+        }
+    }
+
+    private void ConfigureFootAudioSource()
+    {
+        if (!TryGetComponent(out footAudio))
+        {
+            footAudio = gameObject.AddComponent<AudioSource>();
+        }
+        footAudio.clip = defaultStepSound;
+        footAudio.playOnAwake = false;
+        footAudio.volume = 0.2f;
+        footAudio.pitch = 0.8f;
+        footAudio.loop = false;
+        footAudio.maxDistance = 2f;
+        footAudio.minDistance = 0.2f;
+        footAudio.rolloffMode = AudioRolloffMode.Logarithmic;
     }
 
     private void OnAnimatorIK(int layerIndex)
@@ -55,6 +84,18 @@ public class VRFootIK : MonoBehaviour
         {
             animator.SetIKPositionWeight(AvatarIKGoal.LeftFoot, 0);
             animator.SetIKRotation(AvatarIKGoal.LeftFoot, Quaternion.identity);
+        }
+    }
+
+    /// <summary>
+    /// Used by the animation events to play footstep sounds.
+    /// </summary>
+    private void PlayFootstepSound()
+    {
+        if (enableFootSounds && (Time.time - stepTick > stepDelay))
+        {
+            stepTick = Time.time;
+            footAudio.Play();
         }
     }
 }

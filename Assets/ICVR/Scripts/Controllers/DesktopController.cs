@@ -22,7 +22,6 @@ namespace ICVR
         private static DesktopController _instance;
         public static DesktopController Instance { get { return _instance; } }
 
-        private Camera _camera;
 
         // Inspector Variables
         [Tooltip("Character physics container")]
@@ -31,21 +30,8 @@ namespace ICVR
         [Tooltip("Mouse sensitivity")]
         [SerializeField] private float mouseSensitivity = 2f;
 
-        [Tooltip("Straffe Speed")]
-        [SerializeField] private float straffeSpeed = 1f;
-
         [Tooltip("(Optional) Joysick for character movement on mobile devices")]
-        [SerializeField] private Canvas JoystickCanvas;
-
-        [Tooltip("Joystick sensitivity")]
-        [SerializeField] private float joystickMultiplier;
-
-
-        // Cursor Objects
-        [SerializeField] private Texture2D cursorForScene;
-        [SerializeField] private Texture2D cursorForObjects;
-        [SerializeField] private Texture2D cursorForControls;
-        [SerializeField] private ICVRCrosshair crosshair;
+        [SerializeField] private Canvas JoystickRoot;
 
 
         // Public Attributes
@@ -54,6 +40,8 @@ namespace ICVR
         public float CurrentDistance { get; private set; }
 
         public Vector3 CurrentHitPoint { get; private set; }
+
+        public bool IsGameMode { get; set; }
 
 
         // Cursor event handling   
@@ -66,11 +54,12 @@ namespace ICVR
 
         #region ----- Private Variables ------
 
+        private Camera _camera;
+
         private WebXRState xrState = WebXRState.NORMAL;
-        private VariableJoystickB variableJoystick;
+        private ICVRJoystick variableJoystick;
 
-        private bool isGameMode = false;
-
+        private bool wasKinematic = false;
         private FixedJoint attachJoint;
 
         private float runFactor = 1.0f;
@@ -87,10 +76,7 @@ namespace ICVR
 
         private Quaternion startRotation;
         private Quaternion currentHeading;
-
-        private Vector2 hotspot = new Vector2(10, 5);
-        private readonly CursorMode cMode = CursorMode.ForceSoftware;
-
+    
         private bool isMouseDown = false;
         private bool isDragging = false;
 
@@ -98,10 +84,7 @@ namespace ICVR
         private bool runOne;
 
         private SharedAsset currentSharedAsset;
-
         private GameObject activeMesh;
-        private GameObject focusedObject;
-        private int pLayer = 0;
 
         private float jumpTick;
         private float triggerTick = 0;
@@ -126,17 +109,14 @@ namespace ICVR
             runOne = true;
             jumpTick = Time.time;
 
-            SetCrosshairVisibility();
-
             startRotation = transform.rotation;
             currentHeading = startRotation;
 
             attachJoint = GetComponent<FixedJoint>();
-
-            if (JoystickCanvas != null)
+            
+            if (JoystickRoot != null)
             {
-                variableJoystick = JoystickCanvas.gameObject.GetComponentInChildren<VariableJoystickB>();
-                UpdateJoystickVisibility();
+                variableJoystick = JoystickRoot.GetComponentInChildren<ICVRJoystick>();
             }
         }
 
@@ -145,11 +125,11 @@ namespace ICVR
             if (xrState != WebXRState.NORMAL) { return; }
 
             // set character pose
-            MoveBodyWithKeyboard(straffeSpeed);
+            MoveBodyWithKeyboard();
             MoveBodyWithJoystick();            
             SetCameraRotation();        
 
-            // make observation, update current object and cursor
+            // make observation
             GameObject viewedObject = ScreenRaycast();
             if (viewedObject != null)
             {
@@ -157,9 +137,9 @@ namespace ICVR
             }
             else
             {
+                // remember, this is a Unity null, not a total null
                 CurrentObject = null;
             }
-
         }
 
         private void OnEnable()
@@ -175,9 +155,7 @@ namespace ICVR
         private void OnXRChange(WebXRState state, int viewsCount, Rect leftRect, Rect rightRect)
         {
             xrState = state;
-            JoystickCanvas.gameObject.SetActive(PlatformManager.Instance.IsMobile);
-            SetCursorParameters();
-            UpdateJoystickVisibility();
+            CursorManager.Instance.SetCursorParameters(xrState);
         }
 
 
@@ -186,16 +164,11 @@ namespace ICVR
 
         #region ----- Input Handling -----
 
-        [SerializeField] private bool DebugMouseInteraction;
-
         void OnGUI()
         {
             if (xrState != WebXRState.NORMAL) { return; }
 
-            if (!Application.isEditor || DebugMouseInteraction)
-            {
-                SetCursorImage();
-            }
+            HandleCursorFocus();
 
             Event e = Event.current;
 
@@ -222,6 +195,8 @@ namespace ICVR
 
                 if (e.type == EventType.MouseDown && e.button == 0 && CurrentObject != null)
                 {
+                    CursorManager.Instance.SetFocusedObject(CurrentObject);
+
                     if (CurrentObject.layer == 9 || CurrentObject.layer == 14)
                     {
                         //set interation options for controllables...
@@ -276,11 +251,6 @@ namespace ICVR
                     globalInvertMouse *= -1.0f;
                 }
 
-                if (e.keyCode == KeyCode.M)
-                {
-                    ToggleGameMode();
-                }
-
                 if (e.keyCode == KeyCode.Space)
                 {
                     JumpSwim();
@@ -312,9 +282,7 @@ namespace ICVR
         #endregion ----- Input Handling -----
 
 
-        #region ----- Character Movement ------
-
-
+        #region ----- Character Movement ------    
 
         private Quaternion GetCameraRotationFromMouse(float sensitivity, float invertMouse)
         {
@@ -347,28 +315,29 @@ namespace ICVR
         {
             if (variableJoystick == null) { return; }
 
-            float x = variableJoystick.Horizontal * 0.5f * Time.deltaTime * joystickMultiplier;
-            float z = variableJoystick.Vertical * 0.5f * Time.deltaTime * joystickMultiplier;
+            float x = variableJoystick.Horizontal * 0.5f * Time.deltaTime * 3.0f;
+            float z = variableJoystick.Vertical * 0.5f * Time.deltaTime * 3.0f;
 
             // conditions for no action
             if (x == 0 && z == 0) return;
 
-            //camera forward and right vectors
+            // camera forward and right vectors
             Vector3 forward = transform.forward;
             Vector3 right = transform.right;
 
-            //project forward and right vectors on the horizontal plane (y = 0)
+            // project forward and right vectors on the horizontal plane
             forward.y = 0f;
             right.y = 0f;
             forward.Normalize();
             right.Normalize();
 
-            //this is the direction in the world space we want to move:
+            // this is the direction in the world space we want to move:
             var desiredMoveDirection = forward * z + right * x;
             CharacterVehicle.transform.Translate(desiredMoveDirection);
+            
         }
 
-        private void MoveBodyWithKeyboard(float multiplier)
+        private void MoveBodyWithKeyboard()
         {
             float x = Input.GetAxis("Horizontal") * Time.smoothDeltaTime * runFactor;
             float z = Input.GetAxis("Vertical") * Time.smoothDeltaTime * runFactor;
@@ -387,15 +356,14 @@ namespace ICVR
 
             //this is the direction in the world space we want to move:
             var desiredMoveDirection = personForward * z + personRight * x;
-            CharacterVehicle.transform.Translate(desiredMoveDirection * multiplier);
+            CharacterVehicle.transform.Translate(desiredMoveDirection);
         }
 
         private void SetCameraRotation()
         {
-            //float dragMod = 1.0f;
             float dragMod = isDragging ? -1.5f * globalInvertMouse : 1.0f;
 
-            if (isGameMode)
+            if (IsGameMode)
             {
                 Quaternion camQuat = GetCameraRotationFromMouse(mouseSensitivity, 1.0f * globalInvertMouse);
                 StartCoroutine(RotateCamera(camQuat, mouseSensitivity));
@@ -456,98 +424,28 @@ namespace ICVR
         #endregion ----- Character Movement ------
 
 
-        private void ToggleGameMode()
-        {
-            isGameMode = !isGameMode;
-            SetCrosshairVisibility();
-            SetCursorParameters();
-        }
-
-        private void SetCrosshairVisibility()
-        {
-            // toggle crosshair visibility
-            int isGamey = (isGameMode ? 1 : 0) * 255;
-            crosshair.SetColor(CrosshairColorChannel.ALPHA, isGamey, true);
-        }
-
-        private void SetCursorParameters()
-        {
-            if (xrState != WebXRState.NORMAL)
-            {
-                Cursor.visible = false;
-            }
-            else
-            {
-                Cursor.visible = true;
-                Cursor.lockState = isGameMode ? CursorLockMode.Locked : CursorLockMode.None;
-                Cursor.visible = !isGameMode;
-            }
-        }
-
-        private void SetDefaultCursor()
-        {
-            if (focusedObject)
-            {
-                InvokeFocusEvent(focusedObject, false);
-                focusedObject = null;
-            }
-            pLayer = 0;
-            Cursor.SetCursor(cursorForScene, hotspot, cMode);
-            if (isGameMode) crosshair.SetGap(6, true);
-        }
-
-        private void SetCursorImage()
-        {
-            if (CurrentObject == null)
-            {
-                SetDefaultCursor();
-                return;
-            }
-
-            if (CurrentObject.layer == pLayer)
-            {
-                return;
-            }
-
-            pLayer = CurrentObject.layer;
-
-            // ui buttons
-            if (CurrentObject.layer == 12)
-            {
-                Cursor.SetCursor(cursorForControls, hotspot, cMode);
-            }
-            // interactable objects
-            else if (CurrentObject.layer == 10 || CurrentObject.layer == 15)
-            {
-                focusedObject = CurrentObject;
-                InvokeFocusEvent(CurrentObject, true);
-                Cursor.SetCursor(cursorForObjects, hotspot, cMode);
-                if (isGameMode) crosshair.SetGap(18, true);
-            }
-            // controllable cursor
-            else if (CurrentObject.layer == 9 || CurrentObject.layer == 14)
-            {
-                focusedObject = CurrentObject;
-                InvokeFocusEvent(CurrentObject, true);
-                Cursor.SetCursor(cursorForControls, hotspot, cMode);
-            }
-            // default (scene) cursor
-            else
-            {
-                InvokeFocusEvent(null, false);
-                SetDefaultCursor();
-            }
-        }
-
-        private void UpdateJoystickVisibility()
-        {
-            JoystickCanvas.gameObject.SetActive(PlatformManager.Instance.IsMobile);
-        }
-
-
         #region ----- Object Interaction ------
 
-        bool wasKinematic = false;
+        private void HandleCursorFocus()
+        {
+            if (CurrentObject == null) return;
+
+            CursorManager.Instance.SetFocusedObject(CurrentObject);
+
+            int layer = CurrentObject.layer;
+            if (layer >= 9 && layer <= 15)
+            {
+                // scene layer removes focus
+                if (layer != 11)
+                {
+                    InvokeFocusEvent(CurrentObject, true);
+                }
+                else
+                {
+                    InvokeFocusEvent(null, false);
+                }
+            }
+        }
 
         private GameObject PickUpObject(GameObject ooi)
         {
@@ -719,7 +617,7 @@ namespace ICVR
 
             Ray ray;
 
-            if (isGameMode)
+            if (IsGameMode)
             {
                 ray = _camera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
             }
@@ -741,7 +639,6 @@ namespace ICVR
         }
 
         #endregion ----- Object Interaction ------
-
 
     }
 }

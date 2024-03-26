@@ -1,14 +1,18 @@
-﻿using System.Collections;
+﻿using ICVR;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-public class VariableJoystickB : JoystickBase
+public class ICVRJoystick : JoystickBase
 {
     public float MoveThreshold { get { return moveThreshold; } set { moveThreshold = Mathf.Abs(value); } }
 
     [SerializeField] private float moveThreshold = 1;
     [SerializeField] private JoystickTypeB joystickType = JoystickTypeB.Fixed;
+
+    [Tooltip("Joystick sensitivity, when present")]
+    [SerializeField] private float joystickMultiplier;
 
     private Vector2 fixedPosition = Vector2.zero;
 
@@ -29,6 +33,13 @@ public class VariableJoystickB : JoystickBase
         base.Start();
         fixedPosition = background.anchoredPosition;
         SetMode(joystickType);
+        UpdateJoystickVisibility();
+    }
+
+    private void UpdateJoystickVisibility()
+    {
+        bool showJS = (PlatformManager.Instance.IsMobile || Application.platform == RuntimePlatform.WindowsEditor);
+        transform.parent.gameObject.SetActive(showJS);
     }
 
     public override void OnPointerDown(PointerEventData eventData)

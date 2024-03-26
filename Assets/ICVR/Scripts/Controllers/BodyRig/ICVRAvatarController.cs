@@ -5,7 +5,7 @@ namespace ICVR
 {
     public class ICVRAvatarController : MonoBehaviour
     {
-        public float speedThreshold = 0.2f;
+        public float speedThreshold = 0.1f;
         
         [SerializeField] private Rig ArmRig;
         [SerializeField] private Transform rightWrist;
@@ -62,6 +62,7 @@ namespace ICVR
             {
                 bodyAnimator.SetFloat("directionX", Mathf.Clamp(headsetLocalSpeed.x, -1, 1));
                 bodyAnimator.SetFloat("directionY", Mathf.Clamp(headsetLocalSpeed.z, -1, 1));
+                bodyAnimator.SetFloat("animation_speed", Mathf.Clamp(headsetLocalSpeed.magnitude, 1, 2));
             }
 
             prevPos = transform.position;

@@ -2777,7 +2777,7 @@ Animator:
   m_Controller: {fileID: 9100000, guid: f45f13dad25e6ef46917427cec7e7eae, type: 2}
   m_CullingMode: 1
   m_UpdateMode: 1
-  m_ApplyRootMotion: 0
+  m_ApplyRootMotion: 1
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_WarningMessage: 
@@ -2844,6 +2844,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 77d129d1c9d12be47a209b061aa17623, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  enableFootSounds: 1
+  defaultStepSound: {fileID: 8300000, guid: c80e44db025ed394faa0ec327a6c5a28, type: 3}
 --- !u!114 &3965463601833783290
 MonoBehaviour:
   m_ObjectHideFlags: 0
