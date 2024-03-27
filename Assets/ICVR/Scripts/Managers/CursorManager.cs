@@ -111,9 +111,10 @@ namespace ICVR
         private void SetDefaultCursor()
         {
             Cursor.SetCursor(cursorForScene, hotspot, cMode);
-
             if (isGameMode)
-            {
+            {   
+                crosshair.SetSize(14, true);
+                crosshair.SetThickness(1, true);
                 crosshair.SetGap(6, true);
             }
         }
@@ -131,17 +132,34 @@ namespace ICVR
             if (objectLayer == 12)
             {
                 Cursor.SetCursor(cursorForControls, hotspot, cMode);
+                if (isGameMode)
+                {   // a thin square
+                    crosshair.SetSize(1, true);
+                    crosshair.SetThickness(16, true);
+                    crosshair.SetGap(8, true);
+                }
             }
-            // interactables
+            // interactables (object and tools)
             else if (objectLayer == 10 || objectLayer == 15)
             {
                 Cursor.SetCursor(cursorForObjects, hotspot, cMode);
-                if (isGameMode) crosshair.SetGap(18, true);
+                if (isGameMode)
+                {   // wide crosshair
+                    crosshair.SetSize(14, true);
+                    crosshair.SetThickness(1, true);
+                    crosshair.SetGap(18, true);
+                }
             }
-            // controllables
+            // controllables (furniture and wearables)
             else if (objectLayer == 9 || objectLayer == 14)
             {
                 Cursor.SetCursor(cursorForControls, hotspot, cMode);
+                if (isGameMode)
+                {   // narrow, thicker crosshair
+                    crosshair.SetSize(6, true);
+                    crosshair.SetThickness(2, true);
+                    crosshair.SetGap(6, true);
+                }
             }
             // default (scene) cursor
             else

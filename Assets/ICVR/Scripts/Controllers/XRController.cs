@@ -86,7 +86,7 @@ namespace ICVR
         }
 
         // events, use as hooks for controller button functions
-        public event BodyController.CursorFocus OnHandFocus;
+        //public event BodyController.CursorFocus OnHandFocus;
         public event BodyController.ObjectTrigger OnObjectTrigger;
         public event BodyController.ObjectGrip OnObjectGrip;
 
@@ -788,10 +788,7 @@ namespace ICVR
 
         private void UseObjectTrigger(float triggerValue)
         {
-            foreach (ObjectInterface oi in nearInterfaces)
-            {
-                OnObjectTrigger?.Invoke(oi.gameObject, triggerValue);
-            }
+            OnObjectTrigger?.Invoke(currentInterface.gameObject, triggerValue);
         }
 
 
@@ -906,7 +903,7 @@ namespace ICVR
                 OnObjectGrip?.Invoke(hand, currentInterface.gameObject, false);
                 if (!nearInterfaces.Contains(currentInterface))
                 {
-                    OnHandFocus(currentInterface.gameObject, false);
+                    //OnHandFocus(currentInterface.gameObject, false);
                 }
 
                 currentInterface = null;
@@ -1062,7 +1059,7 @@ namespace ICVR
             if ((Time.time - triggerEnterTick) < 0.1f) return;
             switch (other.gameObject.layer)
             {
-                case (12):  // UI
+                case 12:  // UI
                     {
                         touchingButton = true;
                         currentButton = other.gameObject;
@@ -1085,7 +1082,7 @@ namespace ICVR
                             if (!nearInterfaces.Contains(oi))
                             {
                                 nearInterfaces.Add(oi);
-                                OnHandFocus?.Invoke(gameObject, true);
+                                //OnHandFocus?.Invoke(gameObject, true);
                             }
                         }
 
@@ -1111,7 +1108,7 @@ namespace ICVR
             if ((Time.time - triggerExitTick) < 0.1f) return;
             switch (other.gameObject.layer)
             {
-                case (12):  // UI
+                case 12:  // UI
                     {
                         currentButton = null;
                         touchingButton = false;
@@ -1133,7 +1130,7 @@ namespace ICVR
                             if (nearInterfaces.Contains(oi))
                             {
                                 nearInterfaces.Remove(oi);
-                                OnHandFocus?.Invoke(other.gameObject, false);
+                                //OnHandFocus?.Invoke(other.gameObject, false);
                             }
                         }
 

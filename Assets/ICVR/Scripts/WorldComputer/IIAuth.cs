@@ -100,8 +100,7 @@ namespace ICVR
             
             string bkPrincipal = iiUserProfile.principal.BookEnd(9, "...");
             connectionResultString = "Status: " + iiUserProfile.status +
-                                        "\nPrincipal: " + bkPrincipal;
-            
+                                    "\nPrincipal: " + bkPrincipal;
             screenUpdateReady = true;
         }
 

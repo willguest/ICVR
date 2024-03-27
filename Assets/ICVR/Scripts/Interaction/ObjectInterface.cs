@@ -83,7 +83,7 @@ namespace ICVR
         private void OnTriggerEnter(Collider other)
         {
             if (Time.realtimeSinceStartup - triggerEnterTick < 0.1f) return;
-            if (!IsBeingUsed && other.gameObject.TryGetComponent(out XRController xrctrl))
+            if (!IsBeingUsed && other.gameObject.GetComponent<XRController>())
             {
                 triggerEnterTick = Time.realtimeSinceStartup;
                 ToggleActivation(other.gameObject, true);
@@ -93,7 +93,7 @@ namespace ICVR
         private void OnTriggerExit(Collider other)
         {
             if (Time.realtimeSinceStartup - triggerExitTick < 0.1f) return;
-            if (!IsBeingUsed && other.gameObject.TryGetComponent(out XRController xrctrl))
+            if (IsBeingUsed && other.gameObject.GetComponent<XRController>())
             {
                 triggerExitTick = Time.realtimeSinceStartup;
                 ToggleActivation(null, false);
@@ -134,7 +134,7 @@ namespace ICVR
                 }
 
                 xrctrl.IsUsingInterface = true;
-                currentManipulator = manipulator.transform.Find("model")?.gameObject;
+                currentManipulator = manipulator.transform.Find("model").gameObject;
 
                 // disable hand colliders
                 foreach (CapsuleCollider cc in currentManipulator.GetComponentsInChildren<CapsuleCollider>())
@@ -183,8 +183,9 @@ namespace ICVR
 
         private IEnumerator LerpToControlPose(GameObject objToLerp, Transform newParent, Vector3 endPosition, Quaternion endRotation, float duration)
         {
-            // switch parent and wait a frame
-            currentManipulator.transform.parent = newParent;
+            // switch parent
+            objToLerp.transform.parent = newParent;
+
             if (endPosition == Vector3.zero)
             {
                 objToLerp.transform.localScale = Vector3.one;

@@ -88,7 +88,6 @@ GameObject:
   - component: {fileID: 2723482660000542961}
   - component: {fileID: 2723482660000542960}
   - component: {fileID: 2723482660000542991}
-  - component: {fileID: 2723482660000542990}
   - component: {fileID: 2723482660000542963}
   - component: {fileID: 2723482661235777010}
   - component: {fileID: 5524555770203417622}
@@ -193,19 +192,6 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!114 &2723482660000542990
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2723482660000542988}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f6c9cf164207db44f8e98abaa4dd3219, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Density: 1
 --- !u!114 &2723482660000542963
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -218,6 +204,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b2b6706f2d21d6b48abb62e56e3a07bb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsBeingUsed: 0
+  IsBeingHeld: 0
   controlPoseLeft: {fileID: 2723482661192666952}
   controlPoseRight: {fileID: 2723482660088440463}
   gripPose: 
@@ -275,6 +263,9 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 1
+  OnGripEvent:
+    m_PersistentCalls:
+      m_Calls: []
   OnTriggerEvent:
     m_PersistentCalls:
       m_Calls:

@@ -112,8 +112,8 @@ namespace ICVR
         {
             if (isOn)
             {
-                rightController.OnHandFocus += HandleObjectFocus;
-                leftController.OnHandFocus += HandleObjectFocus;
+                //rightController.OnHandFocus += HandleObjectFocus;
+                //leftController.OnHandFocus += HandleObjectFocus;
 
                 rightController.OnObjectGrip += HandleObjectGrip;
                 leftController.OnObjectGrip += HandleObjectGrip;
@@ -126,8 +126,8 @@ namespace ICVR
             }
             else
             {
-                rightController.OnHandFocus -= HandleObjectFocus;
-                leftController.OnHandFocus -= HandleObjectFocus;
+                //rightController.OnHandFocus -= HandleObjectFocus;
+                //leftController.OnHandFocus -= HandleObjectFocus;
 
                 rightController.OnObjectGrip -= HandleObjectGrip;
                 leftController.OnObjectGrip -= HandleObjectGrip;
@@ -171,10 +171,10 @@ namespace ICVR
                     NetworkIO.Instance.OnJoinedRoom -= InitialiseDataChannel;
                 }
 
-
                 IsConnectionReady = false;
 
                 DesktopController.Instance.OnObjectFocus -= HandleObjectFocus;
+                DesktopController.Instance.OnObjectTrigger -= HandleObjectTrigger;
                 DesktopController.Instance.OnNetworkInteraction -= PackageEventData;
             }
         }

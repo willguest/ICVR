@@ -118,6 +118,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Density: 2
+  targetMesh: {fileID: 0}
 --- !u!64 &3300882036306224103
 MeshCollider:
   m_ObjectHideFlags: 0
