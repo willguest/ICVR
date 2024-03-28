@@ -2,6 +2,9 @@
 
 Welcome to the ICVR repository, a Unity-based toolkit for designing cutting-edge immersive experiences on the Internet Computer.
 
+![image](https://github.com/willguest/ICVR/assets/24574013/e58d788d-b342-48f6-a6f9-e7550312ecdf)
+
+
 ## 📦 Steps to Create an ICVR Experience
 
 Make sure that [Unity 2020 LTS](https://unity.com/releases/editor/archive#download-archive-2020) is installed on your system.
