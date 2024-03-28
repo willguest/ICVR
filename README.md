@@ -14,16 +14,17 @@ Import the ICVR_Core and, if desired, the ICVR_DLC unity packages. \
 Open the ICVR Setup window. \
 *(Windows → WebXR → ICVR Setup)*
 
-<img src="https://github.com/willguest/ICVR/assets/24574013/219f7977-eb3b-4367-84ef-452acff0bb33" align="right" width="200px"/>
+<img src="https://github.com/willguest/ICVR/assets/24574013/02397692-9cc0-4172-a282-0f6e9e958d61)" align="right" width="200px"/>
 Use the relevant buttons to complete the ICVR setup:
 
    - Switch build target to WebGL
    - Add dependencies: Newtonsoft Json and WebXR Export (as scoped UPM package)
    - Click on *Enable ICVR Settings* to add the `ICVR` Scripting Define Symbol.
-   - Import relevant settings. Note that this will **override your current settings**.
+   - Apply relevant settings. Note that **this will override your current settings**.
 
 <img src="https://github.com/willguest/ICVR/assets/24574013/d91ea42b-d38f-4902-98d2-783179d3aad7" align="right" width="200px"/>
 Make sure that WebXR Export is enabled for the WebGL target.
+
 
 *(Project Settings → XR Plugin Management)*.
 
