@@ -158,8 +158,15 @@ namespace ICVR
         private void OnXRChange(WebXRState state, int viewsCount, Rect leftRect, Rect rightRect)
         {
             xrState = state;
-            CursorManager.Instance.SetCursorParameters(xrState);
-            variableJoystick.UpdateJoystickVisibility();
+            if (CursorManager.Instance != null)
+            {
+                CursorManager.Instance.SetCursorParameters(xrState);
+            }
+
+            if (variableJoystick != null)
+            {
+                variableJoystick.UpdateJoystickVisibility();
+            }
         }
 
 
@@ -199,7 +206,10 @@ namespace ICVR
 
                 if (e.type == EventType.MouseDown && e.button == 0 && CurrentObject != null)
                 {
-                    CursorManager.Instance.SetFocusedObject(CurrentObject);
+                    if (CursorManager.Instance != null)
+                    {
+                        CursorManager.Instance.SetFocusedObject(CurrentObject);
+                    }
 
                     if (CurrentObject.layer == 9 || CurrentObject.layer == 14)
                     {
@@ -434,7 +444,10 @@ namespace ICVR
         {
             if (CurrentObject == null) return;
 
-            CursorManager.Instance.SetFocusedObject(CurrentObject);
+            if (CursorManager.Instance != null)
+            {
+                CursorManager.Instance.SetFocusedObject(CurrentObject);
+            }
 
             int layer = CurrentObject.layer;
             if (layer >= 9 && layer <= 15)

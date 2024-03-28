@@ -552,11 +552,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   headObject: {fileID: 6506267113760641646}
-  leftHand: {fileID: 850935854436968274}
-  rightHand: {fileID: 7967110934344634494}
+  bodyObject: {fileID: 0}
+  leftController: {fileID: 0}
+  rightController: {fileID: 0}
   leftPointer: {fileID: 1960144460547895358}
   rightPointer: {fileID: 2578383427727819346}
-  hudFollower: {fileID: 8190434128086257531}
 --- !u!1 &474647399702201526
 GameObject:
   m_ObjectHideFlags: 0
@@ -876,23 +876,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aa5538e482207c04f95d355172712425, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  hand: 1
   debugHand: 0
   CharacterRoot: {fileID: 7676236854016821913}
-  BodyController: {fileID: 403641477948328616}
   MaxInteractionDistance: 15
-  GameObjectRenderers:
-  - {fileID: 336957402041660420}
-  - {fileID: 1387404379743011317}
-  - {fileID: 2029920845896817832}
-  - {fileID: 4746812688397412502}
-  - {fileID: 3821938363216776883}
-  - {fileID: 3345739362079233215}
-  hand: 1
+  HandRenderers: []
   PointerLayerMask:
     serializedVersion: 2
     m_Bits: 48673
-  IsUsingInterface: 0
   anim: {fileID: 1213760803710728572}
+  handIKAnchor: {fileID: 0}
 --- !u!1 &895399434054560962
 GameObject:
   m_ObjectHideFlags: 0
@@ -985,18 +978,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7dfb26f785eeb0f458fb3b45a10d382a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rotationEnabled: 1
-  translationEnabled: 1
+  CharacterVehicle: {fileID: 7676236854016821913}
   mouseSensitivity: 2
-  straffeSpeed: 1.5
-  seaLevel: -4.5
-  currentVehicle: {fileID: 7676236854016821913}
-  headObject: {fileID: 6506267113760641646}
-  cursorForScene: {fileID: 2800000, guid: e24d92b4df42b0f4783a4827c8098069, type: 3}
-  cursorForObjects: {fileID: 2800000, guid: fcd990195bbd10c44bb92a1f6c5737ac, type: 3}
-  cursorForInteractables: {fileID: 2800000, guid: be50afd8a5bb98b44875ddfce132c2e8, type: 3}
-  crosshair: {fileID: 6475686401155345275}
-  DebugMouseInteraction: 1
+  JoystickRoot: {fileID: 0}
+  joystickMultiplier: 3
 --- !u!114 &894967123683597141
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2189,12 +2174,16 @@ MonoBehaviour:
   m_GameObject: {fileID: 4770858837642774508}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c145f2c9739b32640926416570e528ec, type: 3}
+  m_Script: {fileID: 11500000, guid: 93d4fe058c52eaa4db7a40e58c50f747, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   DefaultRespawnPose: {fileID: 4873701677421894318}
-  characterCollider: {fileID: 106416010120016520}
   characterRoot: {fileID: 7676236854016821913}
+  characterColliders:
+  - {fileID: 8190434128175470339}
+  - {fileID: 8190434126882787528}
+  - {fileID: 106416010120016520}
+  - {fileID: 6506267113760641646}
 --- !u!1 &5387253612623157160
 GameObject:
   m_ObjectHideFlags: 0
@@ -3615,7 +3604,13 @@ MonoBehaviour:
   cameraR: {fileID: 874429861948344506}
   cameraARL: {fileID: 8115926526948981323}
   cameraARR: {fileID: 2579254202555722744}
-  cameraFollower: {fileID: 6506267113760641647}
+  m_updateNormalFieldOfView: 1
+  m_useNormalFieldOfViewFromAwake: 1
+  m_normalFieldOfView: 60
+  m_updateNormalLocalPose: 1
+  m_useNormalPoseFromAwake: 1
+  m_normalLocalPosition: {x: 0, y: 0, z: 0}
+  m_normalLocalRotation: {x: 0, y: 0, z: 0, w: 1}
   updateCameraTag: 0
 --- !u!54 &7676236854016821919
 Rigidbody:
@@ -4644,20 +4639,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aa5538e482207c04f95d355172712425, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  hand: 2
   debugHand: 0
   CharacterRoot: {fileID: 7676236854016821913}
-  BodyController: {fileID: 403641477948328616}
   MaxInteractionDistance: 15
-  GameObjectRenderers:
-  - {fileID: 8959524282438529362}
-  - {fileID: 3151002412198130585}
-  - {fileID: 3017989634766347681}
-  hand: 2
+  HandRenderers: []
   PointerLayerMask:
     serializedVersion: 2
     m_Bits: 48673
-  IsUsingInterface: 0
   anim: {fileID: 6703491511808171512}
+  handIKAnchor: {fileID: 0}
 --- !u!1 &8135289702252706077
 GameObject:
   m_ObjectHideFlags: 0
@@ -5775,23 +5766,8 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 9bb0c41878dd2394c844c730b16cf325, type: 3}
---- !u!23 &4746812688397412502 stripped
-MeshRenderer:
-  m_CorrespondingSourceObject: {fileID: 339756857671058459, guid: 9bb0c41878dd2394c844c730b16cf325, type: 3}
-  m_PrefabInstance: {fileID: 4996497437179915405}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &6430324694730800898 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2047455370491450255, guid: 9bb0c41878dd2394c844c730b16cf325, type: 3}
-  m_PrefabInstance: {fileID: 4996497437179915405}
-  m_PrefabAsset: {fileID: 0}
---- !u!23 &3821938363216776883 stripped
-MeshRenderer:
-  m_CorrespondingSourceObject: {fileID: 8096732447736816190, guid: 9bb0c41878dd2394c844c730b16cf325, type: 3}
-  m_PrefabInstance: {fileID: 4996497437179915405}
-  m_PrefabAsset: {fileID: 0}
---- !u!23 &3345739362079233215 stripped
-MeshRenderer:
-  m_CorrespondingSourceObject: {fileID: 7726325157425608754, guid: 9bb0c41878dd2394c844c730b16cf325, type: 3}
   m_PrefabInstance: {fileID: 4996497437179915405}
   m_PrefabAsset: {fileID: 0}
