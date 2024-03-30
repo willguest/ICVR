@@ -4,6 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
+using System.Runtime.InteropServices;
 using UnityEngine;
 using WebXR;
 
@@ -18,11 +19,23 @@ namespace ICVR
         private static PlatformManager _instance;
         public static PlatformManager Instance { get { return _instance; } }
 
+        [DllImport("__Internal")]
+        private static extern void DetectFormFactor(string objectName);
+
+
+        public bool IsMobile
+        {
+            get => Application.platform == RuntimePlatform.WebGLPlayer && Application.isMobilePlatform;
+            set { isMobile = value; }
+        }
+
         public bool IsVRSupported { get; private set; }
 
         public WebXRState XrState { get; private set; }
 
         private bool discoveredVR = false;
+        private bool isMobile;
+        private string formFactor = "";
 
         public void StartVR()
         {
@@ -41,12 +54,22 @@ namespace ICVR
             }
         }
 
+        void Start()
+        {
+            if (Application.platform == RuntimePlatform.WebGLPlayer &&
+                WebXRManager.Instance.isSupportedVR)
+            {
+                IsVRSupported = true;
+            }
+            //DetectFormFactor(gameObject.name);
+        }
+
         private void Update()
         {
             if (discoveredVR)
             {
-                WebXRManager.Instance.ToggleVR();
                 discoveredVR = false;
+                WebXRManager.Instance.ToggleVR();
             }
         }
 
@@ -70,6 +93,16 @@ namespace ICVR
         private void OnXRChange(WebXRState state, int viewsCount, Rect leftRect, Rect rightRect)
         {
             XrState = state;
+            //DetectFormFactor(gameObject.name);
+        }
+
+        public void FormFactorResult(string formFactorResult)
+        {
+            if (!string.IsNullOrEmpty(formFactorResult))
+            {
+                Debug.Log("Form Factor: " + formFactorResult);
+                formFactor = formFactorResult;
+            }
         }
 
     }

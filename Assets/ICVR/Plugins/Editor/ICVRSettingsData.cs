@@ -31,6 +31,10 @@ namespace ICVR.Settings
         public bool PresetState = false;
     }
 
+    /// <summary>
+    /// A generator and handler for the named data asset, which is constructed from the 
+    /// preset files held in the subfolder. Not currently viewable in the inspector.
+    /// </summary>
     [System.Serializable, FilePath("Assets/ICVR/Settings/ICVRSettingsData.asset", FilePathAttribute.Location.ProjectFolder)]
     public class ICVRSettingsData : ScriptableSingleton<ICVRSettingsData>
     {
@@ -49,7 +53,7 @@ namespace ICVR.Settings
             {
                 if (ICVRSettings == null || chkLen != ICVRSettings.Count)
                 {
-                    Debug.Log("Settings asset missing or changed, rebuilding...");
+                    Debug.Log("ICVRSettingsData.asset missing or changed, rebuilding...");
                     MakeNewDataAsset();
                 }
                 return (chkLen == instance.ICVRSettings.Count);

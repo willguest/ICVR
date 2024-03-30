@@ -62,6 +62,9 @@ namespace ICVR.Settings
             return false;
         }
 
+        // TODO: change the way package are checked and loaded
+        // (ensure 'com.unity.nuget.newtonsoft-json' is first)
+
         public void TryIncludePackage(string assetId)
         {
             bool foundPackage = CheckForPackage(assetId);

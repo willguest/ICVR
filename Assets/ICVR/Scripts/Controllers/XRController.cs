@@ -25,18 +25,17 @@ namespace ICVR
     /// </summary>
     public class XRController : MonoBehaviour
     {
+        public ControllerHand hand;
+
         [SerializeField] private bool debugHand;
         [SerializeField] private GameObject CharacterRoot;
-        [SerializeField] private BodyController BodyController;
 
         [SerializeField] private float MaxInteractionDistance = 15.0f;
-        [SerializeField] private Renderer[] GameObjectRenderers;
+        [SerializeField] private Renderer[] HandRenderers;
 
-        [SerializeField] private ControllerHand hand = ControllerHand.NONE;
-        [SerializeField] LayerMask PointerLayerMask;
+        [SerializeField] private LayerMask PointerLayerMask;
 
-
-        #region Public Variables, Functions and Attributes
+        #region >   Public Variables, Functions and Attributes
 
         public enum ButtonTypes
         {
@@ -64,10 +63,16 @@ namespace ICVR
 
 
         // flag used by ObjectInterface - used when the hand is bound to an object
-        public bool IsUsingInterface;
+        public bool IsUsingInterface { get; set; }
 
         // flag set by ControlDynamics - used when the controller is articulating equipment
         public bool IsControllingObject { get; set; }
+
+        public GameObject HandAnchor
+        {
+            get { return handIKAnchor; }
+            set { handIKAnchor = value; }
+        } 
 
         public void SetGripPose(string newGripPose)
         {
@@ -81,6 +86,10 @@ namespace ICVR
         }
 
         // events, use as hooks for controller button functions
+        //public event BodyController.CursorFocus OnHandFocus;
+        public event BodyController.ObjectTrigger OnObjectTrigger;
+        public event BodyController.ObjectGrip OnObjectGrip;
+
         public delegate void ButtonPressed(float buttonValue);
         public event ButtonPressed AButtonEvent;
         public event ButtonPressed BButtonEvent;
@@ -88,11 +97,13 @@ namespace ICVR
         public delegate void HandInteraction(AvatarHandlingData interactionData);
         public event HandInteraction OnHandInteraction;
 
+        public bool IsVisible { get; private set; }
+
 
         #endregion Public Variables, Functions and Attributes
 
 
-        #region Private Variables
+        #region >   Private Variables
 
         private float trigger;
         private float squeeze;
@@ -116,11 +127,14 @@ namespace ICVR
 
         private Rigidbody currentNearRigidBody = null;
         private Rigidbody currentFarRigidBody = null;
+        private ObjectInterface currentInterface;
+
         private List<ObjectInterface> nearInterfaces = new List<ObjectInterface>();
-        private List<Rigidbody> nearcontactRigidBodies = new List<Rigidbody>();
-        private List<Rigidbody> farcontactRigidBodies = new List<Rigidbody>();
+        private List<RigidDynamics> nearcontactRigidBodies = new List<RigidDynamics>();
+        private List<RigidDynamics> farcontactRigidBodies = new List<RigidDynamics>();
 
         [SerializeField] private Animator anim;
+        [SerializeField] private GameObject handIKAnchor;
 
         private SharedAsset currentNearSharedAsset;
         private SharedAsset currentFarSharedAsset;
@@ -145,9 +159,9 @@ namespace ICVR
         private bool touchingButton;
         private bool pointingAtButton;
 
-        private int playersPresent = 0;
-
         private GameObject currentButton;
+
+
 
         // Object Handling
         private bool distanceManip = false;
@@ -158,29 +172,17 @@ namespace ICVR
         private float triggerEnterTick = 0f;
         private float triggerExitTick = 0f;
 
-        private bool IsSwimming;
-        private float currentElevation;
         private float jumpTick;
         private float seaLevel = -4.5f;
 
-        private WebXRCamera xrCameras;
         private Camera vrGuideCam;
 
 
         #endregion Private Variables
 
 
-        #region Unity Functions
+        #region >   Unity Functions
 
-        private void OnEnable()
-        {
-            WebXRManager.OnXRChange += OnXRChange;
-            WebXRManager.OnControllerUpdate += OnControllerUpdate;
-            WebXRManager.OnHandUpdate += OnHandUpdateInternal;
-
-            SetControllerActive(false);
-            SetHandActive(false);
-        }
 
         private void OnDisable()
         {
@@ -192,14 +194,47 @@ namespace ICVR
             SetHandActive(false);
         }
 
+        private void OnEnable()
+        {
+            WebXRManager.OnXRChange += OnXRChange;
+            WebXRManager.OnControllerUpdate += OnControllerUpdate;
+            WebXRManager.OnHandUpdate += OnHandUpdateInternal;
+
+            SetControllerActive(false);
+            SetHandActive(false);
+        }
+
+#if UNITY_EDITOR || !UNITY_WEBGL
+
+        private void Update()
+        {
+            if (Input.GetKeyDown(KeyCode.G))
+            {
+                if (IsUsingInterface)
+                {
+                    PickupNear();
+                }
+                else
+                {
+                    PickupNear();
+                }
+            }
+            else if (Input.GetKeyDown(KeyCode.H))
+            {
+                DropNear();
+
+            }
+        }
+
+#endif
 
         void Start()
         {
             attachJoint = new FixedJoint[] { GetComponents<FixedJoint>()[0], GetComponents<FixedJoint>()[1] };
+
             myPointer = transform.Find("pointer").gameObject;
 
-            xrCameras = CharacterRoot.GetComponent<WebXRCamera>();
-            vrGuideCam = xrCameras.GetCamera(WebXRCamera.CameraID.LeftVR);
+            vrGuideCam = CharacterRoot.GetComponentInChildren<Camera>();
 
             if (!debugHand)
             {
@@ -209,45 +244,18 @@ namespace ICVR
             jumpTick = Time.time;
         }
 
-        private void Update()
-        {
-            if (Input.GetKey(KeyCode.K))
-            {
-                StartCoroutine(trigStep());
-            }
-            else if (Input.GetKey(KeyCode.L))
-            {
-                StartCoroutine(gripStep());
-            }
-        }
-
-        private System.Collections.IEnumerator trigStep()
-        {
-            trigger = 0.95f;
-            yield return new WaitForSeconds(0.25f);
-            trigger = 0.0f;
-        }
-
-        private System.Collections.IEnumerator gripStep()
-        {
-            squeeze = 0.95f;
-            yield return new WaitForSeconds(0.25f);
-            squeeze = 0.0f;
-        }
 
         void FixedUpdate()
         {
             // only do this in a webxr session
             if (xrState != WebXRState.VR && debugHand == false) { return; }
 
-            DetectSwimming();
-
             // left stick controls movement
             if (hand == ControllerHand.LEFT)
             {
                 if (Math.Abs(thumbstickX) > thAT || Math.Abs(thumbstickY) > thAT)
                 {
-                    MoveBodyWithJoystick(thumbstickX, thumbstickY, 2.0f);
+                    MoveVehicleWithJoystick(thumbstickX, thumbstickY, 2.0f);
                 }
             }
             // right stick turns in 60 degree steps and forwards-backwards
@@ -255,30 +263,23 @@ namespace ICVR
             {
                 if (Mathf.Abs(thumbstickX) > rightThumbstickThreshold && prevRightThX <= rightThumbstickThreshold)
                 {
-                    RotateWithJoystick(thumbstickX);
+                    RotateVehicleWithJoystick(thumbstickX);
                 }
                 prevRightThX = Mathf.Abs(thumbstickX);
 
                 if (Math.Abs(thumbstickY) > thAT)
                 {
-                    MoveBodyWithJoystick(0.0f, thumbstickY, 2.0f);
+                    MoveVehicleWithJoystick(0.0f, thumbstickY, 2.0f);
                 }
             }
 
-            // trigger effects; distance interaction and events, via the ObjectInterface
+            // trigger for distance interaction
             float trigVal = GetAxis(AxisTypes.Trigger);
-
             if (trigVal > trigThresUp && prevTrig <= trigThresUp)
             {
-                foreach (ObjectInterface oi in nearInterfaces)
-                {
-                    oi.OnTrigger();
-                }
-
                 PickupFar();
             }
             else if (trigVal < trigThresDn && prevTrig >= trigThresDn)
-
             {
                 if (distanceManip)
                 {
@@ -289,8 +290,12 @@ namespace ICVR
                     DropFar();
                 }
             }
+            else if (trigVal > trigThresDn && currentInterface != null)
+            {
+                UseObjectTrigger(trigVal);
+            }
 
-            // grip for near interaction only
+            // grip for near interaction
             float gripVal = GetAxis(AxisTypes.Grip);
             if (gripVal > gripThresUp && prevGrip <= gripThresUp)
             {
@@ -308,6 +313,7 @@ namespace ICVR
 
             if (IsUsingInterface)
             {
+
                 if (GetButtonDown(ButtonTypes.ButtonA))
                 {
                     AButtonEvent.Invoke(1.0f);
@@ -349,15 +355,8 @@ namespace ICVR
         #endregion Unity Functions
 
 
-        #region State Functions
+        #region >   State Functions
 
-        private void ToggleRenderers(bool onOrOff)
-        {
-            foreach (Renderer r in GameObjectRenderers)
-            {
-                r.enabled = onOrOff;
-            }
-        }
 
         private void OnHandUpdateInternal(WebXRHandData handData)
         {
@@ -406,47 +405,19 @@ namespace ICVR
             ToggleRenderers(xrState == WebXRState.VR);
         }
 
-        private void DetectSwimming()
+        private void ToggleRenderers(bool onOrOff)
         {
-            float elevation = CharacterRoot.transform.position.y;
-
-            if (elevation < seaLevel && currentElevation >= seaLevel)
+            foreach (Renderer r in HandRenderers)
             {
-                IsSwimming = true;
-                CharacterRoot.GetComponent<Rigidbody>().mass = 2.0f;
+                r.enabled = onOrOff;
             }
-            else if (elevation > seaLevel && currentElevation <= seaLevel)
-            {
-                IsSwimming = false;
-                CharacterRoot.GetComponent<Rigidbody>().mass = 70.0f;
-            }
-            currentElevation = elevation;
+            IsVisible = onOrOff;
         }
-
-        private void JumpSwim()
-        {
-            if (IsSwimming && Time.time - jumpTick > 0.2f)
-            {
-                jumpTick = Time.time;
-                Vector3 swimForce = new Vector3(0f, 150f, 0f) + (CharacterRoot.transform.forward * 50f);
-                Debug.Log("stroke");
-                CharacterRoot.GetComponent<Rigidbody>().AddForce(swimForce, ForceMode.Acceleration);
-            }
-            else if (Time.time - jumpTick > 2.0f)
-            {
-                jumpTick = Time.time;
-                Vector3 jumpForce = new Vector3(0f, 350f, 0f) + (CharacterRoot.transform.forward * 50f);
-                Debug.Log("hop");
-                CharacterRoot.GetComponent<Rigidbody>().AddForce(jumpForce, ForceMode.Impulse);
-            }
-        }
-
-
 
         #endregion State Functions
 
 
-        #region Button Functionality
+        #region >   Button Functionality
 
 
         private void TryUpdateButtons()
@@ -572,13 +543,51 @@ namespace ICVR
             return buttonStates[action].up;
         }
 
+        public float GetButtonIndexValue(int index)
+        {
+            TryUpdateButtons();
+            switch (index)
+            {
+                case 0:
+                    return trigger;
+                case 1:
+                    return squeeze;
+                case 2:
+                    return touchpad;
+                case 3:
+                    return thumbstick;
+                case 4:
+                    return buttonA;
+                case 5:
+                    return buttonB;
+            }
+            return 0;
+        }
 
-        #endregion Controller Functionality
+        public float GetAxisIndexValue(int index)
+        {
+            TryUpdateButtons();
+            switch (index)
+            {
+                case 0:
+                    return touchpadX;
+                case 1:
+                    return touchpadY;
+                case 2:
+                    return thumbstickX;
+                case 3:
+                    return thumbstickY;
+            }
+            return 0;
+        }
 
 
-        #region Character Movement
+        #endregion Button Functionality
 
-        private void MoveBodyWithJoystick(float xax, float yax, float multiplier = 1.0f)
+
+        #region >   Character Movement
+
+        private void MoveVehicleWithJoystick(float xax, float yax, float multiplier = 1.0f)
         {
             float x = xax * Time.deltaTime;
             float z = yax * Time.deltaTime;
@@ -599,7 +608,7 @@ namespace ICVR
             CharacterRoot.transform.Translate(desiredMoveDirection * multiplier);
         }
 
-        private void RotateWithJoystick(float value)
+        private void RotateVehicleWithJoystick(float value)
         {
             if (value == 0) { return; }
 
@@ -613,11 +622,29 @@ namespace ICVR
             }
         }
 
+        private void JumpSwim()
+        {
+            bool isSwimming = CharacterRoot.transform.position.y < seaLevel;
+
+            if (isSwimming && Time.time - jumpTick > 0.2f)
+            {
+                jumpTick = Time.time;
+                Vector3 swimForce = new Vector3(0f, 150f, 0f) + (CharacterRoot.transform.forward * 50f);
+                CharacterRoot.GetComponent<Rigidbody>().AddForce(swimForce, ForceMode.Acceleration);
+            }
+            else if (Time.time - jumpTick > 2.0f)
+            {
+                jumpTick = Time.time;
+                Vector3 jumpForce = new Vector3(0f, 350f, 0f) + (CharacterRoot.transform.forward * 50f);
+                CharacterRoot.GetComponent<Rigidbody>().AddForce(jumpForce, ForceMode.Impulse);
+            }
+        }
+
 
         #endregion Character Movement
 
 
-        #region Interaction Functions
+        #region >   Interaction Functions
 
         public void PickupFar()
         {
@@ -630,7 +657,7 @@ namespace ICVR
                     pba.ButtonPressed.Invoke();
                 }
                 return;
-            }        
+            }
 
             // stop here if not handling a moveable object
             currentFarRigidBody = GetDistantRigidBody();
@@ -660,7 +687,7 @@ namespace ICVR
                 else
                 {
                     // asset is being used
-                    Debug.Log("This object is being used by someone else. Please pester them until they let you play with it.");
+                    Debug.Log("This object is being used by someone else.");
                 }
             }
 
@@ -754,6 +781,17 @@ namespace ICVR
             }
         }
 
+        private void UseObjectGrip(bool state)
+        {
+            OnObjectGrip?.Invoke(hand, currentInterface.gameObject, state);
+        }
+
+        private void UseObjectTrigger(float triggerValue)
+        {
+            OnObjectTrigger?.Invoke(currentInterface.gameObject, triggerValue);
+        }
+
+
         public void PickupNear()
         {
             currentNearRigidBody = GetNearRigidBody();
@@ -784,7 +822,7 @@ namespace ICVR
             // keep hands kinematic
             if (currentNearObject.TryGetComponent(out XRController otherHand))
             {
-                // space for two-handed gestures, actions or spells
+                // space for two-handed gestures or actions
                 return;
             }
             else
@@ -796,6 +834,12 @@ namespace ICVR
 
                 // set default grip pose
                 SetGripPose(string.IsNullOrEmpty(gripPose) ? "holdIt" : gripPose);
+            }
+
+            if (currentNearObject.TryGetComponent(out ObjectInterface objInt))
+            {
+                currentInterface = objInt;
+                UseObjectGrip(true);
             }
 
             // determine if controlling a fixed object
@@ -823,8 +867,6 @@ namespace ICVR
 
         public void DropNear()
         {
-            nearcontactRigidBodies.Clear();
-
             if (!currentNearRigidBody) return;
 
             if (currentNearRigidBody.gameObject.TryGetComponent(out Grabbable g))
@@ -839,31 +881,39 @@ namespace ICVR
             attachJoint[0].connectedBody = null;
 
             // local throw
-            if (currentNearRigidBody.gameObject.TryGetComponent(out RigidDynamics rd))
+            if (currentNearRigidBody.gameObject.TryGetComponent(out RigidDynamics rigidDynamics))
             {
-                currentNearRigidBody.useGravity = rd.UsesGravity;
-                newThrow = rd.Throw;
+                currentNearRigidBody.useGravity = rigidDynamics.UsesGravity;
+                newThrow = rigidDynamics.Throw;
             }
             else
             {
-                newThrow = new ThrowData() { 
-                    LinearForce = currentNearRigidBody.velocity, 
-                    AngularForce = currentNearRigidBody.angularVelocity 
+                newThrow = new ThrowData()
+                {
+                    LinearForce = currentNearRigidBody.velocity,
+                    AngularForce = currentNearRigidBody.angularVelocity
                 };
             }
 
             currentNearRigidBody.AddForce(newThrow.LinearForce, ForceMode.Impulse);
             currentNearRigidBody.AddTorque(newThrow.AngularForce, ForceMode.Impulse);
 
+            if (currentInterface != null)
+            {
+                OnObjectGrip?.Invoke(hand, currentInterface.gameObject, false);
+                if (!nearInterfaces.Contains(currentInterface))
+                {
+                    //OnHandFocus(currentInterface.gameObject, false);
+                }
+
+                currentInterface = null;
+            }
+
             if (IsControllingObject)
             {
                 currentNearRigidBody.gameObject.GetComponent<ControlDynamics>().FinishInteraction();
                 IsControllingObject = false;
             }
-
-            // reset and forget
-            gripPose = "";
-            SetGripPose("relax");
 
             // network throw
             if (currentNearSharedAsset != null)
@@ -872,17 +922,14 @@ namespace ICVR
                 currentNearSharedAsset.IsBeingHandled = false;
                 currentNearSharedAsset = null;
             }
-
             currentNearRigidBody = null;
         }
 
 
         private bool InvokeAcquisitionEvent(string target, Transform interactionTransform, ManipulationDistance distance)
         {
-            playersPresent = BodyController.CurrentNoPeers;
-
             // check for shared asset id
-            if (!string.IsNullOrEmpty(target) && playersPresent > 0)
+            if (!string.IsNullOrEmpty(target))
             {
                 AcquireData newAcquisition = new AcquireData
                 {
@@ -904,10 +951,8 @@ namespace ICVR
 
         private bool InvokeReleaseEvent(string target, GameObject interactionObject, ManipulationDistance distance, ThrowData throwData)
         {
-            playersPresent = BodyController.CurrentNoPeers;
-
             // check for shared asset id
-            if (!string.IsNullOrEmpty(target) && playersPresent > 0)
+            if (!string.IsNullOrEmpty(target))
             {
                 ReleaseData newRelease = new ReleaseData
                 {
@@ -946,7 +991,7 @@ namespace ICVR
         #endregion Interaction Functions
 
 
-        #region Low-Level Interaction Methods
+        #region >   Low-Level Interaction Methods
 
         private void SetActiveFarMesh()
         {
@@ -957,18 +1002,18 @@ namespace ICVR
                 int layer = currentObject.layer;
 
                 // layer-dependent actions
-                if (layer == 10 || layer == 15)         //  interactabl objects or tools
+                if (layer == 10 || layer == 15)         //  interactable objects or tools
                 {
                     pointingAtButton = false;
                     currentButton = null;
 
                     // must be solid and not near-only interaction
-                    if (currentObject.GetComponent<Rigidbody>() && !GetComponent<ControlDynamics>())
+                    if (currentObject.GetComponent<RigidDynamics>() && !GetComponent<ControlDynamics>())
                     {
                         if (meshName != prevMeshName)
                         {
                             farcontactRigidBodies.Clear();
-                            farcontactRigidBodies.Add(currentObject.GetComponent<Rigidbody>());
+                            farcontactRigidBodies.Add(currentObject.GetComponent<RigidDynamics>());
                         }
 
                         // set pointer appearance for heavy objects
@@ -1011,89 +1056,98 @@ namespace ICVR
 
         void OnTriggerEnter(Collider other)
         {
-            int objectLayer = other.gameObject.layer;
-
-            if (objectLayer == 12) // buttons
+            if ((Time.time - triggerEnterTick) < 0.1f) return;
+            switch (other.gameObject.layer)
             {
-                touchingButton = true;
-                currentButton = other.gameObject;
-
-                if (other.gameObject.TryGetComponent(out PressableButton pb) &&
-                    (Time.time - triggerEnterTick) > 0.2f)
-                {
-                    triggerEnterTick = Time.time;
-                    pb.ButtonPressed?.Invoke();
-                }
-
-            }
-            else if (objectLayer == 9 || objectLayer == 14) // furniture or wearables
-            {
-                if (!IsUsingInterface &&
-                    other.gameObject.TryGetComponent(out ObjectInterface oi) &&
-                    (Time.time - triggerEnterTick) > 0.2f)
-                {
-                    triggerEnterTick = Time.time;
-                    if (!oi.IsBeingUsed && !nearInterfaces.Contains(oi))
+                case 12:  // UI
                     {
-                        nearInterfaces.Add(oi);
-                    }
-                }
-            }
-            else if (objectLayer == 10 || objectLayer == 15) // objects or tools
-            {
-                if (other.gameObject.TryGetComponent(out Rigidbody rb) &&
+                        touchingButton = true;
+                        currentButton = other.gameObject;
 
-                    (Time.time - triggerEnterTick) > 0.2f)
-                {
-                    triggerEnterTick = Time.time;
-                    if (!nearcontactRigidBodies.Contains(rb))
-                    {
-                        nearcontactRigidBodies.Add(rb);
+                        if (other.gameObject.TryGetComponent(out PressableButton pb) &&
+                            (Time.time - triggerEnterTick) > 0.1f)
+                        {
+                            triggerEnterTick = Time.time;
+                            pb.ButtonPressed?.Invoke();
+                        }
+                        triggerEnterTick = Time.time;
+                        break;
                     }
-                }
+                case 10:    // objects
+                case 14:    // wearables
+                case 15:    // tools
+                    {
+                        if (other.gameObject.TryGetComponent(out ObjectInterface oi))
+                        {
+                            if (!nearInterfaces.Contains(oi))
+                            {
+                                nearInterfaces.Add(oi);
+                                //OnHandFocus?.Invoke(gameObject, true);
+                            }
+                        }
+
+                        if (other.gameObject.TryGetComponent(out RigidDynamics rd))
+                        {
+                            if (!nearcontactRigidBodies.Contains(rd))
+                            {
+                                nearcontactRigidBodies.Add(rd);
+                            }
+                        }
+                        triggerEnterTick = Time.time;
+                        break;
+                    }
+                case 9:     // furniture
+                    break;
+                default:
+                    break;
             }
         }
 
         void OnTriggerExit(Collider other)
         {
-            int objectLayer = other.gameObject.layer;
-
-            if (objectLayer == 12) // buttons
+            if ((Time.time - triggerExitTick) < 0.1f) return;
+            switch (other.gameObject.layer)
             {
-                currentButton = null;
-                touchingButton = false;
-
-                if (other.gameObject.TryGetComponent(out PressableButton pb) &&
-                    (Time.time - triggerEnterTick) > 0.2f)
-                {
-                    triggerEnterTick = Time.time;
-                    pb.ButtonReleased?.Invoke();
-                }
-
-            }
-            else if (objectLayer == 9 || objectLayer == 14) // furniture or wearables
-            {
-                if (other.gameObject.TryGetComponent(out ObjectInterface oi)
-                    && (Time.time - triggerExitTick) > 0.2f)
-                {
-                    triggerExitTick = Time.time;
-                    if (nearInterfaces.Contains(oi))
+                case 12:  // UI
                     {
-                        nearInterfaces.Remove(oi);
+                        currentButton = null;
+                        touchingButton = false;
+
+                        if (other.gameObject.TryGetComponent(out PressableButton pb) &&
+                            (Time.time - triggerEnterTick) > 0.2f)
+                        {
+                            pb.ButtonReleased?.Invoke();
+                        }
+                        triggerExitTick = Time.time;
+                        break;
                     }
-                }
-            }
-            else if (objectLayer == 10 || objectLayer == 15) // objects or tools
-            {
-                if (other.gameObject.TryGetComponent(out Rigidbody rb)
-                    && (Time.time - triggerExitTick) > 0.2f)
-                {
-                    triggerExitTick = Time.time;
-                    if (nearcontactRigidBodies.Contains(rb))
+                case 10:    // objects
+                case 14:    // wearables
+                case 15:    // tools
                     {
-                        nearcontactRigidBodies.Remove(rb);
+                        if (other.gameObject.TryGetComponent(out ObjectInterface oi))
+                        {
+                            if (nearInterfaces.Contains(oi))
+                            {
+                                nearInterfaces.Remove(oi);
+                                //OnHandFocus?.Invoke(other.gameObject, false);
+                            }
+                        }
+
+                        if (other.gameObject.TryGetComponent(out RigidDynamics rd))
+                        {
+                            if (nearcontactRigidBodies.Contains(rd))
+                            {
+                                nearcontactRigidBodies.Remove(rd);
+                            }
+                        }
+                        triggerExitTick = Time.time;
+                        break;
                     }
-                }
+                case 9:     // furniture
+                    break;
+                default:
+                    break;
             }
         }
 
@@ -1104,14 +1158,14 @@ namespace ICVR
             float minDistance = MaxInteractionDistance;
             float distance = 0.0f;
 
-            foreach (Rigidbody contactBody in farcontactRigidBodies)
+            foreach (RigidDynamics contactBody in farcontactRigidBodies)
             {
                 distance = (contactBody.gameObject.transform.position - transform.position).sqrMagnitude;
 
                 if (distance < (minDistance * minDistance))
                 {
                     minDistance = distance;
-                    nearestRigidBody = contactBody;
+                    nearestRigidBody = contactBody.GetComponent<Rigidbody>();
                 }
             }
 
@@ -1121,9 +1175,9 @@ namespace ICVR
         private Rigidbody GetNearRigidBody()
         {
             Rigidbody nearestRigidBody = null;
-            foreach (Rigidbody contactBody in nearcontactRigidBodies)
+            foreach (RigidDynamics contactBody in nearcontactRigidBodies)
             {
-                nearestRigidBody = contactBody;
+                nearestRigidBody = contactBody.GetComponent<Rigidbody>();
             }
             return nearestRigidBody;
         }
@@ -1157,8 +1211,8 @@ namespace ICVR
         }
 
         #endregion Low-Level Interaction Methods
-    
-    
+
+
     }
 
 }

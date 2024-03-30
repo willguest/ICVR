@@ -29,6 +29,9 @@ namespace ICVR
         [Tooltip("Units: g/cm3 [0.001 - 10.000] \nAssumes isentropy\nWater = 1.0, Air = 0.00123m Iron:7.874")]
         [SerializeField] private float Density = 1.0f;
 
+        [Tooltip("Target for volume estimation.")]
+        [SerializeField] private MeshFilter targetMesh;
+
         public float Mass
         {
             get { return GetNewMass(); }
@@ -53,8 +56,9 @@ namespace ICVR
             private set { _usesGravity = value; }
         }
 
-        // properties
         private ThrowData _throw;
+
+        // properties
         private float _mass;
         private float _volume;
         private bool _usesGravity;
@@ -76,7 +80,6 @@ namespace ICVR
         private int currVelEntry = 0;
         private int currRotEntry = 0;
 
-        private bool isReadable = false;
         private Rigidbody myRB;
 
         private void OnEnable()
@@ -98,7 +101,7 @@ namespace ICVR
                 _usesGravity = rb.useGravity;
             }
 
-            //Debug.Log(gameObject.name + "\nisReadable:" + isReadable + ";\tVolume:" + (_volume*1000000) + "cm^3;\tMass:" + (_mass*1000) + "g");
+            //Debug.Log(gameObject.name + "\nVolume:" + (_volume*1000000) + "cm^3;\tMass:" + (_mass*1000) + "g");
         }
 
 
@@ -121,25 +124,24 @@ namespace ICVR
 
         private float GetVolume()
         {
-            MeshFilter myMesh;
-
-            if (GetComponent<MeshFilter>())
+            if (targetMesh == null)
             {
-                myMesh = GetComponent<MeshFilter>();
-
+                if (GetComponent<MeshFilter>())
+                {
+                    targetMesh = GetComponent<MeshFilter>();
+                }
+                else if (GetComponentInChildren<MeshFilter>())
+                {
+                    targetMesh = GetComponentInChildren<MeshFilter>().gameObject.GetComponent<MeshFilter>();
+                }
+                else
+                {
+                    targetMesh = null;
+                }
             }
-            else if (GetComponentInChildren<MeshFilter>())
-            {
-                myMesh = GetComponentInChildren<MeshFilter>().gameObject.GetComponent<MeshFilter>();
-            }
-            else
-            {
-                myMesh = null;
-            }
 
-            if (myMesh != null && myMesh.mesh.isReadable)
+            if (targetMesh != null && targetMesh.mesh.isReadable)
             {
-                isReadable = myMesh.mesh.isReadable;
                 Mesh mesh = GetMesh();
                 VolumeSolver vs = new VolumeSolver(gameObject.transform.lossyScale);
                 return (float)vs.GetMeshVolume(mesh);

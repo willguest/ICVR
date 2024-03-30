@@ -10,7 +10,6 @@ using Newtonsoft.Json;
 using ICVR.SharedAssets;
 using UnityEngine;
 using WebXR;
-using System;
 
 namespace ICVR
 {
@@ -24,55 +23,121 @@ namespace ICVR
         private static BodyController _instance;
         public static BodyController Instance { get { return _instance; } }
 
+        // Network Info
         public static string CurrentUserId { get; private set; }
         public static int CurrentNoPeers { get; set; }
-        public float BodyMass { get; private set; }
 
+        public ICVRAvatarController avatar { get; set; }
+
+        // Network hook
         [DllImport("__Internal")]
         private static extern void SendData(string msg);
 
-        [SerializeField] private GameObject headObject;
+        // Event delegates
+        public delegate void CursorFocus(GameObject focalObject, bool state);
+        public delegate void ObjectTrigger(GameObject focalObject, float value);
+        public delegate void ObjectGrip(ControllerHand hand, GameObject focalObject, bool state);
 
-        [SerializeField] private GameObject leftHand;
-        [SerializeField] private GameObject rightHand;
+        // Body layout
+        [SerializeField] private GameObject headObject;
+        [SerializeField] private GameObject bodyObject;
+
+        [SerializeField] private XRController leftController;
+        [SerializeField] private XRController rightController;
 
         [SerializeField] private Transform leftPointer;
         [SerializeField] private Transform rightPointer;
 
-        [SerializeField] private GameObject hudFollower;
-
-        private bool IsVR;
-
         private bool IsConnectionReady = false;
         private bool hasInteractionEvent = false;
-
-        private Pose UiStartPos;
 
         private AvatarEventType currentEventType = AvatarEventType.None;
         private string currentEventData = "";
         private static float startTime = 0.0f;
 
+        private bool notifyingNetwork = false;
+
         private void OnEnable()
         {
-            IsVR = (WebXRManager.Instance.XRState != WebXRState.NORMAL);
             WebXRManager.OnXRChange += OnXRChange;
         }
 
         private void OnDisable()
         {
+            WebXRManager.OnXRChange -= OnXRChange;
             MapEvents(false);
         }
 
         private void OnXRChange(WebXRState state, int viewsCount, Rect leftRect, Rect rightRect)
         {
-            headObject.transform.localRotation = Quaternion.identity;
-            //bodyObject.transform.localRotation = Quaternion.identity;
+            //headObject.transform.localRotation = Quaternion.identity;
 
-            // Turn off the following UI when in VR.
-            hudFollower.SetActive(state == WebXRState.NORMAL);
+            // link controller events in VR
+            MapControllerEvents(state == WebXRState.VR);
 
-            IsVR = (state == WebXRState.VR);
+            // toggle hand IK
+            if (avatar != null)
+            {
+                if (state == WebXRState.NORMAL)
+                {
+                    avatar.RelaxArmRig();
+                }
+                else
+                {
+                    avatar.PrepareArmRig();
+                }
+            }
+        }
 
+        public Transform GetBodyReference(string bodyPart)
+        {
+            switch (bodyPart)
+            {
+                case "head":
+                    return headObject.transform;
+                case "body":
+                    return bodyObject.transform;
+                case "leftHand":
+                    return leftController.HandAnchor.transform;
+                case "rightHand":
+                    return rightController.HandAnchor.transform;
+
+                default:
+                    return null;
+            }
+        }
+
+
+        private void MapControllerEvents(bool isOn)
+        {
+            if (isOn)
+            {
+                //rightController.OnHandFocus += HandleObjectFocus;
+                //leftController.OnHandFocus += HandleObjectFocus;
+
+                rightController.OnObjectGrip += HandleObjectGrip;
+                leftController.OnObjectGrip += HandleObjectGrip;
+
+                rightController.OnObjectTrigger += HandleObjectTrigger;
+                leftController.OnObjectTrigger += HandleObjectTrigger;
+
+                leftController.OnHandInteraction += PackageEventData;
+                rightController.OnHandInteraction += PackageEventData;
+            }
+            else
+            {
+                //rightController.OnHandFocus -= HandleObjectFocus;
+                //leftController.OnHandFocus -= HandleObjectFocus;
+
+                rightController.OnObjectGrip -= HandleObjectGrip;
+                leftController.OnObjectGrip -= HandleObjectGrip;
+
+                rightController.OnObjectTrigger -= HandleObjectTrigger;
+                leftController.OnObjectTrigger -= HandleObjectTrigger;
+
+                leftController.OnHandInteraction -= PackageEventData;
+                rightController.OnHandInteraction -= PackageEventData;
+            }
         }
 
         void MapEvents(bool isOn)
@@ -88,16 +153,11 @@ namespace ICVR
                     NetworkIO.Instance.OnConnectionChanged += SetConnectionReady;
                     NetworkIO.Instance.OnJoinedRoom += InitialiseDataChannel;
                 }
-                if (!IsVR)
-                {
-                    DesktopController.Instance.OnObjectFocus += HandleObjectFocus;
-                    DesktopController.Instance.OnNetworkInteraction += PackageEventData;
-                }
-                else
-                {
-                    leftHand.GetComponent<XRController>().OnHandInteraction += PackageEventData;
-                    rightHand.GetComponent<XRController>().OnHandInteraction += PackageEventData;
-                }
+
+                DesktopController.Instance.OnObjectFocus += HandleObjectFocus;
+                DesktopController.Instance.OnObjectTrigger += HandleObjectTrigger;
+                DesktopController.Instance.OnNetworkInteraction += PackageEventData;
+
             }
             else
             {
@@ -110,20 +170,12 @@ namespace ICVR
                     NetworkIO.Instance.OnConnectionChanged -= SetConnectionReady;
                     NetworkIO.Instance.OnJoinedRoom -= InitialiseDataChannel;
                 }
-                WebXRManager.OnXRChange -= OnXRChange;
 
                 IsConnectionReady = false;
 
-                if (!IsVR)
-                {
-                    DesktopController.Instance.OnObjectFocus -= HandleObjectFocus;
-                    DesktopController.Instance.OnNetworkInteraction -= PackageEventData;
-                }
-                else
-                {
-                    leftHand.GetComponent<XRController>().OnHandInteraction -= PackageEventData;
-                    rightHand.GetComponent<XRController>().OnHandInteraction -= PackageEventData;
-                }
+                DesktopController.Instance.OnObjectFocus -= HandleObjectFocus;
+                DesktopController.Instance.OnObjectTrigger -= HandleObjectTrigger;
+                DesktopController.Instance.OnNetworkInteraction -= PackageEventData;
             }
         }
 
@@ -136,8 +188,10 @@ namespace ICVR
         {
             MapEvents(true);
 
-            UiStartPos.position = hudFollower.transform.position;
-            UiStartPos.rotation = hudFollower.transform.rotation;
+#if UNITY_EDITOR
+            // debugging option
+            MapControllerEvents(true);
+#endif
 
             CurrentUserId = "Me";
             CurrentNoPeers = 0;
@@ -145,22 +199,14 @@ namespace ICVR
 
         void Update()
         {
-            // set position of following UI
-            if (hudFollower.activeInHierarchy)
-            {
-                hudFollower.transform.position = transform.position + headObject.transform.forward * UiStartPos.position.z + headObject.transform.up * UiStartPos.position.y + headObject.transform.right * UiStartPos.position.x; 
-                hudFollower.transform.rotation = Quaternion.LookRotation(headObject.transform.forward) * UiStartPos.rotation;
-            }
-
             if (!IsConnectionReady) return;
-
 
             float frameTick = Time.time;
             if (hasInteractionEvent)
             {
-                startTime = frameTick + 0.25f; 
+                startTime = frameTick + 0.25f;
                 SendData(JsonConvert.SerializeObject(BuildDataFrame()));
-                
+
                 hasInteractionEvent = false;
                 currentEventData = "";
             }
@@ -174,19 +220,37 @@ namespace ICVR
             }
         }
 
+        private void HandleObjectGrip(ControllerHand hand, GameObject controllable, bool state)
+        {
+            if (controllable != null && controllable.TryGetComponent(out ObjectInterface objInt))
+            {
+                objInt.SetGrip(GetHandController(hand), state);
+            }
+        }
+
+        private void HandleObjectTrigger(GameObject controllable, float value)
+        {
+            if (controllable != null && controllable.TryGetComponent(out ObjectInterface objInt))
+            {
+                objInt.SetTrigger(value);
+            }
+        }
+
         private void HandleObjectFocus(GameObject go, bool state)
         {
-            // pass the object to the interface (only desktop)
             if (go != null && go.TryGetComponent(out ObjectInterface objInt))
             {
                 objInt.ToggleActivation(go, state);
             }
-            
         }
 
-        private bool notifyingNetwork = false;
+        private XRController GetHandController(ControllerHand hand)
+        {
+            return (hand == ControllerHand.RIGHT) ? rightController :
+                (hand == ControllerHand.LEFT) ? leftController : null;
+        }
 
-        public void InitialiseDataChannel(string userid = "")
+        private void InitialiseDataChannel(string userid = "")
         {
             if (!notifyingNetwork)
             {
@@ -205,7 +269,6 @@ namespace ICVR
 
         private void playersChanged(int numberofplayers)
         {
-            //Debug.Log("There are now " + numberofplayers + " peers");
             CurrentNoPeers = numberofplayers;
 
             // send a packet to start communication
@@ -245,10 +308,10 @@ namespace ICVR
                     Id = CurrentUserId,
                     HeadPosition = headObject.transform.position,
                     HeadRotation = headObject.transform.rotation,
-                    LeftHandPosition = leftHand.transform.position,
-                    RightHandPosition = rightHand.transform.position,
-                    LeftHandRotation = leftHand.transform.rotation,
-                    RightHandRotation = rightHand.transform.rotation,
+                    LeftHandPosition = leftController.transform.position,
+                    RightHandPosition = rightController.transform.position,
+                    LeftHandRotation = leftController.transform.rotation,
+                    RightHandRotation = rightController.transform.rotation,
 
                     LeftHandPointer = leftPointer.position,
                     RightHandPointer = rightPointer.position,

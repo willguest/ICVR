@@ -24,47 +24,32 @@ namespace ICVR
 
 
         // Inspector Variables
-        [Tooltip("Enable/disable rotation control. For use in Unity editor only.")]
-        [SerializeField] private bool rotationEnabled = true;
-
-        [Tooltip("Enable/disable translation control. For use in Unity editor only.")]
-        [SerializeField] private bool translationEnabled = true;
+        [Tooltip("Character physics container")]
+        [SerializeField] private GameObject CharacterVehicle;
 
         [Tooltip("Mouse sensitivity")]
-        [SerializeField] private float mouseSensitivity = 1f;
+        [SerializeField] private float mouseSensitivity = 2f;
 
-        [Tooltip("Straffe Speed")]
-        [SerializeField] private float straffeSpeed = 5f;
+        [Tooltip("(Optional) Joysick for character movement on mobile devices")]
+        [SerializeField] private Canvas JoystickRoot;
 
-        [SerializeField] private float seaLevel = -4.5f;
-
-        [Tooltip("object to move around with mouse and keyboard")]
-        [SerializeField] private GameObject currentVehicle;
-
-        [Tooltip("head object that moves around with camera")]
-        [SerializeField] private GameObject headObject;
-
-
-        // Cursor Objects
-        [SerializeField] private Texture2D cursorForScene;
-        [SerializeField] private Texture2D cursorForObjects;
-        [SerializeField] private Texture2D cursorForInteractables;
-        [SerializeField] private SimpleCrosshair crosshair;
+        [Tooltip("Joystick sensitivity, when present")]
+        [SerializeField] private float joystickMultiplier = 3f;
 
 
         // Public Attributes
-        public bool IsSwimming { get; set; }
-
         public GameObject CurrentObject { get; set; }
 
-        public  float CurrentDistance { get; private set; }
+        public float CurrentDistance { get; private set; }
 
         public Vector3 CurrentHitPoint { get; private set; }
 
+        public bool IsGameMode { get; set; }
 
-        // Cursor event handling
-        public delegate void CursorFocus(GameObject manipulator, bool state);
-        public event CursorFocus OnObjectFocus;
+
+        // Cursor event handling   
+        public event BodyController.CursorFocus OnObjectFocus;
+        public event BodyController.ObjectTrigger OnObjectTrigger;
 
         public delegate void CursorInteraction(AvatarHandlingData interactionData);
         public event CursorInteraction OnNetworkInteraction;
@@ -72,10 +57,12 @@ namespace ICVR
 
         #region ----- Private Variables ------
 
+        private Camera _camera;
+
         private WebXRState xrState = WebXRState.NORMAL;
+        private VariableJoystick variableJoystick;
 
-        private bool isGameMode = false;
-
+        private bool wasKinematic = false;
         private FixedJoint attachJoint;
 
         private float runFactor = 1.0f;
@@ -92,10 +79,7 @@ namespace ICVR
 
         private Quaternion startRotation;
         private Quaternion currentHeading;
-
-        private Vector2 hotspot = new Vector2(10, 5);
-        private readonly CursorMode cMode = CursorMode.ForceSoftware;
-
+    
         private bool isMouseDown = false;
         private bool isDragging = false;
 
@@ -103,12 +87,7 @@ namespace ICVR
         private bool runOne;
 
         private SharedAsset currentSharedAsset;
-
-        private float currentElevation;
-
         private GameObject activeMesh;
-        private GameObject focusedObject;
-        private int pLayer = 0;
 
         private float jumpTick;
         private float triggerTick = 0;
@@ -116,12 +95,55 @@ namespace ICVR
         public bool buttonDown { get; set; }
         private GameObject currentButton;
 
-        private bool isEditor;
 
         #endregion ----- Private Variables ------
 
 
         #region ----- Unity Functions ------
+
+        private void Awake()
+        {
+            _instance = this;
+            _camera = GetComponent<Camera>();
+        }
+
+        void Start()
+        {
+            runOne = true;
+            jumpTick = Time.time;
+
+            startRotation = transform.rotation;
+            currentHeading = startRotation;
+
+            attachJoint = GetComponent<FixedJoint>();
+            
+            if (JoystickRoot != null)
+            {
+                variableJoystick = JoystickRoot.GetComponentInChildren<VariableJoystick>();
+            }
+        }
+
+        void FixedUpdate()
+        {
+            if (xrState != WebXRState.NORMAL) { return; }
+
+            // set character pose
+            MoveBodyWithKeyboard();
+            MoveBodyWithJoystick();            
+            SetCameraRotation();        
+
+            // make observation
+            GameObject viewedObject = ScreenRaycast();
+            if (viewedObject != null)
+            {
+                CurrentObject = viewedObject;
+            }
+            else
+            {
+                // remember, this is a Unity null, not a total null
+                CurrentObject = null;
+            }
+        }
 
         private void OnEnable()
         {
@@ -133,87 +155,31 @@ namespace ICVR
             WebXRManager.OnXRChange -= OnXRChange;
         }
 
-        private void Awake()
+        private void OnXRChange(WebXRState state, int viewsCount, Rect leftRect, Rect rightRect)
         {
-            _instance = this;
-
-            if (Application.platform == RuntimePlatform.WindowsEditor)
+            xrState = state;
+            if (CursorManager.Instance != null)
             {
-                isEditor = true;
+                CursorManager.Instance.SetCursorParameters(xrState);
+            }
+
+            if (variableJoystick != null)
+            {
+                variableJoystick.UpdateJoystickVisibility();
             }
         }
 
-        void Start()
-        {
-            runOne = true;
-            jumpTick = Time.time;
-
-            SetCrosshairVisibility();
-
-            startRotation = headObject.transform.rotation;
-            currentHeading = startRotation;
-            transform.rotation = Quaternion.Euler(0.0f, 0.0f, 0.0f);
-            attachJoint = GetComponent<FixedJoint>();
-        }
-
-        void Update()
-        {
-            if (xrState != WebXRState.NORMAL) { return; }
-
-            // lateral movement
-            if (translationEnabled)
-            {
-                MoveBodyWithKeyboard(headObject, straffeSpeed);
-            }
-
-            if (rotationEnabled)
-            {
-                SetCameraRotation();
-
-                // make observation, update current object and cursor
-                if (Camera.main.enabled)
-                {
-                    GameObject viewedObject = ScreenRaycast();
-                    if (viewedObject != null)
-                    {
-                        CurrentObject = viewedObject;
-                    }
-                    else
-                    {
-                        CurrentObject = null;
-                    }
-                }
-            }
-
-            // Detect swimming, adjust weight accordingly
-            float elevation = currentVehicle.transform.position.y;
-            if (elevation < seaLevel && currentElevation >= seaLevel)
-            {
-                IsSwimming = true;
-                currentVehicle.GetComponent<Rigidbody>().mass = 2.0f;
-            }
-            else if (elevation > seaLevel && currentElevation <= seaLevel)
-            {
-                IsSwimming = false;
-                currentVehicle.GetComponent<Rigidbody>().mass = 70.0f;
-            }
-            currentElevation = elevation;
-
-        }
 
         #endregion ----- Unity Functions ------
 
 
         #region ----- Input Handling -----
-        [SerializeField] private bool DebugMouseInteraction;
 
         void OnGUI()
         {
             if (xrState != WebXRState.NORMAL) { return; }
-            if (!isEditor || DebugMouseInteraction)
-            {
-                SetCursorImage();
-            }
+
+            HandleCursorFocus();
 
             Event e = Event.current;
 
@@ -240,9 +206,14 @@ namespace ICVR
 
                 if (e.type == EventType.MouseDown && e.button == 0 && CurrentObject != null)
                 {
-                    if (CurrentObject.layer == 9)
+                    if (CursorManager.Instance != null)
                     {
-                        //set interation options for furniture...
+                        CursorManager.Instance.SetFocusedObject(CurrentObject);
+                    }
+
+                    if (CurrentObject.layer == 9 || CurrentObject.layer == 14)
+                    {
+                        //set interation options for controllables...
                     }
                     else if (CurrentObject.layer == 10 || CurrentObject.layer == 15)
                     {
@@ -285,17 +256,13 @@ namespace ICVR
                 }
             }
 
+
             // keyboard events
             else if (e.type == EventType.KeyDown)
             {
                 if (e.keyCode == KeyCode.I)
                 {
                     globalInvertMouse *= -1.0f;
-                }
-
-                if (e.keyCode == KeyCode.M)
-                {
-                    ToggleGameMode();
                 }
 
                 if (e.keyCode == KeyCode.Space)
@@ -307,8 +274,16 @@ namespace ICVR
                 {
                     runFactor = 2.0f;
                 }
-            }
 
+                if (e.keyCode == KeyCode.CapsLock)
+                {
+                    if (runFactor == 1.0f)
+                        runFactor = 2.0f;
+                    else
+                        runFactor = 1.0f;
+                }
+
+            }
             else if (e.type == EventType.KeyUp)
             {
                 if (e.keyCode == KeyCode.LeftShift)
@@ -318,17 +293,10 @@ namespace ICVR
             }
         }
 
-
         #endregion ----- Input Handling -----
 
 
-        #region ----- Character Movement ------
-
-        private void OnXRChange(WebXRState state, int viewsCount, Rect leftRect, Rect rightRect)
-        {
-            xrState = state;
-            SetCursorParameters();
-        }
+        #region ----- Character Movement ------    
 
         private Quaternion GetCameraRotationFromMouse(float sensitivity, float invertMouse)
         {
@@ -357,45 +325,59 @@ namespace ICVR
             return currentHeading;
         }
 
-
-        private void MoveBodyWithKeyboard(GameObject referenceObject, float multiplier = 1.0f)
+        private void MoveBodyWithJoystick()
         {
-            float x = Input.GetAxis("Horizontal") * Time.deltaTime * straffeSpeed * runFactor;
-            float z = Input.GetAxis("Vertical") * Time.deltaTime * straffeSpeed * runFactor;
+            if (variableJoystick == null) { return; }
+
+            float x = variableJoystick.Horizontal * 0.5f * Time.deltaTime * joystickMultiplier;
+            float z = variableJoystick.Vertical * 0.5f * Time.deltaTime * joystickMultiplier;
 
             // conditions for no action
-            if (referenceObject == null) return;
             if (x == 0 && z == 0) return;
 
-            //camera forward and right vectors
-            Vector3 forward = referenceObject.transform.forward;
-            Vector3 right = referenceObject.transform.right;
+            // camera forward and right vectors
+            Vector3 forward = transform.forward;
+            Vector3 right = transform.right;
 
-
-            Vector3 personForward = currentVehicle.transform.InverseTransformDirection(headObject.transform.forward);
-            Vector3 personRight = currentVehicle.transform.InverseTransformDirection(headObject.transform.right);
-            personForward.y = 0;
-            personRight.y = 0;
-            personForward.Normalize();
-            personRight.Normalize();
-
-            //project forward and right vectors on the horizontal plane (y = 0)
+            // project forward and right vectors on the horizontal plane
             forward.y = 0f;
             right.y = 0f;
             forward.Normalize();
             right.Normalize();
 
+            // this is the direction in the world space we want to move:
+            var desiredMoveDirection = forward * z + right * x;
+            CharacterVehicle.transform.Translate(desiredMoveDirection);
+            
+        }
+
+        private void MoveBodyWithKeyboard()
+        {
+            float x = Input.GetAxis("Horizontal") * Time.smoothDeltaTime * runFactor;
+            float z = Input.GetAxis("Vertical") * Time.smoothDeltaTime * runFactor;
+
+            // conditions for no action
+            if (CharacterVehicle == null) return;
+            if (x == 0 && z == 0) return;
+
+            //project forward and right vectors on the horizontal plane (y = 0)
+            Vector3 personForward = CharacterVehicle.transform.InverseTransformDirection(transform.forward);
+            Vector3 personRight = CharacterVehicle.transform.InverseTransformDirection(transform.right);
+            personForward.y = 0;
+            personRight.y = 0;
+            personForward.Normalize();
+            personRight.Normalize();
+
             //this is the direction in the world space we want to move:
             var desiredMoveDirection = personForward * z + personRight * x;
-            currentVehicle.transform.Translate(desiredMoveDirection * multiplier);
+            CharacterVehicle.transform.Translate(desiredMoveDirection);
         }
 
         private void SetCameraRotation()
         {
-            //float dragMod = 1.0f;
             float dragMod = isDragging ? -1.5f * globalInvertMouse : 1.0f;
 
-            if (isGameMode)
+            if (IsGameMode)
             {
                 Quaternion camQuat = GetCameraRotationFromMouse(mouseSensitivity, 1.0f * globalInvertMouse);
                 StartCoroutine(RotateCamera(camQuat, mouseSensitivity));
@@ -412,17 +394,21 @@ namespace ICVR
 
         private void JumpSwim()
         {
-            if (IsSwimming && Time.time - jumpTick > (jumpCool / 10.0f))
+            if (CharacterVehicle == null) { return; }
+
+            bool isSwimming = CharacterVehicle.transform.position.y < -10f;
+
+            if (isSwimming && Time.time - jumpTick > (jumpCool / 10.0f))
             {
                 jumpTick = Time.time;
-                Vector3 swimForce = new Vector3(0f, 150f, 0f) + (Camera.main.transform.forward * 50f);
-                currentVehicle.GetComponent<Rigidbody>().AddForce(swimForce, ForceMode.Acceleration);
+                Vector3 swimForce = new Vector3(0f, 150f, 0f) + (transform.forward * 10f);
+                CharacterVehicle.GetComponent<Rigidbody>().AddForce(swimForce, ForceMode.Impulse);
             }
             else if (Time.time - jumpTick > jumpCool)
             {
                 jumpTick = Time.time;
-                Vector3 jumpForce = new Vector3(0f, 350f, 0f) + Camera.main.transform.forward * 50f;
-                currentVehicle.GetComponent<Rigidbody>().AddForce(jumpForce, ForceMode.Impulse);
+                Vector3 jumpForce = new Vector3(0f, 350f, 0f) + transform.forward * 50f;
+                CharacterVehicle.GetComponent<Rigidbody>().AddForce(jumpForce, ForceMode.Impulse);
             }
         }
 
@@ -437,6 +423,7 @@ namespace ICVR
 
         private System.Collections.IEnumerator RotateCamera(Quaternion targetRot, float speed)
         {
+
             float rotationTimer = 0.0f;
 
             while (rotationTimer < 0.8)
@@ -453,90 +440,29 @@ namespace ICVR
 
         #region ----- Object Interaction ------
 
-
-        private void ToggleGameMode()
+        private void HandleCursorFocus()
         {
-            isGameMode = !isGameMode;
-            SetCrosshairVisibility();
-            SetCursorParameters();
-        }
+            if (CurrentObject == null) return;
 
-        private void SetCrosshairVisibility()
-        {
-            // toggle crosshair visibility
-            int isGamey = (isGameMode ? 1 : 0) * 255;
-            crosshair.SetColor(CrosshairColorChannel.ALPHA, isGamey, true);
-        }
-
-        private void SetCursorParameters()
-        {
-            if (xrState != WebXRState.NORMAL)
+            if (CursorManager.Instance != null)
             {
-                Cursor.visible = false;
+                CursorManager.Instance.SetFocusedObject(CurrentObject);
             }
-            else
+
+            int layer = CurrentObject.layer;
+            if (layer >= 9 && layer <= 15)
             {
-                Cursor.visible = true;
-                Cursor.lockState = isGameMode ? CursorLockMode.Locked : CursorLockMode.None;
-                Cursor.visible = !isGameMode;
+                // scene layer removes focus
+                if (layer != 11)
+                {
+                    InvokeFocusEvent(CurrentObject, true);
+                }
+                else
+                {
+                    InvokeFocusEvent(null, false);
+                }
             }
         }
-
-        private void SetDefaultCursor()
-        {
-            if (focusedObject)
-            {
-                InvokeFocusEvent(focusedObject, false);
-                focusedObject = null;
-            }
-            pLayer = 0;
-            Cursor.SetCursor(cursorForScene, hotspot, cMode);
-            if (isGameMode) crosshair.SetGap(6, true);
-        }
-
-        private void SetCursorImage()
-        {
-            if (CurrentObject == null)
-            {
-                SetDefaultCursor();
-                return;
-            }
-
-            if (CurrentObject.layer == pLayer)
-            {
-                return;
-            }
-
-            pLayer = CurrentObject.layer;
-
-            // ui buttons
-            if (CurrentObject.layer == 12)
-            {
-                Cursor.SetCursor(cursorForInteractables, hotspot, cMode);
-            }
-            // interactale objects
-            else if (CurrentObject.layer == 10 || CurrentObject.layer == 15)
-            {
-                focusedObject = CurrentObject;
-                InvokeFocusEvent(CurrentObject, true);
-                Cursor.SetCursor(cursorForObjects, hotspot, cMode);
-                if (isGameMode) crosshair.SetGap(18, true);
-            }
-            // furniture cursor
-            else if (CurrentObject.layer == 9)
-            {
-                focusedObject = CurrentObject;
-                InvokeFocusEvent(CurrentObject, true);
-                Cursor.SetCursor(cursorForInteractables, hotspot, cMode);
-            }
-            // default (scene) cursor
-            else
-            {
-                SetDefaultCursor();
-            }
-        }
-
-        bool wasKinematic = false;
 
         private GameObject PickUpObject(GameObject ooi)
         {
@@ -544,8 +470,6 @@ namespace ICVR
             {
                 activeMesh = GetActiveMesh(ooi);
                 if (activeMesh == null) return null;
-
-
 
                 Rigidbody actRB = activeMesh.GetComponent<Rigidbody>();
                 actRB.isKinematic = false;
@@ -651,7 +575,7 @@ namespace ICVR
 
         private GameObject GetActiveMesh(GameObject ooi)
         {
-            // priority: self, parent, child rigidbody
+            // priority: self, parent, child
             if (ooi.GetComponent<Rigidbody>())
             {
                 return ooi;
@@ -697,27 +621,29 @@ namespace ICVR
             {
                 if (CurrentObject.TryGetComponent(out ObjectInterface objInt))
                 {
-                    objInt.OnTrigger();
+                    OnObjectTrigger?.Invoke(objInt.gameObject, 0.75f);
                 }
             }
         }
 
         private GameObject ScreenRaycast(bool fromTouch = false)
         {
+            if (!_camera.isActiveAndEnabled) return null;
+
             if (isDragging) return CurrentObject;
 
             Ray ray;
 
-            if (isGameMode)
+            if (IsGameMode)
             {
-                ray = Camera.main.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+                ray = _camera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
             }
             else
             {
-                ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+                ray = _camera.ScreenPointToRay(Input.mousePosition, Camera.MonoOrStereoscopicEye.Mono);
             }
 
-            if (Physics.Raycast(ray, out RaycastHit pointerHit, 15.0f, Physics.DefaultRaycastLayers))
+            if (Physics.Raycast(ray, out RaycastHit pointerHit, 60.0f, Physics.DefaultRaycastLayers))
             {
                 CurrentHitPoint = pointerHit.point;
                 CurrentDistance = pointerHit.distance;
@@ -730,7 +656,6 @@ namespace ICVR
         }
 
         #endregion ----- Object Interaction ------
-
 
     }
 }

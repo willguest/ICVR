@@ -1,41 +1,43 @@
 # Island Collective Virtual Reality 
 
-Welcome to the ICVR repository, an Unity-based toolkit for designing cutting-edge immersive experiences on the Internet Computer.
+Welcome to the ICVR repository, a Unity-based toolkit for designing cutting-edge immersive experiences on the Internet Computer.
 
-## 📦 Create a New Project
+![image](https://github.com/willguest/ICVR/assets/24574013/e58d788d-b342-48f6-a6f9-e7550312ecdf)
 
-Make sure that [Unity 2020 LTS](https://unity.com/releases/programmer-features/2020-lts-tier2-features) is installed on your system.
 
-Start a new URP project using [Unity Hub](https://unity.com/download).
+## 📦 Steps to Create an ICVR Experience
 
-Import the ICVR_Core and, if desired, the ICVR_DLC unity packages. \
-*(Assets → Import Package → Custom Package)*
+Make sure that [Unity 2020 LTS](https://unity.com/releases/editor/archive#download-archive-2020) is installed on your system.
 
-Open the ICVR Setup window. \
-*(Windows → WebXR → ICVR Setup)*
+1) Start a new URP project using [Unity Hub](https://unity.com/download).
 
-<img src="https://github.com/willguest/ICVR/assets/24574013/219f7977-eb3b-4367-84ef-452acff0bb33" align="right" width="200px"/>
-Use the relevant buttons to complete the ICVR setup:
+<img src="https://github.com/willguest/ICVR/assets/24574013/02397692-9cc0-4172-a282-0f6e9e958d61)" align="right" width="200px"/>
+
+2) Import the ICVR_Core and, if desired, the ICVR_DLC unity packages. \
+*Assets → Import Package → Custom Package*
+
+4) Open the ICVR Setup window. \
+*Window → WebXR → ICVR Setup*
+
+5) Use the interface to complete the ICVR setup:
 
    - Switch build target to WebGL
    - Add dependencies: Newtonsoft Json and WebXR Export (as scoped UPM package)
    - Click on *Enable ICVR Settings* to add the `ICVR` Scripting Define Symbol.
-   - Import relevant settings. Note that this will **override your current settings**.
+   - Apply relevant settings. Note that **this will override your current settings**.
+
+6) Check that WebXR Export is enabled for the WebGL target. \
+*Project Settings → XR Plug-in Management*
 
 <img src="https://github.com/willguest/ICVR/assets/24574013/d91ea42b-d38f-4902-98d2-783179d3aad7" align="right" width="200px"/>
-Make sure that WebXR Export is enabled for the WebGL target.
 
-*(Project Settings → XR Plugin Management)*.
+6) Open one of the test scenes \
+Bare bones: *Assets/ICVR/Scenes* \
+Templates: *Assets/ICVR_Scenes*, using [DLC Content](https://github.com/willguest/ICVR/releases)
 
-Open one of the scenes inside *Assets/ICVR/Scenes* to begin with an empty scene.
+8) Open the *Build Settings* window, add the current scene and click *Build*
 
-If also using the DLC (see [Releases](https://github.com/willguest/ICVR/releases)), open one of the scenes in *Assets/ICVR_Scenes* for some design examples.
-
-### 👓 Things to Remember When Building
-
-In the *Build Settings* window, don't forget to add the current scene.
-
-For compatibility with the [ICVR-React](https://github.com/willguest/icvr-react) template, place the build in a folder called `unity_build`.
+9) For compatibility with the [ICVR-React](https://github.com/willguest/icvr-react) template, place the build in a folder called `unity_build`.
 
 <br clear="right"/>
 
@@ -49,7 +51,16 @@ For compatibility with the [ICVR-React](https://github.com/willguest/icvr-react)
 
 ## 📄 Documentation
 
-Each class is documented in a corresponding markdown file, and linked in the class definition summary. The top level can be found [here](https://github.com/willguest/ICVR/tree/develop/Documentation), along with instructions on how to contribute.
+Each class is documented in a corresponding markdown file, and linked in the class definition summary. The [top level](https://github.com/willguest/ICVR/tree/develop/Documentation) contains instructions on how to add documentation to any contributions.
+
+## 🌐 Self-Hosting
+
+This repository is intended to be used with [icvr-canister](https://github.com/willguest/icvr-canister), which allows the Unity WebGL builds to be self-hosted on the Internet Computer blockchain. See that repository's README for more information.
+
+
+## 💛 Sponsorship
+
+The framework is open-source and was initially funded by non-dilutive grants from the Internet Computer. I welcome sponsorship in all forms and look forward to scaling this project as more resources become available. Please visit my [sponsorship page](https://github.com/sponsors/willguest) for more information.
 
 
 ## ⚖️ License

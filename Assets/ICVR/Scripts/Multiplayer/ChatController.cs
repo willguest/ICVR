@@ -42,10 +42,6 @@ namespace ICVR
                 {
                     BroadcastChatMessage();
                 }
-                else
-                {
-                    Debug.Log("input not focused");
-                }
             }
         }
 
